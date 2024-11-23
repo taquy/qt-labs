@@ -1,0 +1,44 @@
+# ---
+# - name: Install basic tools
+#   gather_facts: true
+#   hosts: all
+#   tasks:
+#   - name: Update and upgrade apt packages
+#     become: true
+#     apt:
+#       upgrade: yes
+#       update_cache: yes
+#       cache_valid_time: 86400 #One day
+#   - name: Install a list of packages
+#     ansible.builtin.apt:
+#       pkg:
+#       - net-tools
+#   - name: Stop and disable firewalld.
+#     become: true
+#     service:
+#       name: ufw
+#       state: stopped
+#       enabled: False
+---
+# https://docs.rke2.io/install/quickstart
+- name: Install RKE 
+  gather_facts: true
+  hosts: root_master
+  tasks:
+  - name: Get installation script
+    become: true
+    shell: |
+      curl -sfL https://get.rke2.io | sh -
+  - name: Enable the rke2-server service
+    become: true
+    systemd_service:
+      state: started
+      enabled: true
+      name: rke2-server.service
+  # - name: Enable the rke2-server service
+  #   become: true
+  #   systemd_service:
+  #     state: started
+  #     name: rke2-server.service
+      
+    
