@@ -1,12 +1,25 @@
-frontend api_server_frontend
+defaults
   mode http
-  bind :6443
-  bind :9345
-  default_backend api_servers
+  timeout connect 5000ms
+  timeout client 50000ms
+  timeout server 50000ms
 
-backend api_servers
-  mode https
+frontend api_server_front
+  bind *:6443
+  default_backend api_server_back
+
+backend api_server_back
   balance roundrobin
-    server m1 192.168.19.132 check
-    server m3 192.168.19.136 check
-    server m2 192.168.19.133 check
+    server m1 192.168.19.132 check port 6443
+    server m3 192.168.19.136 check port 6443
+    server m2 192.168.19.133 check port 6443
+
+frontend join_cluster_front
+  bind *:9345
+  default_backend join_cluster_back
+
+backend join_cluster_back
+  balance roundrobin
+    server m1 192.168.19.132 check port 9345
+    server m3 192.168.19.136 check port 9345
+    server m2 192.168.19.133 check port 9345

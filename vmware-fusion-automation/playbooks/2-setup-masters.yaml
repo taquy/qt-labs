@@ -1,0 +1,62 @@
+# https://docs.rke2.io/install/quickstart
+- name: Install RKE 
+  gather_facts: true
+  hosts: masters
+  become: true
+  tasks:
+  - name: Reboot
+    reboot:
+  - name: Get installation script
+    shell: curl -sfL https://get.rke2.io | sh -
+  - name: Creates config directory 
+    file:
+      path: /etc/rancher/rke2/
+      state: directory
+      mode: 0775
+      recurse: yes
+  - name: Enable the rke2-server service
+    systemd_service:
+      enabled: true
+      name: rke2-server.service
+- name: Start RKE in primary master
+  gather_facts: true
+  become: true
+  hosts: primary_master
+  tasks:
+  - name: Upload config file
+    copy:
+      src: ../configs/rke2_config_master_pri
+      dest: /etc/rancher/rke2/config.yaml
+  - name: Start the rke2-server service
+    systemd_service:
+      state: started
+      name: rke2-server.service
+- name: Start RKE in secondary masters
+  gather_facts: true
+  become: true
+  hosts: secondary_masters
+  tasks:
+  - name: Upload config file
+    copy:
+      src: ../configs/rke2_config_master_sec
+      dest: /etc/rancher/rke2/config.yaml
+  - name: Start the rke2-server service
+    systemd_service:
+      state: started
+      name: rke2-server.service
+- name: Load configs for all masters
+  gather_facts: true
+  become: true
+  hosts: masters
+  vars:
+    local_home: /home/qt
+  tasks:
+  - name: Export binary path
+    shell: |
+      line='export PATH=/var/lib/rancher/rke2/bin:$PATH'
+      grep "$line" /root/.bashrc || echo $line >> /root/.bashrc
+      grep "$line" {{ local_home }}/.bashrc || echo $line >> {{ local_home }}/.bashrc
+      line='export KUBECONFIG=/etc/rancher/rke2/rke2.yaml'
+      grep "$line" /root/.bashrc || echo $line >> /root/.bashrc
+      grep "$line" {{ local_home }}/.bashrc || echo $line >> {{ local_home }}/.bashrc
+      chmod 444 /etc/rancher/rke2/rke2.yaml

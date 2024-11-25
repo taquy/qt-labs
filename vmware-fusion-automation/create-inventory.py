@@ -66,7 +66,7 @@ def create_haproxy_config(api_servers):
     print('No API servers available')
   results_template = environment.get_template('templates/haproxy_config.j2')
   with open('configs/haproxy_config', mode="w", encoding="utf-8") as results:
-      results.write(results_template.render(api_servers=api_servers))
+      results.write(results_template.render(api_servers=api_servers) + '\n')
       
 def get_cluster_token():
   cluster_token = ''
@@ -90,21 +90,16 @@ def create_rke_config(api_servers):
   results_template = environment.get_template('templates/rke2_config.j2')
   backends = cluster_nodes['primary_master'] + cluster_nodes['secondary_masters'] + cluster_nodes['load_balancer']
   token = get_cluster_token()
+  lb_ip = cluster_nodes['load_balancer'][0]
   # create primary primary config
   with open('configs/rke2_config_master_pri', mode="w", encoding="utf-8") as results:
-    results.write(results_template.render(
-      backends=backends, token=token,
-    ))
+    results.write(results_template.render(backends=backends, token=token,) + '\n')
   # create secondary masters config
   with open('configs/rke2_config_master_sec', mode="w", encoding="utf-8") as results:
-    results.write(results_template.render(
-      backends=backends, token=token, root_api_server=cluster_nodes['primary_master'][0]
-    ))
+    results.write(results_template.render(backends=backends, token=token, lb_ip=lb_ip) + '\n')
   # create workers config
   with open('configs/rke2_config_worker', mode="w", encoding="utf-8") as results:
-    results.write(results_template.render(
-      token=token,  root_api_server=cluster_nodes['primary_master'][0]
-    ))
+    results.write(results_template.render(token=token, lb_ip=lb_ip) + '\n')
     
 api_servers, cluster_nodes = create_inventories()
 create_haproxy_config(api_servers)

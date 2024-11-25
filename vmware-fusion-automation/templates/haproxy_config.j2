@@ -1,12 +1,25 @@
-frontend api_server_frontend
+defaults
   mode http
-  bind :6443
-  bind :9345
-  default_backend api_servers
+  timeout connect 5000ms
+  timeout client 50000ms
+  timeout server 50000ms
 
-backend api_servers
-  mode https
+frontend api_server_front
+  bind *:6443
+  default_backend api_server_back
+
+backend api_server_back
   balance roundrobin
   {%- for api_server in api_servers %}
-    server {{ api_server.name }} {{ api_server.ip_addr }} check
+    server {{ api_server.name }} {{ api_server.ip_addr }} check port 6443
+  {%- endfor %}
+
+frontend join_cluster_front
+  bind *:9345
+  default_backend join_cluster_back
+
+backend join_cluster_back
+  balance roundrobin
+  {%- for api_server in api_servers %}
+    server {{ api_server.name }} {{ api_server.ip_addr }} check port 9345
   {%- endfor %}
