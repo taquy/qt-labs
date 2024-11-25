@@ -1,0 +1,11 @@
+{%- if root_api_server %}
+server: https://{{ root_api_server }}:9345
+{%- endif %}
+token: {{ token }}
+{%- if backends %}
+tls-san:
+  - rke.qt
+  {%- for backend in backends %}
+  - {{ backend }}
+  {%- endfor %}
+{%- endif %}
