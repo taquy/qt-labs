@@ -1,6 +1,5 @@
 
-server: https://192.168.19.132:9345
-token: HvucAeGjg2NAkjIzZ4df
+token: VehhsAtpSFK5reXWTAHE
 tls-san:
   - rke.qt
   - 192.168.19.132

@@ -6,11 +6,14 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 import secrets
 import string
+from pathlib import Path
 
 loader = FileSystemLoader(searchpath="./")
 environment = Environment(loader=loader)
 
 VM_DIR = "/Users/qt/Virtual Machines.localized"
+
+Path("configs").mkdir(parents=True, exist_ok=True)
 
 # collect nodes and group nodes master prefix is `m`, worker prefix is `w`
 def create_inventories():
@@ -61,27 +64,44 @@ def create_inventories():
 def create_haproxy_config(api_servers):
   if not api_servers or len(api_servers) == 0:
     print('No API servers available')
-  results_template = environment.get_template('haproxy_config.j2')
-  with open('haproxy_config', mode="w", encoding="utf-8") as results:
+  results_template = environment.get_template('templates/haproxy_config.j2')
+  with open('configs/haproxy_config', mode="w", encoding="utf-8") as results:
       results.write(results_template.render(api_servers=api_servers))
+      
+def get_cluster_token():
+  cluster_token = ''
+  token_file_name = 'cluster_token'
+  if os.path.isfile(token_file_name):
+    print('Token file "cluster_token" found in path, using it as cluster token')
+    token_file = open(token_file_name, 'r')
+    cluster_token = token_file.read().strip()
+    token_file.close()
+  else:
+    print('Token file "cluster_token" does not found in path, generate random cluster token')
+    alphabet = string.ascii_letters + string.digits
+    cluster_token = ''.join(secrets.choice(alphabet) for i in range(20))  # for a 20-character password
+    # save in to token file
+    token_file = open(token_file_name, 'w')
+    token_file.write(cluster_token)
+    token_file.close()
+  return cluster_token
 
 def create_rke_config(api_servers):
-  results_template = environment.get_template('rke2_config.j2')
-  alphabet = string.ascii_letters + string.digits
-  token = ''.join(secrets.choice(alphabet) for i in range(20))  # for a 20-character password
+  results_template = environment.get_template('templates/rke2_config.j2')
   backends = cluster_nodes['primary_master'] + cluster_nodes['secondary_masters'] + cluster_nodes['load_balancer']
+  token = get_cluster_token()
   # create primary primary config
-  with open('rke2_config_master_pri', mode="w", encoding="utf-8") as results:
+  with open('configs/rke2_config_master_pri', mode="w", encoding="utf-8") as results:
     results.write(results_template.render(
       backends=backends, token=token,
     ))
   # create secondary masters config
-  with open('rke2_config_master_sec', mode="w", encoding="utf-8") as results:
+  with open('configs/rke2_config_master_sec', mode="w", encoding="utf-8") as results:
     results.write(results_template.render(
       backends=backends, token=token, root_api_server=cluster_nodes['primary_master'][0]
     ))
   # create workers config
-  with open('rke2_config_worker', mode="w", encoding="utf-8") as results:
+  with open('configs/rke2_config_worker', mode="w", encoding="utf-8") as results:
     results.write(results_template.render(
       token=token,  root_api_server=cluster_nodes['primary_master'][0]
     ))
