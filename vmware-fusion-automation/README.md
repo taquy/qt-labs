@@ -7,6 +7,6 @@ python create-inventory.py
 
 
 # execute playbooks
-ansible-playbook 1-setup-loadbalancer.yaml -i inventories.yaml -K
-ansible-playbook 2-install-cluster.yaml -i inventories.yaml -K
-ansible-playbook 1-setup-loadbalancer.yaml -i inventories.yaml -K
+ansible-playbook playbooks/1-setup-loadbalancer.yaml -i inventories.yaml -K
+ansible-playbook playbooks/2-install-cluster.yaml -i inventories.yaml -K
+ansible-playbook playbooks/3-uninstall-cluster.yaml -i inventories.yaml -K

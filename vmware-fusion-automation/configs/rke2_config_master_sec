@@ -1,5 +1,5 @@
 
-server: https://192.168.19.132:9345
+server: https://192.168.19.142:9345
 token: VehhsAtpSFK5reXWTAHE
 tls-san:
   - rke.qt

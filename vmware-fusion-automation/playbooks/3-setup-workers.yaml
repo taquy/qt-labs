@@ -1,0 +1,17 @@
+- name: Start RKE in workers
+  gather_facts: true
+  become: true
+  hosts: workers
+  tasks:
+  - name: Reboot
+    reboot:
+  - name: Get installation script
+    shell: curl -sfL https://get.rke2.io | sh -
+  - name: Upload config file
+    copy:
+      src: ../configs/rke2_config_worker
+      dest: /etc/rancher/rke2/config.yaml
+  - name: Start the rke2-agent service
+    systemd_service:
+      state: started
+      name: rke2-agent.service
