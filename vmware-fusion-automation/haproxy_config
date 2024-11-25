@@ -1,6 +1,7 @@
 frontend api_server_frontend
   mode http
   bind :6443
+  bind :9345
   default_backend api_servers
 
 backend api_servers

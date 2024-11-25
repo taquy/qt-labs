@@ -1,10 +1,11 @@
 frontend api_server_frontend
-  mode https
+  mode http
   bind :6443
+  bind :9345
   default_backend api_servers
 
 backend api_servers
-  mode http
+  mode https
   balance roundrobin
   {%- for api_server in api_servers %}
     server {{ api_server.name }} {{ api_server.ip_addr }} check

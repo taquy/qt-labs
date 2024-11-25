@@ -1,4 +1,3 @@
-# ---
 # - name: Install basic tools
 #   gather_facts: true
 #   hosts: all
@@ -10,7 +9,7 @@
 #       update_cache: yes
 #       cache_valid_time: 86400 #One day
 #   - name: Install a list of packages
-#     ansible.builtin.apt:
+#     apt:
 #       pkg:
 #       - net-tools
 #   - name: Stop and disable firewalld.
@@ -19,26 +18,86 @@
 #       name: ufw
 #       state: stopped
 #       enabled: False
----
+# - name: Setup load balancer
+#   gather_facts: true
+#   hosts: load_balancer
+#   tasks:
+#   - name: Install HAProxy
+#     become: true
+#     apt:
+#       pkg:
+#       - haproxy
+#   - name: Check if file exists
+#     stat:
+#       path: /etc/haproxy/haproxy.cfg.bak
+#     register: p
+#   - name: Copy file if not exists
+#     become: true
+#     command: mv /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak
+#     when: p.stat.exists == False
+#   - name: Upload config file
+#     become: true
+#     copy:
+#       src: ./haproxy_config
+#       dest: /etc/haproxy/haproxy.cfg
+#   - name: Restart service
+#     become: true
+#     systemd_service:
+#       state: restarted
+#       name: haproxy
 # https://docs.rke2.io/install/quickstart
-- name: Install RKE 
+# - name: Install RKE 
+#   gather_facts: true
+#   hosts: all
+#   become: true
+#   tasks:
+#   - name: Get installation script
+#     shell: |
+#       curl -sfL https://get.rke2.io | sh -
+#   - name: Creates config directory 
+#     file:
+#       path: /etc/rancher/rke2/
+#       state: directory
+#       mode: 0775
+#       recurse: yes
+# - name: Start RKE in primary master
+#   gather_facts: true
+#   become: true
+#   hosts: primary_master
+#   tasks:
+#   - name: Upload config file
+#     copy:
+#       src: rke2_config_master_pri
+#       dest: /etc/rancher/rke2/config.yaml
+#   - name: Start the rke2-server service
+#     systemd_service:
+#       state: started
+#       name: rke2-server.service
+# - name: Start RKE in secondary masters
+#   gather_facts: true
+#   become: true
+#   hosts: secondary_masters
+#   tasks:
+#   - name: Upload config file
+#     copy:
+#       src: rke2_config_master_sec
+#       dest: /etc/rancher/rke2/config.yaml
+#   - name: Start the rke2-server service
+#     systemd_service:
+#       state: started
+#       name: rke2-server.service
+- name: Start RKE in workers
   gather_facts: true
-  hosts: root_master
+  become: true
+  hosts: workers
   tasks:
-  - name: Get installation script
-    become: true
-    shell: |
-      curl -sfL https://get.rke2.io | sh -
-  - name: Enable the rke2-server service
-    become: true
+  - name: Reboot workers
+    reboot:
+  - name: Upload config file
+    copy:
+      src: rke2_config_worker
+      dest: /etc/rancher/rke2/config.yaml
+  - name: Start the rke2-server service
     systemd_service:
       state: started
-      enabled: true
       name: rke2-server.service
-  # - name: Enable the rke2-server service
-  #   become: true
-  #   systemd_service:
-  #     state: started
-  #     name: rke2-server.service
-      
-    

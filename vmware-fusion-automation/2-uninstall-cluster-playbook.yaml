@@ -1,0 +1,10 @@
+- name: Uninstall RKE 
+  gather_facts: true
+  hosts: all
+  become: true
+  tasks:
+  - name: Run install script
+    shell: |
+      /usr/local/bin/rke2-uninstall.sh
+  - name: Unconditionally reboot the machine with all defaults
+    reboot:
