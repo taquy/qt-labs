@@ -9,3 +9,5 @@ tls-san:
   - {{ backend }}
   {%- endfor %}
 {%- endif %}
+node-taint:
+  - "CriticalAddonsOnly=true:NoExecute"
