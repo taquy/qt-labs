@@ -72,12 +72,12 @@ def get_cluster_token():
   cluster_token = ''
   token_file_name = 'cluster_token'
   if os.path.isfile(token_file_name):
-    print('Token file "cluster_token" found in path, using it as cluster token')
+    print(f'Token file "{token_file_name}" found in path, using it as cluster token')
     token_file = open(token_file_name, 'r')
     cluster_token = token_file.read().strip()
     token_file.close()
   else:
-    print('Token file "cluster_token" does not found in path, generate random cluster token')
+    print(f'Token file "{token_file_name}" does not found in path, generate random cluster token')
     alphabet = string.ascii_letters + string.digits
     cluster_token = ''.join(secrets.choice(alphabet) for i in range(20))  # for a 20-character password
     # save in to token file
@@ -92,15 +92,18 @@ def create_rke_config(api_servers):
   token = get_cluster_token()
   lb_ip = cluster_nodes['load_balancer'][0]
   # create primary primary config
-  with open('configs/rke2_config_master_pri', mode="w", encoding="utf-8") as results:
-    results.write(results_template.render(backends=backends, token=token,) + '\n')
+  with open('configs/rke2_config_master_pri', mode="w") as file:
+    file.write(results_template.render(backends=backends, token=token,) + '\n')
   # create secondary masters config
-  with open('configs/rke2_config_master_sec', mode="w", encoding="utf-8") as results:
-    results.write(results_template.render(backends=backends, token=token, lb_ip=lb_ip) + '\n')
+  with open('configs/rke2_config_master_sec', mode="w") as file:
+    file.write(results_template.render(backends=backends, token=token, lb_ip=lb_ip) + '\n')
   # create workers config
-  with open('configs/rke2_config_worker', mode="w", encoding="utf-8") as results:
-    results.write(results_template.render(token=token, lb_ip=lb_ip) + '\n')
-    
+  with open('configs/rke2_config_worker', mode="w") as file:
+    file.write(results_template.render(token=token, lb_ip=lb_ip) + '\n')
+  # save lb ip in a file to be used for generate rke config later
+  with open('configs/loadbalancer_ip', mode="w") as file:
+    file.write(lb_ip)
+      
 api_servers, cluster_nodes = create_inventories()
 create_haproxy_config(api_servers)
 create_rke_config(cluster_nodes)

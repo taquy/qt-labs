@@ -10,4 +10,5 @@ python create-inventory.py
 ansible-playbook -i inventories.yaml -K playbooks/1-setup-loadbalancer.yaml
 ansible-playbook -i inventories.yaml -K playbooks/2-setup-masters.yaml
 ansible-playbook -i inventories.yaml -K playbooks/3-setup-workers.yaml
-ansible-playbook -i inventories.yaml -K playbooks/4-uninstall-cluster.yaml
+ansible-playbook -i inventories.yaml -K playbooks/4-download-kubeconfig.yaml
+ansible-playbook -i inventories.yaml -K playbooks/5-uninstall-cluster.yaml
