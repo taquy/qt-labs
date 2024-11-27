@@ -1,23 +1,40 @@
-load_balancer:
+cluster_masters:
+  children:
+    primary_masters: {}
+    secondary_masters: {}
+cluster_workers:
+  children:
+    compute_workers: {}
+    disk_workers: {}
+    generic_workers: {}
+    memory_workers: {}
+compute_workers:
+  hosts:
+    192.168.19.135: ''
+    192.168.19.137: ''
+    192.168.19.138: ''
+disk_workers:
+  hosts:
+    192.168.19.143: ''
+    192.168.19.144: ''
+    192.168.19.145: ''
+generic_workers:
+  hosts:
+    192.168.19.146: ''
+    192.168.19.147: ''
+    192.168.19.148: ''
+load_balancers:
   hosts:
     192.168.19.142: ''
-masters:
+memory_workers:
   hosts:
-    192.168.19.132: ''
-    192.168.19.133: ''
-    192.168.19.136: ''
-primary_master:
+    192.168.19.139: ''
+    192.168.19.140: ''
+    192.168.19.141: ''
+primary_masters:
   hosts:
     192.168.19.132: ''
 secondary_masters:
   hosts:
     192.168.19.133: ''
     192.168.19.136: ''
-workers:
-  hosts:
-    192.168.19.135: ''
-    192.168.19.137: ''
-    192.168.19.138: ''
-    192.168.19.139: ''
-    192.168.19.140: ''
-    192.168.19.141: ''

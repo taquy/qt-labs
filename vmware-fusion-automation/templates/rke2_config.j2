@@ -8,6 +8,6 @@ tls-san:
   {%- for backend in backends %}
   - {{ backend }}
   {%- endfor %}
-{%- endif %}
 node-taint:
   - "CriticalAddonsOnly=true:NoExecute"
+{%- endif %}
