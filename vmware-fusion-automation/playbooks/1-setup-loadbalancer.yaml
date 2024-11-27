@@ -20,7 +20,7 @@
 - name: Setup load balancer
   gather_facts: true
   become: true
-  hosts: load_balancer
+  hosts: load_balancers
   tasks:
   - name: Install HAProxy
     apt:

@@ -1,7 +1,7 @@
 # https://docs.rke2.io/install/quickstart
 - name: Install RKE 
   gather_facts: true
-  hosts: masters
+  hosts: cluster_masters
   become: true
   tasks:
   - name: Reboot
@@ -21,7 +21,7 @@
 - name: Start RKE in primary master
   gather_facts: true
   become: true
-  hosts: primary_master
+  hosts: primary_masters
   tasks:
   - name: Upload config file
     copy:
@@ -47,7 +47,7 @@
 - name: Load configs for all masters
   gather_facts: true
   become: true
-  hosts: masters
+  hosts: cluster_masters
   vars:
     local_home: /home/qt
   tasks:

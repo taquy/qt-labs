@@ -7,6 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 import secrets
 import string
 from pathlib import Path
+import itertools
 
 loader = FileSystemLoader(searchpath="./")
 environment = Environment(loader=loader)
@@ -17,12 +18,18 @@ Path("configs").mkdir(parents=True, exist_ok=True)
 
 # collect nodes and group nodes master prefix is `m`, worker prefix is `w`
 def create_inventories():
-  cluster_nodes = {
-    'load_balancer': [],
-    'primary_master': [], # first master node to be install with RKE
-    'secondary_masters': [], # other master nodes to be install with RKE
-    'masters': [],
-    'workers': [],
+  master_nodes = {
+    'primary': [], # first master node to be install with RKE
+    'secondary': [], # other master nodes to be install with RKE
+  }
+  worker_nodes = {
+    'compute': [],
+    'memory': [],
+    'disk': [],
+    'generic': [],
+  }
+  other_nodes = {
+    'load_balancers': []
   }
   api_servers = []
   for filepath in pathlib.Path(VM_DIR).glob('*vmwarevm'):
@@ -31,35 +38,58 @@ def create_inventories():
     node_name = Path(fn).stem
     node_prefix = node_name[0]
     
-    role = 'workers'
     if node_prefix == 'm':
-      role = 'masters'
+      # create primary and secondary node group
+      if node_name == 'm1':
+        master_nodes['primary'].append(ipaddr)
+      else:
+        master_nodes['secondary'].append(ipaddr)
+      # configs for haproxy
       api_servers.append({
         'name': node_name,
         'ip_addr': ipaddr
       })
     elif node_prefix == 'l':
-      role = 'load_balancer'
-    else:
-      role = 'workers'
-      
-    cluster_nodes[role].append(ipaddr)
-    print(node_name, ' ', ipaddr)
-    if node_prefix == 'm':
-      if len(cluster_nodes['primary_master']) == 0 and '1' in node_name:
-        cluster_nodes['primary_master'].append(ipaddr)
+      other_nodes['load_balancers'].append(ipaddr)
+    elif node_prefix == 'w':
+      # also append to worker nodes (for later node labeling)
+      worker_prefix = node_name.split('-')[1][0]
+      if worker_prefix == 'm':
+        worker_nodes['memory'].append(ipaddr)
+      elif worker_prefix == 'c':
+        worker_nodes['compute'].append(ipaddr)
+      elif worker_prefix == 'd':
+        worker_nodes['disk'].append(ipaddr)
       else:
-        cluster_nodes['secondary_masters'].append(ipaddr)
-    
+        worker_nodes['generic'].append(ipaddr)
+      
+    print(node_name, ' ', ipaddr)
+  
+  cluster_nodes = {
+    'masters': master_nodes,
+    'workers': worker_nodes,
+  }
+  
   inventories = {}
-  for key in cluster_nodes:
-    inventories[key] = {'hosts': {}}
-    for ip_address in cluster_nodes[key]:
-      inventories[key]['hosts'][ip_address] = ''
-
+  # import cluster nodes to inventory
+  for group_name in cluster_nodes:
+    parent_group = 'cluster_' + group_name
+    inventories[parent_group] = {'children': {}} # set parent node groups
+    for host_type in cluster_nodes[group_name]:
+      ansible_key = host_type + '_' + group_name
+      inventories[ansible_key] = {'hosts': {}}
+      inventories[parent_group]['children'][ansible_key] = {}
+      for ip_address in cluster_nodes[group_name][host_type]:
+        inventories[ansible_key]['hosts'][ip_address] = ''
+  # import other nodes
+  for node_type in other_nodes:
+    inventories[node_type] = {'hosts': {}}
+    for ip_address in other_nodes[node_type]:
+      inventories[node_type]['hosts'][ip_address] = ''
+  
   with open('inventories.yaml', 'w') as outfile:
     yaml.dump(inventories, outfile, default_flow_style=False)
-  return api_servers, cluster_nodes
+  return api_servers, cluster_nodes | other_nodes
 
 def create_haproxy_config(api_servers):
   if not api_servers or len(api_servers) == 0:
@@ -86,11 +116,12 @@ def get_cluster_token():
     token_file.close()
   return cluster_token
 
-def create_rke_config(api_servers):
+def create_rke_config(cluster_nodes):
   results_template = environment.get_template('templates/rke2_config.j2')
-  backends = cluster_nodes['primary_master'] + cluster_nodes['secondary_masters'] + cluster_nodes['load_balancer']
+  lb_ips = cluster_nodes['load_balancers']
+  lb_ip = lb_ips[0]
+  backends = list(itertools.chain(*cluster_nodes['masters'].values())) + lb_ips
   token = get_cluster_token()
-  lb_ip = cluster_nodes['load_balancer'][0]
   # create primary primary config
   with open('configs/rke2_config_master_pri', mode="w") as file:
     file.write(results_template.render(backends=backends, token=token,) + '\n')
