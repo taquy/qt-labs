@@ -73,7 +73,7 @@ def create_inventories():
   inventories = {}
   # import cluster nodes to inventory
   for group_name in cluster_nodes:
-    parent_group = 'cluster_' + group_name
+    parent_group = group_name + '_nodes'
     inventories[parent_group] = {'children': {}} # set parent node groups
     for host_type in cluster_nodes[group_name]:
       ansible_key = host_type + '_' + group_name
@@ -89,6 +89,7 @@ def create_inventories():
   
   with open('inventories.yaml', 'w') as outfile:
     yaml.dump(inventories, outfile, default_flow_style=False)
+    
   return api_servers, cluster_nodes | other_nodes
 
 def create_haproxy_config(api_servers):
@@ -129,8 +130,9 @@ def create_rke_config(cluster_nodes):
   with open('configs/rke2_config_master_sec', mode="w") as file:
     file.write(results_template.render(backends=backends, token=token, lb_ip=lb_ip) + '\n')
   # create workers config
-  with open('configs/rke2_config_worker', mode="w") as file:
-    file.write(results_template.render(token=token, lb_ip=lb_ip) + '\n')
+  for worker_type in cluster_nodes['workers']:
+    with open(f'configs/rke2_config_{worker_type}_workers', mode="w") as file:
+      file.write(results_template.render(token=token, lb_ip=lb_ip, worker_type=worker_type) + '\n')
   # save lb ip in a file to be used for generate rke config later
   with open('configs/loadbalancer_ip', mode="w") as file:
     file.write(lb_ip)

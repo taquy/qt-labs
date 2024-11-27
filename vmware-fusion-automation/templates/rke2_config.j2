@@ -11,3 +11,8 @@ tls-san:
 node-taint:
   - "CriticalAddonsOnly=true:NoExecute"
 {%- endif %}
+
+{%- if worker_type %}
+node-label:
+  - node-role.kubernetes.io/worker={{ worker_type }}
+{%- endif %}
