@@ -1,5 +1,0 @@
-
-server: https://192.168.19.142:9345
-token: VehhsAtpSFK5reXWTAHE
-node-label:
-  - node-role.kubernetes.io/worker=disk

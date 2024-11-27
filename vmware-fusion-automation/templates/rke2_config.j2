@@ -14,5 +14,7 @@ node-taint:
 
 {%- if worker_type %}
 node-label:
-  - node-role.kubernetes.io/worker={{ worker_type }}
+  - "node-role.kubernetes.io/worker="
+  - "worker-type={{ worker_type }}"
 {%- endif %}
+debug: true
