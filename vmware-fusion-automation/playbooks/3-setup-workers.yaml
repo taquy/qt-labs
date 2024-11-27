@@ -1,21 +1,26 @@
+# - name: Setup RKE in workers
+#   gather_facts: true
+#   become: true
+#   hosts: workers_nodes
+#   tasks:
+#   - name: Reboot
+#     reboot:
+#   - name: Get installation script
+#     shell: curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="agent" sh -
+#   - name: Creates config directory 
+#     file:
+#       path: /etc/rancher/rke2/
+#       state: directory
+#       mode: 0775
+#       recurse: yes
 - name: Start RKE in workers
   gather_facts: true
   become: true
-  hosts: cluster_workers
+  hosts: '*_workers'
   tasks:
-  - name: Reboot
-    reboot:
-  - name: Get installation script
-    shell: curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="agent" sh -
-  - name: Creates config directory 
-    file:
-      path: /etc/rancher/rke2/
-      state: directory
-      mode: 0775
-      recurse: yes
   - name: Upload config file
     copy:
-      src: ../configs/rke2_config_worker
+      src: ../configs/rke2_config_{{ group_names[0] }}
       dest: /etc/rancher/rke2/config.yaml
   - name: Start the rke2-agent service
     systemd_service:
