@@ -4,7 +4,6 @@ server: https://{{ lb_ip }}:9345
 token: {{ token }}
 {%- if backends %}
 tls-san:
-  - rke.qt
   {%- for backend in backends %}
   - {{ backend }}
   {%- endfor %}

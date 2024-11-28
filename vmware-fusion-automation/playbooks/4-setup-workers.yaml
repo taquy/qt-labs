@@ -1,7 +1,7 @@
 - name: Setup RKE in workers
   gather_facts: true
   become: true
-  hosts: workers_nodes
+  hosts: '*workers'
   tasks:
   - name: Reboot
     reboot:
@@ -13,10 +13,14 @@
       state: directory
       mode: 0775
       recurse: yes
+  - name: Enable the rke2-agent service
+    systemd_service:
+      enabled: true
+      name: rke2-agent.service
 - name: Start RKE in workers
   gather_facts: true
   become: true
-  hosts: '*_workers'
+  hosts: '*workers'
   tasks:
   - name: Upload config file
     copy:
@@ -25,5 +29,4 @@
   - name: Start the rke2-agent service
     systemd_service:
       state: started
-      enabled: true
       name: rke2-agent.service

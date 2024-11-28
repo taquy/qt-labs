@@ -32,11 +32,19 @@ def create_inventories():
     'load_balancers': []
   }
   api_servers = []
+  
+  host_file_records = []
   for filepath in pathlib.Path(VM_DIR).glob('*vmwarevm'):
     fn = filepath.absolute()
     ipaddr = subprocess.run(['vmrun', 'getGuestIPAddress', fn], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
     node_name = Path(fn).stem
     node_prefix = node_name[0]
+    
+    # host file inventories
+    host_file_records.append({
+      'name': node_name, 
+      'ipaddr': ipaddr
+    })
     
     if node_prefix == 'm':
       # create primary and secondary node group
@@ -73,12 +81,9 @@ def create_inventories():
   inventories = {}
   # import cluster nodes to inventory
   for group_name in cluster_nodes:
-    parent_group = group_name + '_nodes'
-    inventories[parent_group] = {'children': {}} # set parent node groups
     for host_type in cluster_nodes[group_name]:
       ansible_key = host_type + '_' + group_name
       inventories[ansible_key] = {'hosts': {}}
-      inventories[parent_group]['children'][ansible_key] = {}
       for ip_address in cluster_nodes[group_name][host_type]:
         inventories[ansible_key]['hosts'][ip_address] = ''
   # import other nodes
@@ -90,6 +95,10 @@ def create_inventories():
   with open('inventories.yaml', 'w') as outfile:
     yaml.dump(inventories, outfile, default_flow_style=False)
     
+  # save cluster nodes to file for later use: update host file
+  with open('configs/hosts_vars.yaml', 'w') as outfile:
+    yaml.dump({'hosts': host_file_records}, outfile, default_flow_style=False)
+      
   return api_servers, cluster_nodes | other_nodes
 
 def create_haproxy_config(api_servers):
@@ -136,6 +145,7 @@ def create_rke_config(cluster_nodes):
   # save lb ip in a file to be used for generate rke config later
   with open('configs/loadbalancer_ip', mode="w") as file:
     file.write(lb_ip)
+      
       
 api_servers, cluster_nodes = create_inventories()
 create_haproxy_config(api_servers)
