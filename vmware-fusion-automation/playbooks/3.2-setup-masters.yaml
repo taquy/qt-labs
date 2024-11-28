@@ -1,9 +1,6 @@
 - name: Install RKE 
-  gather_facts: true
   hosts: '*masters'
   become: true
-  vars:
-    local_home: /home/qt
   tasks:
   - name: Reboot
     reboot:
@@ -14,6 +11,26 @@
       enabled: true
       state: started
       name: rke2-server.service
+- name: Start RKE in primary master
+  hosts: 'primary_masters'
+  become: true
+  tasks:
+  - name: Enable the rke2-server service in primary masters
+    systemd_service:
+      state: started
+- name: Start RKE in secondary masters
+  hosts: 'secondary_masters'
+  become: true
+  tasks:
+  - name: Enable the rke2-server service in secondary masters
+    systemd_service:
+      state: started
+- name: Prepare Kubeconfig
+  hosts: '*masters'
+  become: true
+  vars:
+    local_home: /home/qt
+  tasks:
   - name: Export binary path
     shell: |
       line='export PATH=/var/lib/rancher/rke2/bin:$PATH'

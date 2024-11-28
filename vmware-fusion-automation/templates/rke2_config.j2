@@ -2,7 +2,7 @@
 server: https://{{ lb_ip }}:9345
 {%- endif %}
 {%- if backends %}
-token-file: /tmp/shared_token
+token-file: /etc/rancher/rke2/token
 tls-san:
   {%- for backend in backends %}
   - {{ backend }}
@@ -10,9 +10,8 @@ tls-san:
 node-taint:
   - "CriticalAddonsOnly=true:NoExecute"
 {%- endif %}
-
+agent-token-file: /etc/rancher/rke2/token
 {%- if worker_type %}
-agent-token-file: /tmp/agent_token
 node-label:
   - "node-role.kubernetes.io/worker="
   - "worker-type={{ worker_type }}"
