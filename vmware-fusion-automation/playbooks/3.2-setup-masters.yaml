@@ -9,7 +9,6 @@
   - name: Enable the rke2-server service
     systemd_service:
       enabled: true
-      state: started
       name: rke2-server.service
 - name: Start RKE in primary master
   hosts: 'primary_masters'
@@ -18,6 +17,7 @@
   - name: Enable the rke2-server service in primary masters
     systemd_service:
       state: started
+      name: rke2-server.service
 - name: Start RKE in secondary masters
   hosts: 'secondary_masters'
   become: true
@@ -25,6 +25,7 @@
   - name: Enable the rke2-server service in secondary masters
     systemd_service:
       state: started
+      name: rke2-server.service
 - name: Prepare Kubeconfig
   hosts: '*masters'
   become: true
@@ -34,9 +35,9 @@
   - name: Export binary path
     shell: |
       line='export PATH=/var/lib/rancher/rke2/bin:$PATH'
-      grep "$line" /root/.bashrc || echo $line >> /root/.bashrc
-      grep "$line" {{ local_home }}/.bashrc || echo $line >> {{ local_home }}/.bashrc
+      grep "$line" /root/.bashrc || echo $line >> /root/.bash_profile
+      grep "$line" {{ local_home }}/.bash_profile || echo $line >> {{ local_home }}/.bash_profile
       line='export KUBECONFIG=/etc/rancher/rke2/rke2.yaml'
-      grep "$line" /root/.bashrc || echo $line >> /root/.bashrc
-      grep "$line" {{ local_home }}/.bashrc || echo $line >> {{ local_home }}/.bashrc
+      grep "$line" /root/.bash_profile || echo $line >> /root/.bash_profile
+      grep "$line" {{ local_home }}/.bash_profile || echo $line >> {{ local_home }}/.bash_profile
       chmod 444 /etc/rancher/rke2/rke2.yaml
