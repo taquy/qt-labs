@@ -6,76 +6,12 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 import secrets
 import string
-from pathlib import Path
 import itertools
 
 loader = FileSystemLoader(searchpath="./")
 environment = Environment(loader=loader)
 
-VM_DIR = "/Users/qt/Virtual Machines.localized"
-
-# collect nodes and group nodes master prefix is `m`, worker prefix is `w`
 def create_inventories():
-  master_nodes = {
-    'primary': [], # first master node to be install with RKE
-    'secondary': [], # other master nodes to be install with RKE
-  }
-  worker_nodes = {
-    'compute': [],
-    'memory': [],
-    'disk': [],
-    'generic': [],
-  }
-  other_nodes = {
-    'load_balancers': []
-  }
-  api_servers = []
-  
-  host_file_records = []
-  for filepath in pathlib.Path(VM_DIR).glob('*vmwarevm'):
-    fn = filepath.absolute()
-    ipaddr = subprocess.run(['vmrun', 'getGuestIPAddress', fn], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
-    node_name = Path(fn).stem
-    node_prefix = node_name[0]
-    
-    # host file inventories
-    host_file_records.append({
-      'name': node_name, 
-      'ipaddr': ipaddr
-    })
-    
-    if node_prefix == 'm':
-      # create primary and secondary node group
-      if node_name == 'm1':
-        master_nodes['primary'].append(ipaddr)
-      else:
-        master_nodes['secondary'].append(ipaddr)
-      # configs for haproxy
-      api_servers.append({
-        'name': node_name,
-        'ip_addr': ipaddr
-      })
-    elif node_prefix == 'l':
-      other_nodes['load_balancers'].append(ipaddr)
-    elif node_prefix == 'w':
-      # also append to worker nodes (for later node labeling)
-      worker_prefix = node_name.split('-')[1][0]
-      if worker_prefix == 'm':
-        worker_nodes['memory'].append(ipaddr)
-      elif worker_prefix == 'c':
-        worker_nodes['compute'].append(ipaddr)
-      elif worker_prefix == 'd':
-        worker_nodes['disk'].append(ipaddr)
-      else:
-        worker_nodes['generic'].append(ipaddr)
-      
-    print(node_name, ' ', ipaddr)
-  
-  cluster_nodes = {
-    'masters': master_nodes,
-    'workers': worker_nodes,
-  }
-  
   inventories = {}
   # import cluster nodes to inventory
   for group_name in cluster_nodes:
@@ -110,8 +46,8 @@ def create_haproxy_config(api_servers):
       
 def get_cluster_token(prefix):
   cluster_token = ''
-  Path("configs/cluster_tokens").mkdir(parents=True, exist_ok=True)
-  token_file_name = f'configs/cluster_tokens/{prefix}'
+  Path("configs/rke2/tokens").mkdir(parents=True, exist_ok=True)
+  token_file_name = f'configs/rke2/tokens/{prefix}'
   if os.path.isfile(token_file_name):
     print(f'Token file "{token_file_name}" found in path, using it as cluster token')
     token_file = open(token_file_name, 'r')
@@ -129,8 +65,8 @@ def get_cluster_token(prefix):
 
 def write_rke2_config(fn, **kwargs):
   tpl = environment.get_template('templates/rke2_config.j2')
-  Path("configs/rke2_configs").mkdir(parents=True, exist_ok=True)
-  with open(f'configs/rke2_configs/{fn}', mode="w") as file:
+  Path("configs/rke2/configs").mkdir(parents=True, exist_ok=True)
+  with open(f'configs/rke2/configs/{fn}', mode="w") as file:
     file.write(tpl.render(kwargs) + '\n')
 
 def create_rke_config(cluster_nodes):

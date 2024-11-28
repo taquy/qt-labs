@@ -3,6 +3,14 @@
 openssl rand -base64 12 > cluster_token
 ```
 
+# get virtual ip address
+```sh
+# install nmap
+brew install nmap
+
+sudo python 1-collect-vmware-machines.py
+```
+
 # run setup script
 ```sh
 # install python packages

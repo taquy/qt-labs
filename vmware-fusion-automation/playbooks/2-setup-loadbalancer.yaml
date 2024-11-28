@@ -1,5 +1,4 @@
 - name: Setup load balancer
-  gather_facts: true
   become: true
   hosts: load_balancers
   tasks:
