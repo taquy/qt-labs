@@ -16,11 +16,12 @@ python create-inventory.py
 ```sh
 ansible-playbook -i inventories.yaml -K playbooks/1-pre-installation.yaml
 ansible-playbook -i inventories.yaml -K playbooks/2-setup-loadbalancer.yaml
-ansible-playbook -i inventories.yaml -K playbooks/3-setup-masters.yaml
-ansible-playbook -i inventories.yaml -K playbooks/4-setup-workers.yaml
+ansible-playbook -i inventories.yaml -K playbooks/3.1-upload-tokens.yaml
+ansible-playbook -i inventories.yaml -K playbooks/3.2-setup-masters.yaml
+ansible-playbook -i inventories.yaml -K playbooks/3.3-setup-workers.yaml
 
 ansible-playbook -i inventories.yaml -K \
-  --extra-vars "local_kubeconfig_dir=$HOME" playbooks/5-download-kubeconfig.yaml
+  --extra-vars "local_kubeconfig_dir=$HOME" playbooks/4-download-kubeconfig.yaml
   
-ansible-playbook -i inventories.yaml -K playbooks/6-uninstall-cluster.yaml
+ansible-playbook -i inventories.yaml -K playbooks/5-uninstall-cluster.yaml
 ```
