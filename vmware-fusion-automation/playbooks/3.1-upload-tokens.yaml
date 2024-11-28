@@ -1,0 +1,25 @@
+- name: Upload RKE configs and token
+  gather_facts: true
+  become: true
+  hosts: "*masters,*workers"
+  tasks:
+  - name: Create RKE config directory 
+    file:
+      path: /etc/rancher/rke2/
+      state: directory
+      mode: 0775
+      recurse: yes
+  - name: Upload RKE config file
+    copy:
+      src: ../configs/rke2_configs/{{ group_names[0] }}
+      dest: /etc/rancher/rke2/config.yaml
+  - name: Upload agent token
+    copy:
+      src: ../configs/cluster_tokens/agent
+      dest: /tmp/agent_token
+    when: '"workers" in group_names[0]'
+  - name: Upload shared token
+    copy:
+      src: ../configs/cluster_tokens/shared
+      dest: /tmp/shared_token
+    when: '"masters" in group_names[0]'
