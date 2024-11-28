@@ -1,23 +1,16 @@
-# generate cluster token (only need to run once per cluster)
-```sh
-openssl rand -base64 12 > cluster_token
-```
-
-# get virtual ip address
+# run setup script
 ```sh
 # install nmap
 brew install nmap
 
-sudo python 1-collect-vmware-machines.py
-```
-
-# run setup script
-```sh
 # install python packages
 pip install -r requirements.txt
 
-# install
-python create-inventory.py
+# get virtual ip address and vm machines descriptions
+sudo python 1-collect-vmware-machines.py
+
+# create inventories, variables and other configs
+python 2-create-ansible-inventory.py
 ```
 
 # execute playbooks

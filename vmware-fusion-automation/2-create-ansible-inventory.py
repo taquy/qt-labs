@@ -68,7 +68,7 @@ class AnsibleInventoryService:
 
   def create_keepalived_config(self):
     lb_ips = self.other_nodes['load_balancers']
-    password = self._generate_password(8) # maximum password length is 8
+    password = self._generate_password(f'configs/haproxy/keealived_password', pwd_length=8)
     tpl = environment.get_template('templates/keepalived.j2')
     default_priority = 101
     for lb in self.load_balancers:
@@ -91,28 +91,22 @@ class AnsibleInventoryService:
             priority=priority
           ) + '\n')
     
-  def _generate_password(self, pwd_length):
-    alphabet = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(alphabet) for i in range(pwd_length))  # for a 20-character password
-    
-  def _get_cluster_token(self, prefix):
-    cluster_token = ''
-    Path('configs/rke2/tokens').mkdir(parents=True, exist_ok=True)
-    token_fn = f'configs/rke2/tokens/{prefix}'
-    if os.path.isfile(token_fn):
-      print(f'Token file "{token_fn}" found in path, using it as cluster token')
-      token_file = open(token_fn, 'r')
-      cluster_token = token_file.read().strip()
+  def _generate_password(self, pwd_file, pwd_length):
+    if os.path.isfile(pwd_file):
+      print(f'"{pwd_file}" found in path, reusing it.')
+      token_file = open(pwd_file, 'r')
+      password = token_file.read().strip()
       token_file.close()
     else:
-      print(f'Token file "{token_fn}" does not found in path, generate random cluster token')
-      cluster_token = self._generate_password(20)
+      print(f'"{pwd_file}" does not found in path, generate new.')
+      alphabet = string.ascii_letters + string.digits
+      password = ''.join(secrets.choice(alphabet) for i in range(pwd_length))
       # save in to token file
-      token_file = open(token_fn, 'w')
-      token_file.write(cluster_token)
+      token_file = open(pwd_file, 'w')
+      token_file.write(password)
       token_file.close()
-    return cluster_token
-
+    return password
+    
   def _write_rke2_config(self, fn, **kwargs):
     tpl = environment.get_template('templates/rke2_config.j2')
     Path('configs/rke2/configs').mkdir(parents=True, exist_ok=True)
@@ -122,15 +116,18 @@ class AnsibleInventoryService:
   def create_rke_config(self):
     lb_ips = self.other_nodes ['load_balancers']
     backends = list(itertools.chain(*self.cluster_nodes['masters'].values())) + lb_ips + [self.lb_virtual_ip]
-    shared_token = self._get_cluster_token('shared')
-    agent_token = self._get_cluster_token('agent')
+    tokens_dir = 'configs/rke2/tokens'
+    Path(tokens_dir).mkdir(parents=True, exist_ok=True)
+    self._generate_password(f'{tokens_dir}/server', pwd_length=20)
+    self._generate_password(f'{tokens_dir}/agent', pwd_length=20)
     # create primary primary config
     self._write_rke2_config('primary_masters', backends=backends)
     # create secondary masters config
-    self._write_rke2_config('secondary_masters', backends=backends, lb_ip=self.lb_virtual_ip)
+    primary_master_ip = self.cluster_nodes['masters']['primary'][0]
+    self._write_rke2_config('secondary_masters', backends=backends, join_node_ip=primary_master_ip)
     # create workers config
     for worker_type in self.cluster_nodes['workers']:
-      self._write_rke2_config(f'{worker_type}_workers', worker_type=worker_type, lb_ip=self.lb_virtual_ip)
+      self._write_rke2_config(f'{worker_type}_workers', worker_type=worker_type, join_node_ip=self.lb_virtual_ip)
         
 service = AnsibleInventoryService()
 service.create_keepalived_config()
