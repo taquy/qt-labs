@@ -1,0 +1,34 @@
+global_defs {
+  router_id {{ current_host }}
+}
+vrrp_script chk_haproxy {
+  script "killall -0 haproxy"
+  interval 2
+  weight 2
+}
+vrrp_instance VI_1 {
+  interface {{ nic }}
+  {%- if is_master %}
+  state MASTER
+  {%- else %}
+  state BACKUP
+  {%- endif %}
+  priority {{ priority }}
+  virtual_router_id 50
+  authentication {
+    auth_type PASS
+    auth_pass {{ password }}
+  }
+  virtual_ipaddress {
+    {{ virtual_ip }} dev {{ nic }}
+  }
+  unicast_src_ip {{ current_ip }}
+  unicast_peer {
+    {%- for peer_ip in peer_ips %}
+    {{ peer_ip }}
+    {%- endfor %}
+  }
+  track_script {
+    chk_haproxy
+  }
+}
