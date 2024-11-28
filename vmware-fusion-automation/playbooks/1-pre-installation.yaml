@@ -1,0 +1,30 @@
+- name: Install basic tools
+  gather_facts: true
+  become: true
+  hosts: all
+  tasks:
+  - name: Update and upgrade apt packages
+    apt:
+      upgrade: yes
+      update_cache: yes
+      cache_valid_time: 86400 #One day
+  - name: Install a list of packages
+    apt:
+      pkg:
+      - net-tools
+      - python3-full
+      - python3-pip
+  - name: Install python package
+    pip:
+      name: hostsman
+      break_system_packages: true
+  - name: Include hosts variables
+    include_vars: ../configs/hosts_vars.yaml
+  - name: Update hosts file
+    loop: "{{ hosts }}"
+    shell: hostsman -i {{ item.name}}:{{ item.ipaddr}}
+  - name: Stop and disable firewalld.
+    service:
+      name: ufw
+      state: stopped
+      enabled: False

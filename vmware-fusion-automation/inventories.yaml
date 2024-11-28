@@ -16,10 +16,6 @@ generic_workers:
 load_balancers:
   hosts:
     192.168.19.142: ''
-masters_nodes:
-  children:
-    primary_masters: {}
-    secondary_masters: {}
 memory_workers:
   hosts:
     192.168.19.139: ''
@@ -32,9 +28,3 @@ secondary_masters:
   hosts:
     192.168.19.133: ''
     192.168.19.136: ''
-workers_nodes:
-  children:
-    compute_workers: {}
-    disk_workers: {}
-    generic_workers: {}
-    memory_workers: {}

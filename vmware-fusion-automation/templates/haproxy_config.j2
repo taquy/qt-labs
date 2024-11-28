@@ -11,8 +11,9 @@ frontend api_server_front
 
 backend api_server_back
   balance roundrobin
+  option tcp-check
   {%- for api_server in api_servers %}
-    server {{ api_server.name }} {{ api_server.ip_addr }}:6443 check port 6443
+    server {{ api_server.name }} {{ api_server.ip_addr }}:6443 check fall 3 rise 2
   {%- endfor %}
 
 frontend join_cluster_front
@@ -22,5 +23,5 @@ frontend join_cluster_front
 backend join_cluster_back
   balance roundrobin
   {%- for api_server in api_servers %}
-    server {{ api_server.name }} {{ api_server.ip_addr }}:9345 check port 9345
+    server {{ api_server.name }} {{ api_server.ip_addr }}:9345 check fall 3 rise 2
   {%- endfor %}
