@@ -19,7 +19,7 @@
       name: hostsman
       break_system_packages: true
   - name: Include hosts variables
-    include_vars: ../configs/hosts_vars.yaml
+    include_vars: ../configs/ansible_vars/hosts.yaml
   - name: Update hosts file
     loop: "{{ hosts }}"
     shell: hostsman -i {{ item.name}}:{{ item.ipaddr}}
@@ -28,3 +28,13 @@
       name: ufw
       state: stopped
       enabled: False
+  - name: Create RKE config directory 
+    file:
+      path: /etc/rancher/rke2/
+      state: directory
+      mode: 0775
+      recurse: yes
+  - name: Upload RKE config file
+    copy:
+      src: ../configs/rke2_config_{{ group_names[0] }}
+      dest: /etc/rancher/rke2/config.yaml

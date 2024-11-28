@@ -16,7 +16,7 @@
     when: p.stat.exists == False
   - name: Upload config file
     copy:
-      src: ../configs/haproxy_config
+      src: ../configs/haproxy/harpxoy.cfg
       dest: /etc/haproxy/haproxy.cfg
   - name: Validate HAProxy config
     shell: haproxy  -c -V -f /etc/haproxy/haproxy.cfg

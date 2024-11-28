@@ -1,8 +1,8 @@
 {%- if lb_ip %}
 server: https://{{ lb_ip }}:9345
 {%- endif %}
-token: {{ token }}
 {%- if backends %}
+token-file: /tmp/shared_token
 tls-san:
   {%- for backend in backends %}
   - {{ backend }}
@@ -12,6 +12,7 @@ node-taint:
 {%- endif %}
 
 {%- if worker_type %}
+agent-token-file: /tmp/agent_token
 node-label:
   - "node-role.kubernetes.io/worker="
   - "worker-type={{ worker_type }}"

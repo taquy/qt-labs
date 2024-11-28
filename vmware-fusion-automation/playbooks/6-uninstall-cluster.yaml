@@ -1,13 +1,13 @@
 - name: Uninstall RKE in workers
   gather_facts: true
-  hosts: workers_nodes
+  hosts: "*workers"
   become: true
   tasks:
   - name: Run uninstall script
     shell: /usr/local/bin/rke2-uninstall.sh
 - name: Uninstall RKE in masters
   gather_facts: true
-  hosts: masters_nodes
+  hosts: "*masters"
   become: true
   tasks:
   - name: Run uninstall script
