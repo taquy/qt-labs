@@ -2,6 +2,16 @@ import subprocess
 import random
 import yaml
 from pathlib import Path
+import os
+import paramiko
+
+# create configs dir
+Path('configs').mkdir(mode=0o770, parents=True, exist_ok=True)
+os.system('chmod 777 configs')
+os.system('chown -R qt configs')
+
+SSH_PRIVATE_KEY = '/Users/qt/.ssh/qt'
+SSH_USER = 'qt'
 
 class VmwareCollector:
   vm_dir = "/Users/qt/Virtual Machines.localized"
@@ -22,7 +32,9 @@ class VmwareCollector:
     'dns': [],
   }
   api_servers = []
-  virtual_ip = ''
+  load_balancers = []
+  lb_virtual_ip = ''
+  lb_primary_nic = ''
   hosts_file_records = []
 
   def _add_worker_node(self, node_name, ip_addr):
@@ -40,28 +52,55 @@ class VmwareCollector:
       # create primary and secondary node group
       node_type = 'primary' if node_name == 'm1' else 'secondary'
       self.master_nodes[node_type].append(ip_addr)
-      # configs for haproxy
-      self.api_servers.append({
-        'name': node_name,
-        'ip_addr': ip_addr
-      })
-      
-  def _set_virtual_ip(self, ip_addr):
+      self.api_servers.append({'name': node_name, 'ip_addr': ip_addr}) # configs for haproxy
+  
+  def _set_lb_primary_nic(self, ip_addr):
+    fp = 'configs/haproxy/lb_primary_nic'
+    if os.path.isfile(fp):
+      print(f'Virtual IP already found \"{fp}\"')
+      with open(fp, 'r') as stream:
+        self.lb_primary_nic = stream.read()
+      return
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(ip_addr, username=SSH_USER, key_filename=SSH_PRIVATE_KEY) # no passwd needed
+    stdin, stdout, stderr = client.exec_command("ip addr | awk '/state UP/ {print $2}' | sed 's/.$//'")
+    stdin.close()
+    stdout.channel.recv_exit_status()
+    self.lb_primary_nic = stdout.read().decode('utf-8').strip()
+    client.close()
+    print(f'Primary LB NIC found: {self.lb_primary_nic}')
+    with open(fp, 'w') as outfile:
+      outfile.write(self.lb_primary_nic)
+    os.chmod(fp, 0o777)
+  
+  def _set_lb_virtual_ip(self, ip_addr):
+    fp = 'configs/haproxy/lb_virtual_ip'
+    if os.path.isfile(fp):
+      print(f'Virtual IP already found \"{fp}\"')
+      with open(fp, 'r') as stream:
+        self.lb_virtual_ip = stream.read()
+      return
     print('Getting virtual IP address...')
     cmd = "sudo nmap -v -sn -n " + ip_addr + "/24 -oG - | awk '/Status: Down/{print $2}'"
     ps = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     available_ips = ps.communicate()[0].decode('utf-8').strip().split('\n')[1:-1]
-    self.virtual_ip = random.choice(available_ips)
-    print(f'Virtual IP address found: {self.virtual_ip}')
-
+    self.lb_virtual_ip = random.choice(available_ips)
+    print(f'Virtual IP address found: {self.lb_virtual_ip}')
+    with open(fp, 'w') as outfile:
+      outfile.write(self.lb_virtual_ip)
+    os.chmod(fp, 0o777)
+  
   def _collect_vmware_inventories(self):
     for filepath in Path(self.vm_dir).glob('*vmwarevm'):
       fn = filepath.absolute()
       ip_addr = subprocess.run(['vmrun', 'getGuestIPAddress', fn], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
       node_name = Path(fn).stem
       # get virtual ip address from available ip in network
-      if not self.virtual_ip:
-        self._set_virtual_ip(ip_addr)
+      if not self.lb_virtual_ip or not self.lb_primary_nic:
+        Path('configs/haproxy').mkdir(mode=0o770, parents=True, exist_ok=True)
+        self._set_lb_virtual_ip(ip_addr)
+        self._set_lb_primary_nic(ip_addr)
       # host file inventories
       self.hosts_file_records.append({
         'name': node_name, 
@@ -73,6 +112,7 @@ class VmwareCollector:
         self.other_nodes['dns'].append(ip_addr)
       elif 'lb' in node_name:
         self.other_nodes['load_balancers'].append(ip_addr)
+        self.load_balancers.append({'name': node_name, 'ip_addr': ip_addr}) # configs for keepalived
       else:
         node_prefix = node_name[0]
         if node_prefix == 'm':
@@ -91,11 +131,12 @@ class VmwareCollector:
       'other_nodes': self.other_nodes,
       'api_servers': self.api_servers,
       'hosts_file_records': self.hosts_file_records,
-      'virtual_ip': self.virtual_ip
+      'load_balancers': self.load_balancers,
     }
-    Path("configs").mkdir(parents=True, exist_ok=True)
-    with open('configs/vm_lists.yaml', 'w') as outfile:
+    # save vm lists
+    fp = 'configs/vm_lists.yaml'
+    with open(fp, 'w') as outfile:
       yaml.dump({'hosts': vm_lists}, outfile, default_flow_style=False)
-  
+      
 service = VmwareCollector()
 service.start()
