@@ -62,10 +62,13 @@ class AnsibleInventoryService:
       }, outfile, default_flow_style=False)
 
   def create_haproxy_config(self):
-    if not self.api_servers or len(self.api_servers) == 0:
-      print('No API servers available')
+    tpl = environment.get_template('templates/haproxy_config.j2')
+    with open('configs/haproxy/haproxy.cfg', mode="w", encoding="utf-8") as results:
+        results.write(tpl.render(api_servers=self.api_servers) + '\n')
+
+  def create_keepalived_config(self):
     lb_ips = self.other_nodes['load_balancers']
-    password = self._generate_password(10)
+    password = self._generate_password(8) # maximum password length is 8
     tpl = environment.get_template('templates/keepalived.j2')
     default_priority = 101
     for lb in self.load_balancers:
@@ -79,6 +82,7 @@ class AnsibleInventoryService:
       with open(f'configs/haproxy/keepalived_{current_host}.conf', mode='w', encoding='utf-8') as results:
           results.write(tpl.render(
             current_host=current_host,
+            current_ip=current_ip,
             nic=self.lb_primary_nic,
             is_master=is_master,
             password=password,
@@ -129,6 +133,7 @@ class AnsibleInventoryService:
       self._write_rke2_config(f'{worker_type}_workers', worker_type=worker_type, lb_ip=self.lb_virtual_ip)
         
 service = AnsibleInventoryService()
+service.create_keepalived_config()
 service.create_haproxy_config()
 service.create_inventories()
 service.create_rke_config()

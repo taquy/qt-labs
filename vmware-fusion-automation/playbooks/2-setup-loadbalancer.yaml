@@ -1,36 +1,50 @@
-- name: Setup load balancer
+- name: Setup HAProxy
   become: true
   hosts: load_balancers
+  gather_facts: true
   tasks:
-  - name: Get primary network adapter
-    set_fact: 
-      primary_nic: '{{ item }}'
-    loop: '{{ ansible_facts.interfaces }}'
-    when: 'item.startswith("ens")'
-  - name: Print primary network interface
-    debug:
-      msg: "{{ primary_nic }}"
-  # - name: Install HAProxy
-  #   apt:
-  #     pkg:
-  #     - haproxy
-  #     - keepalived
-  # - name: Check if file exists
-  #   stat:
-  #     path: /etc/haproxy/haproxy.cfg.bak
-  #   register: p
-  # - name: Copy file if not exists
-  #   command: mv /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak
-  #   when: p.stat.exists == False
-  # - name: Upload config file
-  #   copy:
-  #     src: ../configs/haproxy/haproxy.cfg
-  #     dest: /etc/haproxy/haproxy.cfg
-  # - name: Validate HAProxy config
-  #   shell: |
-  #     setsebool -P haproxy_connect_any=1
-  #     haproxy  -c -V -f /etc/haproxy/haproxy.cfg
-  # - name: Restart service
-  #   systemd_service:
-  #     state: restarted
-  #     name: haproxy
+  - name: Install HAProxy and Keepalived
+    apt:
+      pkg:
+      - haproxy
+      - keepalived
+  # haproxy setup
+  - name: Check if file exists
+    stat:
+      path: /etc/haproxy/haproxy.cfg.bak
+    register: p
+  - name: Copy file if not exists
+    command: mv /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak
+    when: p.stat.exists == False
+  - name: Upload haproxy config file
+    copy:
+      src: ../configs/haproxy/haproxy.cfg
+      dest: /etc/haproxy/haproxy.cfg
+      owner: haproxy
+  - name: Validate HAProxy config
+    shell: |
+      setsebool -P haproxy_connect_any=1
+      haproxy  -c -V -f /etc/haproxy/haproxy.cfg
+    register: ps
+  - debug: var=ps.stdout_lines
+  - name: Restart haproxy
+    systemd_service:
+      state: restarted
+      name: haproxy
+  # keepalive setup
+  - name: Upload keepalived config file
+    copy:
+      src: ../configs/haproxy/keepalived_{{ ansible_hostname }}.conf
+      dest: /etc/keepalived/keepalived.conf
+  - name: Validate Keepalived config
+    shell: keepalived -t
+    register: ps
+  - debug: var=ps.stdout_lines
+  - name: Restart keepalived
+    systemd_service:
+      state: restarted
+      name: keepalived
+  - name: Display if the node has the active load balancer IP
+    shell: ip a | grep {{ ansible_default_ipv4['interface'] }}
+    register: ps
+  - debug: var=ps.stdout_lines
