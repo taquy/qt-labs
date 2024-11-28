@@ -7,26 +7,8 @@
     reboot:
   - name: Get installation script
     shell: curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="agent" sh -
-  - name: Creates config directory 
-    file:
-      path: /etc/rancher/rke2/
-      state: directory
-      mode: 0775
-      recurse: yes
   - name: Enable the rke2-agent service
     systemd_service:
       enabled: true
-      name: rke2-agent.service
-- name: Start RKE in workers
-  gather_facts: true
-  become: true
-  hosts: '*workers'
-  tasks:
-  - name: Upload config file
-    copy:
-      src: ../configs/rke2_config_{{ group_names[0] }}
-      dest: /etc/rancher/rke2/config.yaml
-  - name: Start the rke2-agent service
-    systemd_service:
       state: started
       name: rke2-agent.service
