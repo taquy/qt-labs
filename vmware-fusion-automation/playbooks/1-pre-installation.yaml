@@ -1,6 +1,6 @@
 - name: Install basic tools
   become: true
-  hosts: dns
+  hosts: all
   tasks:
   - name: Update and upgrade apt packages
     apt:

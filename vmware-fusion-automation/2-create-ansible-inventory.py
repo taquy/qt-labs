@@ -31,7 +31,6 @@ class AnsibleInventoryService:
       self.other_nodes = hosts.get('other_nodes')
       self.api_servers = hosts.get('api_servers')
       self.load_balancers = hosts.get('load_balancers')
-      self._save_hosts_file_variables(hosts.get('hosts_file_records'))
     with open('configs/haproxy/lb_virtual_ip', mode="r") as file:
       self.lb_virtual_ip = file.read()
     with open('configs/haproxy/lb_primary_nic', mode="r") as file:
@@ -53,13 +52,6 @@ class AnsibleInventoryService:
         inventories[node_type]['hosts'][ip_address] = ''
     with open('inventories.yaml', 'w') as outfile:
       yaml.dump(inventories, outfile, default_flow_style=False)
-      
-  def _save_hosts_file_variables(self, hosts_file_records):
-    # save cluster nodes to file for later use: update host file
-    with open('configs/hosts.yaml', 'w') as outfile:
-      yaml.dump({
-        'hosts': hosts_file_records
-      }, outfile, default_flow_style=False)
 
   def create_haproxy_config(self):
     tpl = environment.get_template('templates/haproxy_config.j2')
@@ -115,19 +107,20 @@ class AnsibleInventoryService:
 
   def create_rke_config(self):
     lb_ips = self.other_nodes ['load_balancers']
-    backends = list(itertools.chain(*self.cluster_nodes['masters'].values())) + lb_ips + [self.lb_virtual_ip]
+    backends = list(itertools.chain(*self.cluster_nodes['masters'].values())) + lb_ips
+    backends += [self.lb_virtual_ip, '172.0.0.1', '127.0.1.1', 'localhost']
     tokens_dir = 'configs/rke2/tokens'
     Path(tokens_dir).mkdir(parents=True, exist_ok=True)
     self._generate_password(f'{tokens_dir}/server', pwd_length=20)
     self._generate_password(f'{tokens_dir}/agent', pwd_length=20)
     # create primary primary config
-    self._write_rke2_config('primary_masters', backends=backends)
+    self._write_rke2_config('primary_masters', is_master=True, backends=backends)
     # create secondary masters config
     primary_master_ip = self.cluster_nodes['masters']['primary'][0]
-    self._write_rke2_config('secondary_masters', backends=backends, join_node_ip=primary_master_ip)
+    self._write_rke2_config('secondary_masters', is_master=True, backends=backends, join_node_ip=primary_master_ip)
     # create workers config
     for worker_type in self.cluster_nodes['workers']:
-      self._write_rke2_config(f'{worker_type}_workers', worker_type=worker_type, join_node_ip=self.lb_virtual_ip)
+      self._write_rke2_config(f'{worker_type}_workers', worker_type=worker_type, backends=backends, join_node_ip=self.lb_virtual_ip)
         
 service = AnsibleInventoryService()
 service.create_keepalived_config()

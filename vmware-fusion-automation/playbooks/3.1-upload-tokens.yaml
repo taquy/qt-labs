@@ -15,9 +15,9 @@
   - name: Upload agent token to all nodes
     copy:
       src: ../configs/rke2/tokens/agent
-      dest: /etc/rancher/rke2/agent-token
+      dest: /etc/rancher/rke2/agent_token
   - name: Upload server token to master nodes
     copy:
       src: ../configs/rke2/tokens/server
-      dest: /etc/rancher/rke2/server-token
+      dest: /etc/rancher/rke2/server_token
     when: '"masters" in group_names[0]'
