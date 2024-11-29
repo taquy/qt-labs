@@ -31,11 +31,12 @@ class VmwareCollector:
     'load_balancers': [],
     'dns': [],
   }
-  api_servers = []
-  load_balancers = []
-  lb_virtual_ip = ''
-  lb_primary_nic = ''
-  hosts_file_records = []
+  api_servers = [] # for haproxy configs
+  load_balancers = [] # for haproxy configs
+  lb_virtual_ip = '' # for keepalived and rke2 configs
+  lb_primary_nic = '' # for keepalived configs 
+  hosts_file_records = [] # for updating /etc/hosts
+  worker_hosts = [] # for variables in worker playbooks
 
   def _add_worker_node(self, node_name, ip_addr):
     worker_types = {
@@ -47,6 +48,10 @@ class VmwareCollector:
     worker_prefix = node_name.split('-')[1][0]
     node_type = worker_types[worker_prefix]
     self.worker_nodes[node_type].append(ip_addr)
+    self.worker_hosts.append({
+      'name': node_name, 
+      'ip_addr': ip_addr
+    })
     
   def _add_master_node(self, node_name, ip_addr):
       # create primary and secondary node group
@@ -130,13 +135,17 @@ class VmwareCollector:
       'cluster_nodes': cluster_nodes,
       'other_nodes': self.other_nodes,
       'api_servers': self.api_servers,
-      'hosts_file_records': self.hosts_file_records,
       'load_balancers': self.load_balancers,
     }
     # save vm lists
     fp = 'configs/vm_lists.yaml'
     with open(fp, 'w') as outfile:
       yaml.dump({'hosts': vm_lists}, outfile, default_flow_style=False)
+    # save hosts variables
+    with open('configs/hosts.yaml', 'w') as outfile:
+      yaml.dump({'hosts': self.hosts_file_records}, outfile, default_flow_style=False)
+    with open('configs/worker_hosts.yaml', 'w') as outfile:
+      yaml.dump({'hosts': self.worker_hosts}, outfile, default_flow_style=False)
       
 service = VmwareCollector()
 service.start()

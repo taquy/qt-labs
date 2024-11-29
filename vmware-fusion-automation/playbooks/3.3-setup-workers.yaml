@@ -1,5 +1,31 @@
+- name: Remove existing nodes in clusters
+  hosts: 'primary_masters'
+  vars:
+    k8s_env: 
+      KUBECONFIG: /etc/rancher/rke2/rke2.yaml
+      PATH: /var/lib/rancher/rke2/bin:/usr/bin/:$PATH
+  tasks:
+  - name: Include hosts variables
+    include_vars: ../configs/worker_hosts.yaml
+  - name: Remove worker nodes for clean installation of workers
+    loop: "{{ hosts }}"
+    shell: kubectl delete node {{ item['name'] }}
+    environment: "{{ k8s_env }}"
+    ignore_errors: true
+    register: ps
+  - debug: var=ps.stdout_lines
+  - name: Remove not ready nodes
+    shell: kubectl delete node $(kubectl get nodes | grep NotReady | awk '{print $1;}')
+    environment: "{{ k8s_env }}"
+    ignore_errors: true
+    args:
+      executable: /bin/bash
+  - name: Get nodes
+    shell: kubectl get nodes
+    environment: "{{ k8s_env }}"
+    register: ps
+  - debug: var=ps.stdout_lines
 - name: Setup RKE in workers
-  gather_facts: true
   become: true
   hosts: '*workers'
   tasks:
@@ -8,6 +34,8 @@
   - name: Get installation script
     shell: curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="agent" sh -
   - name: Enable the rke2-agent service
+    async: 45
+    poll: 
     systemd_service:
       enabled: true
       state: started

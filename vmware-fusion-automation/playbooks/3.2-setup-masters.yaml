@@ -14,7 +14,7 @@
   hosts: 'primary_masters'
   become: true
   tasks:
-  - name: Enable the rke2-server service in primary masters
+  - name: Start the rke2-server service in primary masters
     systemd_service:
       state: started
       name: rke2-server.service
@@ -22,7 +22,7 @@
   hosts: 'secondary_masters'
   become: true
   tasks:
-  - name: Enable the rke2-server service in secondary masters
+  - name: Start the rke2-server service in secondary masters
     systemd_service:
       state: started
       name: rke2-server.service
