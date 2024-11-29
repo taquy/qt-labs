@@ -1,11 +1,12 @@
-# - name: Uninstall RKE in masters
-#   hosts: "*masters"
-#   become: true
-#   tasks:
-#   - name: Run uninstall script
-#     shell: /usr/local/bin/rke2-uninstall.sh
+
 - name: Uninstall RKE in workers
   hosts: "*workers"
+  become: true
+  tasks:
+  - name: Run uninstall script
+    shell: /usr/local/bin/rke2-uninstall.sh
+- name: Uninstall RKE in masters
+  hosts: "*masters"
   become: true
   tasks:
   - name: Run uninstall script
