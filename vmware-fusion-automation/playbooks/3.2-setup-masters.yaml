@@ -26,18 +26,3 @@
     systemd_service:
       state: started
       name: rke2-server.service
-- name: Prepare Kubeconfig
-  hosts: '*masters'
-  become: true
-  vars:
-    local_home: /home/qt
-  tasks:
-  - name: Export binary path
-    shell: |
-      line='export PATH=/var/lib/rancher/rke2/bin:$PATH'
-      grep "$line" /root/.bashrc || echo $line >> /root/.bash_profile
-      grep "$line" {{ local_home }}/.bash_profile || echo $line >> {{ local_home }}/.bash_profile
-      line='export KUBECONFIG=/etc/rancher/rke2/rke2.yaml'
-      grep "$line" /root/.bash_profile || echo $line >> /root/.bash_profile
-      grep "$line" {{ local_home }}/.bash_profile || echo $line >> {{ local_home }}/.bash_profile
-      chmod 444 /etc/rancher/rke2/rke2.yaml

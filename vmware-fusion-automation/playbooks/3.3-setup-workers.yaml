@@ -9,7 +9,9 @@
     include_vars: ../configs/worker_hosts.yaml
   - name: Remove worker nodes for clean installation of workers
     loop: "{{ hosts }}"
-    shell: kubectl delete node {{ item['name'] }}
+    shell: |
+      kubectl delete node {{ item['name'] }}
+      kubectl delete secret {{ item['name'] }}.node-password.rke2 -n kube-system
     environment: "{{ k8s_env }}"
     ignore_errors: true
     register: ps
@@ -18,8 +20,6 @@
     shell: kubectl delete node $(kubectl get nodes | grep NotReady | awk '{print $1;}')
     environment: "{{ k8s_env }}"
     ignore_errors: true
-    args:
-      executable: /bin/bash
   - name: Get nodes
     shell: kubectl get nodes
     environment: "{{ k8s_env }}"
@@ -34,8 +34,6 @@
   - name: Get installation script
     shell: curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE="agent" sh -
   - name: Enable the rke2-agent service
-    async: 45
-    poll: 
     systemd_service:
       enabled: true
       state: started
