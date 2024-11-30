@@ -36,3 +36,5 @@ terraform.rc
 .DS_Store
 
 vmware-fusion-automation/configs/
+
+*.tgz

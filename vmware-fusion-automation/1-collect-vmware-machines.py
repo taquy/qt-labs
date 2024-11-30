@@ -10,8 +10,9 @@ Path('configs').mkdir(mode=0o770, parents=True, exist_ok=True)
 os.system('chmod 777 configs')
 os.system('chown -R qt configs')
 
-SSH_PRIVATE_KEY = '/Users/qt/.ssh/qt'
-SSH_USER = 'qt'
+
+with open("example.yaml") as stream:
+  global_config = yaml.safe_load(stream)
 
 class VmwareCollector:
   vm_dir = "/Users/qt/Virtual Machines.localized"
@@ -21,12 +22,7 @@ class VmwareCollector:
     'primary': [], # first master node to be install with RKE
     'secondary': [], # other master nodes to be install with RKE
   }
-  worker_nodes = {
-    'compute': [],
-    'memory': [],
-    'disk': [],
-    'generic': [],
-  }
+  worker_nodes = {}
   other_nodes = {
     'load_balancers': [],
     'dns': [],
@@ -39,14 +35,11 @@ class VmwareCollector:
   worker_hosts = [] # for variables in worker playbooks
 
   def _add_worker_node(self, node_name, ip_addr):
-    worker_types = {
-      'm': 'memory',
-      'c': 'compute',
-      'd': 'disk',
-      'g': 'generic',
-    }
-    worker_prefix = node_name.split('-')[1][0]
-    node_type = worker_types[worker_prefix]
+    worker_types = global_config.get('worker_types')
+    node_type = 'generic'
+    if len(node_name.split('-')) > 1:
+      worker_prefix = node_name.split('-')[1][0]
+      node_type = worker_types[worker_prefix]
     self.worker_nodes[node_type].append(ip_addr)
     self.worker_hosts.append({
       'name': node_name, 
@@ -68,7 +61,7 @@ class VmwareCollector:
       return
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(ip_addr, username=SSH_USER, key_filename=SSH_PRIVATE_KEY) # no passwd needed
+    client.connect(ip_addr, username=global_config.get('ssh_user'), key_filename=global_config.get('ssh_key')) # no passwd needed
     stdin, stdout, stderr = client.exec_command("ip addr | awk '/state UP/ {print $2}' | sed 's/.$//'")
     stdin.close()
     stdout.channel.recv_exit_status()
@@ -112,12 +105,13 @@ class VmwareCollector:
         'ip_addr': ip_addr
       })
       print(node_name, ip_addr)
+      other_nodes = global_config.get('other_nodes')
       # categorize node lists and get available virtual ip
-      if 'dns' in node_name:
-        self.other_nodes['dns'].append(ip_addr)
-      elif 'lb' in node_name:
-        self.other_nodes['load_balancers'].append(ip_addr)
-        self.load_balancers.append({'name': node_name, 'ip_addr': ip_addr}) # configs for keepalived
+      if node_name in other_nodes:
+        node_key = other_nodes[node_name]
+        self.other_nodes[node_key].append(ip_addr)
+        if 'lb' in node_name:
+          self.load_balancers.append({'name': node_name, 'ip_addr': ip_addr}) # configs for keepalived
       else:
         node_prefix = node_name[0]
         if node_prefix == 'm':

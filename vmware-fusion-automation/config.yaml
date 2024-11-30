@@ -1,0 +1,10 @@
+worker_types:
+  m: memory
+  c: compute
+  d: disk
+  g: generic
+ssh_key: '/Users/qt/.ssh/qt'
+ssh_user: 'qt'
+other_nodes:
+  dns: dns
+  lb: load_balancers
