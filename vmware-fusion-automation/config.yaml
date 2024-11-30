@@ -7,4 +7,7 @@ ssh_key: '/Users/qt/.ssh/qt'
 ssh_user: 'qt'
 other_nodes:
   dns: dns
-  lb: load_balancers
+  db: databases
+  vpn: vpn
+  ldap: ldap
+vm_dir: /Users/qt/Virtual Machines.localized
