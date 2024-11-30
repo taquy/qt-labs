@@ -31,6 +31,7 @@ class AnsibleInventoryService:
       self.other_nodes = hosts.get('other_nodes')
       self.api_servers = hosts.get('api_servers')
       self.load_balancers = hosts.get('load_balancers')
+      self.lb_ips = [lb['ip_addr'] for lb in self.load_balancers]
     with open('configs/haproxy/lb_virtual_ip', mode="r") as file:
       self.lb_virtual_ip = file.read()
     with open('configs/haproxy/lb_primary_nic', mode="r") as file:
@@ -38,14 +39,16 @@ class AnsibleInventoryService:
 
   def create_inventories(self):
     inventories = {}
-    # import cluster nodes to inventory
+    # add cluster nodes
     for group_name in self.cluster_nodes:
       for host_type in self.cluster_nodes[group_name]:
         ansible_key = host_type + '_' + group_name
         inventories[ansible_key] = {'hosts': {}}
         for ip_address in self.cluster_nodes[group_name][host_type]:
           inventories[ansible_key]['hosts'][ip_address] = ''
-    # import other nodes
+    # add load balancer nodes  
+    inventories['load_balancers'] = {'hosts': self.lb_ips}
+    # add other nodes
     for node_type in self.other_nodes:
       inventories[node_type] = {'hosts': {}}
       for ip_address in self.other_nodes[node_type]:
@@ -59,7 +62,6 @@ class AnsibleInventoryService:
         results.write(tpl.render(api_servers=self.api_servers) + '\n')
 
   def create_keepalived_config(self):
-    lb_ips = self.other_nodes['load_balancers']
     password = self._generate_password(f'configs/haproxy/keealived_password', pwd_length=8)
     tpl = environment.get_template('templates/keepalived.j2')
     default_priority = 101
@@ -69,7 +71,7 @@ class AnsibleInventoryService:
       priority = default_priority - host_index
       is_master = host_index == 1
       current_ip = lb.get('ip_addr')
-      peer_ips = lb_ips.copy()
+      peer_ips = self.lb_ips.copy()
       peer_ips.remove(current_ip)
       with open(f'configs/haproxy/keepalived_{current_host}.conf', mode='w', encoding='utf-8') as results:
           results.write(tpl.render(
@@ -106,8 +108,7 @@ class AnsibleInventoryService:
       file.write(tpl.render(kwargs) + '\n')
 
   def create_rke_config(self):
-    lb_ips = self.other_nodes ['load_balancers']
-    backends = list(itertools.chain(*self.cluster_nodes['masters'].values())) + lb_ips
+    backends = list(itertools.chain(*self.cluster_nodes['masters'].values())) + self.lb_ips
     backends += [self.lb_virtual_ip, '172.0.0.1', '127.0.1.1', 'localhost']
     tokens_dir = 'configs/rke2/tokens'
     Path(tokens_dir).mkdir(parents=True, exist_ok=True)

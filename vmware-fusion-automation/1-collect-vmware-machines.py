@@ -11,11 +11,10 @@ os.system('chmod 777 configs')
 os.system('chown -R qt configs')
 
 
-with open("example.yaml") as stream:
+with open("config.yaml") as stream:
   global_config = yaml.safe_load(stream)
 
 class VmwareCollector:
-  vm_dir = "/Users/qt/Virtual Machines.localized"
 
   # collect nodes and group nodes master prefix is `m`, worker prefix is `w`
   master_nodes = {
@@ -23,10 +22,7 @@ class VmwareCollector:
     'secondary': [], # other master nodes to be install with RKE
   }
   worker_nodes = {}
-  other_nodes = {
-    'load_balancers': [],
-    'dns': [],
-  }
+  other_nodes = {}
   api_servers = [] # for haproxy configs
   load_balancers = [] # for haproxy configs
   lb_virtual_ip = '' # for keepalived and rke2 configs
@@ -40,6 +36,8 @@ class VmwareCollector:
     if len(node_name.split('-')) > 1:
       worker_prefix = node_name.split('-')[1][0]
       node_type = worker_types[worker_prefix]
+    if node_type not in self.worker_nodes:
+      self.worker_nodes[node_type] = []
     self.worker_nodes[node_type].append(ip_addr)
     self.worker_hosts.append({
       'name': node_name, 
@@ -88,9 +86,22 @@ class VmwareCollector:
     with open(fp, 'w') as outfile:
       outfile.write(self.lb_virtual_ip)
     os.chmod(fp, 0o777)
+    
+  def _add_other_nodes(self, node_name, ip_addr):
+    other_nodes = global_config.get('other_nodes')
+    for node_key in other_nodes:
+      if node_key not in node_name:
+        continue
+      ansible_group = other_nodes[node_key]
+      if ansible_group not in self.other_nodes:
+        self.other_nodes[ansible_group] = []
+      self.other_nodes[ansible_group].append(ip_addr)
+      return True
+    return False
   
   def _collect_vmware_inventories(self):
-    for filepath in Path(self.vm_dir).glob('*vmwarevm'):
+    vm_dir = global_config.get('vm_dir')
+    for filepath in Path(vm_dir).glob('*vmwarevm'):
       fn = filepath.absolute()
       ip_addr = subprocess.run(['vmrun', 'getGuestIPAddress', fn], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
       node_name = Path(fn).stem
@@ -100,23 +111,19 @@ class VmwareCollector:
         self._set_lb_virtual_ip(ip_addr)
         self._set_lb_primary_nic(ip_addr)
       # host file inventories
-      self.hosts_file_records.append({
-        'name': node_name, 
-        'ip_addr': ip_addr
-      })
-      print(node_name, ip_addr)
-      other_nodes = global_config.get('other_nodes')
+      host_pair = {'name': node_name, 'ip_addr': ip_addr}
+      self.hosts_file_records.append(host_pair)
       # categorize node lists and get available virtual ip
-      if node_name in other_nodes:
-        node_key = other_nodes[node_name]
-        self.other_nodes[node_key].append(ip_addr)
-        if 'lb' in node_name:
-          self.load_balancers.append({'name': node_name, 'ip_addr': ip_addr}) # configs for keepalived
-      else:
+      if self._add_other_nodes(node_name, ip_addr):
+        continue
+      if 'lb' in node_name:
+        # configs for keepalived
+        self.load_balancers.append(host_pair) 
+      else:    
         node_prefix = node_name[0]
         if node_prefix == 'm':
           self._add_master_node(node_name, ip_addr)
-        elif node_prefix == 'w':
+        else:
           self._add_worker_node(node_name, ip_addr)
     
   def start(self):
