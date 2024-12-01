@@ -87,44 +87,57 @@ class VmwareCollector:
       outfile.write(self.lb_virtual_ip)
     os.chmod(fp, 0o777)
     
-  def _add_other_nodes(self, node_name, ip_addr):
+  def _add_other_nodes(self, host_pair):
     other_nodes = global_config.get('other_nodes')
     for node_key in other_nodes:
-      if node_key not in node_name:
+      if node_key not in host_pair.get('name'):
         continue
       ansible_group = other_nodes[node_key]
       if ansible_group not in self.other_nodes:
         self.other_nodes[ansible_group] = []
-      self.other_nodes[ansible_group].append(ip_addr)
+      self.other_nodes[ansible_group].append(host_pair['ip_addr'])
       return True
     return False
   
+  def _add_load_balancers(self, host_pair)
+    ip_addr = host_pair.get('ip_addr')
+    # get virtual ip address from available ip in network
+    if not self.lb_virtual_ip or not self.lb_primary_nic:
+      Path('configs/haproxy').mkdir(mode=0o770, parents=True, exist_ok=True)
+      self._set_lb_virtual_ip(ip_addr)
+      self._set_lb_primary_nic(ip_addr)
+    # configs for keepalived
+    self.load_balancers.append(host_pair)
+    
+  def _add_cluster_nodes(self, host_pair):
+    node_name = host_pair.get('name')
+    ip_addr = host_pair.get('ip_addr')
+    node_prefix = node_name[0]
+    if node_prefix == 'm':
+      self._add_master_node(node_name, ip_addr)
+      return
+    self._add_worker_node(node_name, ip_addr)
+
   def _collect_vmware_inventories(self):
     vm_dir = global_config.get('vm_dir')
     for filepath in Path(vm_dir).glob('*vmwarevm'):
       fn = filepath.absolute()
       ip_addr = subprocess.run(['vmrun', 'getGuestIPAddress', fn], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
       node_name = Path(fn).stem
-      # get virtual ip address from available ip in network
-      if not self.lb_virtual_ip or not self.lb_primary_nic:
-        Path('configs/haproxy').mkdir(mode=0o770, parents=True, exist_ok=True)
-        self._set_lb_virtual_ip(ip_addr)
-        self._set_lb_primary_nic(ip_addr)
       # host file inventories
       host_pair = {'name': node_name, 'ip_addr': ip_addr}
       self.hosts_file_records.append(host_pair)
       # categorize node lists and get available virtual ip
-      if self._add_other_nodes(node_name, ip_addr):
+      if self._add_other_nodes(host_pair):
         continue
       if 'lb' in node_name:
-        # configs for keepalived
-        self.load_balancers.append(host_pair) 
-      else:    
-        node_prefix = node_name[0]
-        if node_prefix == 'm':
-          self._add_master_node(node_name, ip_addr)
-        else:
-          self._add_worker_node(node_name, ip_addr)
+        self._add_load_balancers(host_pair)
+      else:
+        self._add_cluster_nodes(host_pair)
+        
+    # add virtual ip
+    host_pair = {'name': 'vip', 'ip_addr': self.lb_virtual_ip}
+    self.hosts_file_records.append(host_pair)
     
   def start(self):
     self._collect_vmware_inventories()
@@ -143,7 +156,13 @@ class VmwareCollector:
     with open(fp, 'w') as outfile:
       yaml.dump({'hosts': vm_lists}, outfile, default_flow_style=False)
     # save hosts variables
-    with open('configs/hosts.yaml', 'w') as outfile:
+    Path('configs/vars').mkdir(mode=0o770, parents=True, exist_ok=True)
+    ansible_vars = global_config.get('ansible_vars')
+    for var_name in ansible_vars:
+      var_content = ansible_vars[var_name]
+      with open(f'configs/vars/{var_name}.yaml', 'w') as outfile:
+        yaml.dump({var_name: var_content}, outfile, default_flow_style=False)
+    with open('configs/vars/hosts.yaml', 'w') as outfile:
       yaml.dump({'hosts': self.hosts_file_records}, outfile, default_flow_style=False)
     with open('configs/worker_hosts.yaml', 'w') as outfile:
       yaml.dump({'hosts': self.worker_hosts}, outfile, default_flow_style=False)

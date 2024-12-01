@@ -1,13 +1,23 @@
+# worker types for grouping nodes into ansible inventory and node labeling
 worker_types:
   m: memory
   c: compute
   d: disk
   g: generic
+# ssh key to use for fetching primary network interface
 ssh_key: '/Users/qt/.ssh/qt'
 ssh_user: 'qt'
+# other nodes for mapping non-cluster nodes and non-load balancers to ansible inventory
 other_nodes:
   dns: dns
   db: databases
   vpn: vpn
   ldap: ldap
+# directory that contains vmware files to fetch data from VM (eg: ip addresses, hostname)
 vm_dir: /Users/qt/Virtual Machines.localized
+# ansible variables to be share among playbooks
+ansible_vars:
+  pihole:
+    enabled: true
+    web_password: root1234
+    default_domain: q.t 
