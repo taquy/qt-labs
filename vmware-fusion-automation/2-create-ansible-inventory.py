@@ -47,7 +47,7 @@ class AnsibleInventoryService:
         for ip_address in self.cluster_nodes[group_name][host_type]:
           inventories[ansible_key]['hosts'][ip_address] = ''
     # add load balancer nodes  
-    inventories['load_balancers'] = {'hosts': self.lb_ips}
+    inventories['load_balancers'] = {'hosts': dict.fromkeys(self.lb_ips, '')}
     # add other nodes
     for node_type in self.other_nodes:
       inventories[node_type] = {'hosts': {}}

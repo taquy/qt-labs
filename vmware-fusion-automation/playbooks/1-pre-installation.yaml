@@ -23,7 +23,7 @@
       state: stopped
       enabled: False
   - name: Include hosts variables
-    include_vars: ../configs/hosts.yaml
+    include_vars: ../configs/vars/hosts.yaml
   - name: Update hosts file
     loop: "{{ hosts }}"
     shell: hostsman -i {{ item.name }}:{{ item.ip_addr }}

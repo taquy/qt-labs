@@ -1,0 +1,56 @@
+- name: Setup Pihole as DNS server
+  become: true
+  hosts: dns
+  tasks:
+  - name: Include pihole variables
+    include_vars: ../configs/vars/pihole.yaml
+  - name: Include hosts variables
+    include_vars: ../configs/vars/hosts.yaml
+  - name: Prepare Pihole config
+    shell: |
+      password=$(printf $(echo -n "{{ pihole['web_password'] }}" | sha256sum | awk '{printf $1}'| sha256sum))
+      mkdir -p /etc/pihole
+      bash -c "cat << EOF > /etc/pihole/setupVars.conf
+      PIHOLE_INTERFACE={{ hostvars[inventory_hostname].ansible_default_ipv4.interface }}
+      QUERY_LOGGING=true
+      INSTALL_WEB_SERVER=true
+      INSTALL_WEB_INTERFACE=true
+      LIGHTTPD_ENABLED=true
+      CACHE_SIZE=10000
+      DNS_FQDN_REQUIRED=true
+      DNS_BOGUS_PRIV=true
+      DNSMASQ_LISTENING=all
+      WEBPASSWORD=$(printf ${password})
+      BLOCKING_ENABLED=true
+      DNSSEC=false
+      REV_SERVER=false
+      PIHOLE_DNS_1=8.8.8.8
+      PIHOLE_DNS_2=8.8.4.4
+      PIHOLE_DNS_3=2001:4860:4860:0:0:0:0:8888
+      PIHOLE_DNS_4=2001:4860:4860:0:0:0:0:8844
+      PIHOLE_DNS_5=127.0.0.1#5053
+      PIHOLE_DNS_6=::1#5053
+      EOF
+      "
+    when: pihole.enabled
+  - name: Install Pihole
+    shell: bash -c "$(curl -sSL https://install.pi-hole.net)" -- --unattended
+    when: pihole.enabled
+    register: ps
+  - debug: var=ps.stdout_lines
+  - name: Web admin address
+    debug:
+      msg: "http://{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}/admin"
+    when: pihole.enabled
+  - name: Uninstall Pihole
+    shell: rm /etc/pihole; echo y | pihole uninstall
+    when: not pihole.enabled
+    register: ps
+  - debug: var=ps.stdout_lines
+    when: not pihole.enabled
+  - name: Add hosts to /etc/pihole/custom.list
+    loop: "{{ hosts }}"
+    shell: |
+      record="{{ item['ip_addr'] }} {{ item['name'] }}.{{ pihole.default_domain }}"
+      target_dir=/etc/pihole/custom.list
+      grep -qxF "$record" $target_dir || echo $record >> $target_dir
