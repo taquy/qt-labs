@@ -2,17 +2,21 @@
   become: true
   hosts: all
   tasks:
+  - include_vars: ../configs/vars/hosts.yaml
   - name: Update and upgrade apt packages
     apt:
       upgrade: yes
       update_cache: yes
       cache_valid_time: 86400 #One day
+      autoremove: true
   - name: Install a list of packages
     apt:
       pkg:
       - net-tools
       - python3-full
       - python3-pip
+      - iproute2
+      - iputils-ping
   - name: Install python package
     pip:
       name: hostsman
@@ -22,9 +26,8 @@
       name: ufw
       state: stopped
       enabled: False
-  - name: Include hosts variables
-    include_vars: ../configs/vars/hosts.yaml
   - name: Update hosts file
     loop: "{{ hosts }}"
-    shell: hostsman -i {{ item.name }}:{{ item.ip_addr }}
-
+    shell: |
+      hostsman -r {{ item.name }}
+      hostsman -i {{ item.name }}:{{ item.ip_addr }}

@@ -1,0 +1,23 @@
+
+- name: Remove Pihole
+  become: true
+  hosts: dns
+  tasks:
+  - include_vars: ../../configs/vars/pihole.yaml
+  - name: Uninstall Pihole
+    shell: |
+      rm /etc/pihole 2> /dev/null
+      echo "y
+      n" | pihole uninstall
+    ignore_errors: true
+    register: ps
+  - debug: var=ps.stdout_lines
+  - name: Remove nameserver in resolve.conf
+    loop: "{{ groups.dns }}"
+    shell: rm /etc/resolv.conf; cp /etc/resolv.conf.bak /etc/resolv.conf
+
+- name: Reload resolv.conf
+  become: true
+  hosts: all
+  tasks:
+  - shell: systemctl restart systemd-resolved

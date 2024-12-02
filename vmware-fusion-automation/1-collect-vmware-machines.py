@@ -99,7 +99,7 @@ class VmwareCollector:
       return True
     return False
   
-  def _add_load_balancers(self, host_pair)
+  def _add_load_balancers(self, host_pair):
     ip_addr = host_pair.get('ip_addr')
     # get virtual ip address from available ip in network
     if not self.lb_virtual_ip or not self.lb_primary_nic:
@@ -123,9 +123,12 @@ class VmwareCollector:
     for filepath in Path(vm_dir).glob('*vmwarevm'):
       fn = filepath.absolute()
       ip_addr = subprocess.run(['vmrun', 'getGuestIPAddress', fn], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
+      if ip_addr == 'unknown':
+        continue
       node_name = Path(fn).stem
       # host file inventories
       host_pair = {'name': node_name, 'ip_addr': ip_addr}
+      print(host_pair, fn)
       self.hosts_file_records.append(host_pair)
       # categorize node lists and get available virtual ip
       if self._add_other_nodes(host_pair):
