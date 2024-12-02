@@ -1,0 +1,73 @@
+
+- name: Setup Pihole as DNS server
+  become: true
+  hosts: dns
+  tasks:
+  - include_vars: ../../configs/vars/pihole.yaml
+  - include_vars: ../../configs/vars/hosts.yaml
+  - name: Prepare Pihole config
+    shell: |
+      password=$(printf $(echo -n "{{ pihole['web_password'] }}" | sha256sum | awk '{printf $1}'| sha256sum))
+      mkdir -p /etc/pihole
+      bash -c "cat << EOF > /etc/pihole/setupVars.conf
+      PIHOLE_INTERFACE={{ hostvars[inventory_hostname].ansible_default_ipv4.interface }}
+      QUERY_LOGGING=true
+      INSTALL_WEB_SERVER=true
+      INSTALL_WEB_INTERFACE=true
+      LIGHTTPD_ENABLED=true
+      CACHE_SIZE=10000
+      DNS_FQDN_REQUIRED=true
+      DNS_BOGUS_PRIV=true
+      DNSMASQ_LISTENING=all
+      WEBPASSWORD=$(printf ${password})
+      BLOCKING_ENABLED=true
+      DNSSEC=false
+      REV_SERVER=false
+      PIHOLE_DNS_1=8.8.8.8
+      PIHOLE_DNS_2=8.8.4.4
+      PIHOLE_DNS_3=2001:4860:4860:0:0:0:0:8888
+      PIHOLE_DNS_4=2001:4860:4860:0:0:0:0:8844
+      PIHOLE_DNS_5=127.0.0.1#5053
+      PIHOLE_DNS_6=::1#5053
+      EOF
+      "
+  - name: Install Pihole
+    shell: bash -c "$(curl -sSL https://install.pi-hole.net)" -- --unattended
+    register: ps
+  - debug: var=ps.stdout_lines
+  - name: Web admin address
+    debug:
+      msg: "http://{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}/admin"
+  - name: Add hosts to /etc/pihole/custom.list
+    loop: "{{ hosts }}"
+    shell: |
+      record="{{ item['ip_addr'] }} {{ item['name'] }}.{{ pihole.default_domain }}"
+      target_dir=/etc/pihole/custom.list
+      grep -qxF "$record" $target_dir || echo $record >> $target_dir
+
+- name: Use Pihole as default DNS server for all nodes
+  become: true
+  hosts: all
+  vars:
+    resolv_conf: /etc/resolvconf/resolv.conf.d/head
+  tasks:
+  - debug:
+      msg: "{{ resolv_conf }}"
+  - include_vars: ../../configs/vars/pihole.yaml
+  - name: Clean up previous resolv.conf
+    shell: rm {{ resolv_conf }}
+  - name: Add Pihole nameserver in resolve.conf
+    loop: "{{ groups.dns }}"
+    shell: |
+      mkdir -p /etc/resolvconf/resolv.conf.d/
+      record="nameserver {{ item }}"
+      target_dir={{ resolv_conf }}
+      grep -qxF "$record" $target_dir || echo $record >> $target_dir
+      [ ! -f "/etc/resolv.conf.bak" ] && mv /etc/resolv.conf /etc/resolv.conf.bak
+      ln -sf $target_dir /etc/resolv.conf
+  - name: Add default DNS nameserver in resolve.conf
+    loop: "{{ pihole.default_ns }}"  
+    shell: |
+      record="nameserver {{ item }}"
+      target_dir={{ resolv_conf }}
+      grep -qxF "$record" $target_dir || echo $record >> $target_dir

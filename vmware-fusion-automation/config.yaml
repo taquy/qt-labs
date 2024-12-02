@@ -21,3 +21,7 @@ ansible_vars:
     enabled: true
     web_password: root1234
     default_domain: q.t 
+    default_ns:
+      - 8.8.8.8 # google
+      - 8.8.4.4 # google
+      - 1.1.1.1 # cloudfare
