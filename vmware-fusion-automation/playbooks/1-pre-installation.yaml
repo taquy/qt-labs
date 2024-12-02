@@ -17,6 +17,7 @@
       - python3-pip
       - iproute2
       - iputils-ping
+      - yamllint
   - name: Install python package
     pip:
       name: hostsman
