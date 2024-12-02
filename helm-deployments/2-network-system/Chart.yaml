@@ -5,8 +5,15 @@ type: application
 version: 0.1.0
 appVersion: "1.16.0"
 dependencies:
+# load balancer
 - name: metallb
   alias: metallb
   condition: metallb.enabled
   repository: https://metallb.github.io/metallb
   version: 0.14.8
+# ingress controller
+- name: traefik
+  alias: traefik
+  condition: traefik.enabled
+  repository: https://traefik.github.io/charts
+  version: 4.1.0
