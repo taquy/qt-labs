@@ -10,7 +10,7 @@ nfs:
   imagePullSecrets: []
 
   nfs:
-    server: nfs.q.t
+    server: nfs # hostname defined in /etc/hosts
     path: /nfs-storage/rke2
     mountOptions:
     volumeName: nfs-subdir-external-provisioner-root

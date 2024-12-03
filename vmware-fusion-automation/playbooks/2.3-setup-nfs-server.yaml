@@ -11,16 +11,15 @@
       enabled: true
       name: nfs-kernel-server.service
   - name: Create NFS storage directory
-    ansible.builtin.file:
+    file:
       path: /nfs-storage/rke2
       state: directory
-      owner: qt
-      group: root
-      mode: 0775
       recurse: yes
+  - shell: |
+    chown nobody:nogroup /nfs-storage/rke2
+    chmod -R 777 /nfs-storage/rke2
   - name: Update /etc/exports
     lineinfile:
       dest: /etc/exports
-      line: /nfs-storage/rke2 *(rw,async,no_subtree_check,no_root_squash)
+      line: /nfs-storage/rke2 *(rw,sync,no_root_squash,insecure,no_subtree_check)
   - shell: exportfs -a
-
