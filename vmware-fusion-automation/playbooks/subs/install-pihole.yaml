@@ -55,7 +55,8 @@
       msg: "{{ resolv_conf }}"
   - include_vars: ../../configs/vars/pihole.yaml
   - name: Clean up previous resolv.conf
-    shell: rm {{ resolv_conf }}
+    shell: rm {{ resolv_conf }} || true
+    ignore_errors: true
   - name: Add Pihole nameserver in resolve.conf
     loop: "{{ groups.dns }}"
     shell: |

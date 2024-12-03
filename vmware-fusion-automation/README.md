@@ -40,7 +40,6 @@ ansible-playbook -i inventories.yaml -K playbooks/5-uninstall-cluster.yaml
 ```
 
 # clean up lck files
-
 ```sh
-for f in $(find "/Users/qt/Virtual Machines.localized/" -name '*.lck'); do rm $f; done
+for f in $(find . -mindepth 1 -maxdepth 1 -type d); do rm -r  "$f/*.lck" || true; done
 ```

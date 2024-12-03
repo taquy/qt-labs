@@ -1,9 +1,0 @@
-dependencies:
-- name: metallb
-  repository: https://metallb.github.io/metallb
-  version: 0.14.8
-- name: traefik
-  repository: https://traefik.github.io/charts
-  version: 33.0.0
-digest: sha256:258694c6575d8eea44ca8d88dbc7788b5071ed88ea1ad8fada08cdfc6ec18cf0
-generated: "2024-12-02T14:43:03.685026-05:00"
