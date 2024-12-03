@@ -196,7 +196,7 @@ traefik:
       # -- Specify the allowed entrypoints to use for the dashboard ingress route, (e.g. traefik, web, websecure).
       # By default, it's using traefik entrypoint, which is not exposed.
       # /!\ Do not expose your dashboard without any protection over the internet /!\
-      entryPoints: ["traefik"]
+      entryPoints: ["web"]
       # -- Additional ingressRoute middlewares (e.g. for authentication)
       middlewares: []
       # -- TLS options (e.g. secret containing certificate)
@@ -260,9 +260,9 @@ traefik:
       # -- Load Kubernetes IngressRoute provider
       enabled: true
       # -- Allows IngressRoute to reference resources in namespace other than theirs
-      allowCrossNamespace: false
+      allowCrossNamespace: true
       # -- Allows to reference ExternalName services in IngressRoute
-      allowExternalNameServices: false
+      allowExternalNameServices: true
       # -- Allows to return 503 when there is no endpoints available
       allowEmptyServices: true
       # -- When the parameter is set, only resources containing an annotation with the same value are processed. Otherwise, resources missing the annotation, having an empty value, or the value traefik are processed. It will also set required annotation on Dashboard and Healthcheck IngressRoute when enabled.
@@ -277,7 +277,7 @@ traefik:
       # -- Load Kubernetes Ingress provider
       enabled: true
       # -- Allows to reference ExternalName services in Ingress
-      allowExternalNameServices: false
+      allowExternalNameServices: true
       # -- Allows to return 503 when there is no endpoints available
       allowEmptyServices: true
       # -- When ingressClass is set, only Ingresses containing an annotation with the same value are processed. Otherwise, Ingresses missing the annotation, having an empty value, or the value traefik are processed.
@@ -357,7 +357,7 @@ traefik:
       noColor: false
     access:
       # -- To enable access logs
-      enabled: false
+      enabled: true
       # -- Set [access log format](https://doc.traefik.io/traefik/observability/access-logs/#format)
       format:  # @schema enum:["common", "json", null]; type:[string, null]; default: "common"
       # filePath: "/var/log/traefik/access.log
@@ -372,7 +372,7 @@ traefik:
         # -- Set minDuration, to keep access logs when requests take longer than the specified duration
         minduration: ""
       # -- Enables accessLogs for internal resources. Default: false.
-      addInternals: false
+      addInternals: true
       fields:
         general:
           # -- Set default mode for fields.names
@@ -608,7 +608,7 @@ traefik:
       # If you want to access it from outside your cluster,
       # use `kubectl port-forward` or create a secure ingress
       expose:
-        default: false
+        default: true
       # -- The exposed port for this service
       exposedPort: 8080
       # -- The port protocol (TCP/UDP)
@@ -739,7 +739,7 @@ traefik:
     enabled: true
     ## -- Single service is using `MixedProtocolLBService` feature gate.
     ## -- When set to false, it will create two Service, one for TCP and one for UDP.
-    single: true
+    single: false
     type: LoadBalancer
     # -- Additional annotations applied to both TCP and UDP services (e.g. for cloud provider specific config)
     annotations: {}

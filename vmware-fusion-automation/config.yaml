@@ -13,6 +13,7 @@ other_nodes:
   db: databases
   vpn: vpn
   ldap: ldap
+  nfs: nfs
 # directory that contains vmware files to fetch data from VM (eg: ip addresses, hostname)
 vm_dir: /Users/qt/Virtual Machines.localized
 # ansible variables to be share among playbooks
@@ -20,7 +21,7 @@ ansible_vars:
   pihole:
     enabled: true
     web_password: root1234
-    default_domain: q.t 
+    default_domain: q.rke
     default_ns:
       - 8.8.8.8 # google
       - 8.8.4.4 # google
