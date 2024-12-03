@@ -96,7 +96,7 @@ cert-manager:
   #
   # Note that cert-manager uses leader election to ensure that there can
   # only be a single instance active at a time.
-  replicaCount: 1
+  replicaCount: 3
 
   # Deployment update strategy for the cert-manager controller deployment.
   # For more information, see the [Kubernetes documentation](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy).
@@ -551,7 +551,7 @@ cert-manager:
     # Note that you can not enable both PodMonitor and ServiceMonitor as they are mutually exclusive. Enabling both will result in an error.
     podmonitor:
       # Create a PodMonitor to add cert-manager to Prometheus.
-      enabled: true
+      enabled: false
 
       # The namespace that the pod monitor should live in, defaults
       # to the cert-manager namespace.
