@@ -1,5 +1,5 @@
 apiVersion: v2
-name: otel
+name: network-system
 description: Basic charts
 type: application
 version: 0.1.0
@@ -11,9 +11,15 @@ dependencies:
   condition: metallb.enabled
   repository: https://metallb.github.io/metallb
   version: 0.14.8
+# cert manager
+- name: cert-manager
+  alias: cert-manager
+  condition: cert-manager.enabled
+  repository: https://charts.jetstack.io
+  version: v1.16.2
 # ingress controller
 - name: traefik
   alias: traefik
   condition: traefik.enabled
   repository: https://traefik.github.io/charts
-  version: 4.1.0
+  version: 33.0.0
