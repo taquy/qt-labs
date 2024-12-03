@@ -18,6 +18,8 @@
       - iproute2
       - iputils-ping
       - yamllint
+      - nfs-common
+      - cifs-utils
   - name: Install python package
     pip:
       name: hostsman
