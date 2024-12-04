@@ -13,17 +13,3 @@ kind: L2Advertisement
 metadata:
   name: default
   namespace: network-system
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx
-  # annotations:
-  #   metallb.universe.tf/address-pool: default
-spec:
-  type: LoadBalancer
-  selector:
-    app: nginx
-  ports:
-    - port: 80
-      targetPort: 80
