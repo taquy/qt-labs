@@ -188,7 +188,7 @@ traefik:
       # -- Additional ingressRoute labels (e.g. for filtering IngressRoute by custom labels)
       labels: {}
       # -- The router match rule used for the dashboard ingressRoute
-      matchRule: PathPrefix(`/dashboard`) || PathPrefix(`/api`)
+      matchRule: Host(`traefik.q.t`)
       # -- The internal service used for the dashboard ingressRoute
       services:
         - name: api@internal
@@ -209,7 +209,7 @@ traefik:
       # -- Additional ingressRoute labels (e.g. for filtering IngressRoute by custom labels)
       labels: {}
       # -- The router match rule used for the healthcheck ingressRoute
-      matchRule: PathPrefix(`/ping`)
+      matchRule: Host(`traefik.q.t`) && PathPrefix(`/ping`)
       # -- The internal service used for the healthcheck ingressRoute
       services:
         - name: ping@internal
@@ -753,7 +753,7 @@ traefik:
     # -- Cannot contain type, selector or ports entries.
     spec: {}
     # externalTrafficPolicy: Cluster
-    # loadBalancerIP: "1.2.3.4"
+    # loadBalancerIP: ""
     # clusterIP: "2.3.4.5"
     loadBalancerSourceRanges: []
     # - 192.168.0.1/32

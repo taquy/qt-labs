@@ -8,7 +8,7 @@ minio:
   auth:
     rootUser: admin
     rootPassword: "root1234"
-  ## defaultBuckets: "my-bucket, my-second-bucket"
+  # defaultBuckets: "loki-chunks, loki-admin, loki-ruler"
   deployment:
     updateStrategy:
       type: Recreate
@@ -167,9 +167,12 @@ minio:
     ##     tags:
     ##       key1: value1
     buckets:
-      - loki-chunks
-      - loki-admin
-      - loki-ruler
+      - name: loki-chunks
+        region: canada
+      - name: loki-admin
+        region: canada
+      - name: loki-ruler
+        region: canada
     ## @param provisioning.config MinIO&reg; config provisioning
     ## https://docs.min.io/docs/minio-server-configuration-guide.html
     ## e.g.
@@ -206,7 +209,7 @@ minio:
   ## @param podSecurityContext.fsGroupChangePolicy When K8s should preform chown on attached volumes
   ##
   podSecurityContext:
-    enabled: true
+    enabled: false
     sysctls: []
     supplementalGroups: []
     fsGroup: 1001
@@ -225,7 +228,7 @@ minio:
   ## @param containerSecurityContext.seccompProfile.type Set container's Security Context seccomp profile
   ##
   containerSecurityContext:
-    enabled: true
+    enabled: false
     seLinuxOptions: {}
     runAsUser: 1001
     runAsGroup: 1001
@@ -327,7 +330,7 @@ minio:
   ## @param livenessProbe.successThreshold Success threshold for livenessProbe
   ##
   livenessProbe:
-    enabled: true
+    enabled: false
     initialDelaySeconds: 5
     periodSeconds: 5
     timeoutSeconds: 5
@@ -343,7 +346,7 @@ minio:
   ## @param readinessProbe.successThreshold Success threshold for readinessProbe
   ##
   readinessProbe:
-    enabled: true
+    enabled: false
     initialDelaySeconds: 5
     periodSeconds: 5
     timeoutSeconds: 1
@@ -359,7 +362,7 @@ minio:
   ## @param startupProbe.successThreshold Success threshold for startupProbe
   ##
   startupProbe:
-    enabled: true
+    enabled: false
     initialDelaySeconds: 0
     periodSeconds: 10
     timeoutSeconds: 5
@@ -412,7 +415,7 @@ minio:
   service:
     ## @param service.type MinIO&reg; service type
     ##
-    type: ClusterIP
+    type: LoadBalancer
     ## @param service.ports.api MinIO&reg; API service port
     ## @param service.ports.console MinIO&reg; Console service port
     ##
