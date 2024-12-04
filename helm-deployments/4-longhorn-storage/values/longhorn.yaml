@@ -132,25 +132,25 @@ longhorn:
     # -- mkfs parameters of the default Longhorn StorageClass.
     defaultMkfsParams: ""
     # -- Replica count of the default Longhorn StorageClass.
-    defaultClassReplicaCount: 3
+    defaultClassReplicaCount: 1
     # -- Data locality of the default Longhorn StorageClass. (Options: "disabled", "best-effort")
     defaultDataLocality: disabled
     # -- Reclaim policy that provides instructions for handling of a volume after its claim is released. (Options: "Retain", "Delete")
     reclaimPolicy: Delete
     # -- Setting that allows you to enable live migration of a Longhorn volume from one node to another.
-    migratable: false
+    migratable: true
     # -- Setting that disables the revision counter and thereby prevents Longhorn from tracking all write operations to a volume. When salvaging a volume, Longhorn uses properties of the volume-head-xxx.img file (the last file size and the last time the file was modified) to select the replica to be used for volume recovery.
     disableRevisionCounter: "true"
     # -- Set NFS mount options for Longhorn StorageClass for RWX volumes
     nfsOptions: ""
     recurringJobSelector:
       # -- Setting that allows you to enable the recurring job selector for a Longhorn StorageClass.
-      enable: false
+      enable: true
       # -- Recurring job selector for a Longhorn StorageClass. Ensure that quotes are used correctly when specifying job parameters. (Example: `[{"name":"backup", "isGroup":true}]`)
       jobList: []
     backingImage:
       # -- Setting that allows you to use a backing image in a Longhorn StorageClass.
-      enable: false
+      enable: true
       # -- Backing image to be used for creating and restoring volumes in a Longhorn StorageClass. When no backing images are available, specify the data source type and parameters that Longhorn can use to create a backing image.
       name: ~
       # -- Data source type of a backing image used in a Longhorn StorageClass.
@@ -164,12 +164,12 @@ longhorn:
       expectedChecksum: ~
     defaultDiskSelector:
       # -- Setting that allows you to enable the disk selector for the default Longhorn StorageClass.
-      enable: false
+      enable: true
       # -- Disk selector for the default Longhorn StorageClass. Longhorn uses only disks with the specified tags for storing volume data. (Examples: "nvme,sata")
       selector: ""
     defaultNodeSelector:
       # -- Setting that allows you to enable the node selector for the default Longhorn StorageClass.
-      enable: false
+      enable: true
       # -- Node selector for the default Longhorn StorageClass. Longhorn uses only nodes with the specified tags for storing volume data. (Examples: "storage,fast")
       selector: ""
     # -- Setting that allows you to enable automatic snapshot removal during filesystem trim for a Longhorn StorageClass. (Options: "ignored", "enabled", "disabled")
@@ -221,7 +221,7 @@ longhorn:
     # -- Upgrade Checker that periodically checks for new Longhorn versions. When a new version is available, a notification appears on the Longhorn UI. This setting is enabled by default
     upgradeChecker: ~
     # -- Default number of replicas for volumes created using the Longhorn UI. For Kubernetes configuration, modify the `numberOfReplicas` field in the StorageClass. The default value is "3".
-    defaultReplicaCount: ~
+    defaultReplicaCount: 3
     # -- Default Longhorn StorageClass. "storageClassName" is assigned to PVs and PVCs that are created for an existing Longhorn volume. "storageClassName" can also be used as a label, so it is possible to use a Longhorn StorageClass to bind a workload to an existing PV without creating a Kubernetes StorageClass object. The default value is "longhorn-static".
     defaultLonghornStaticStorageClass: ~
     # -- Number of seconds that Longhorn waits before checking the backupstore for new backups. The default value is "300". When the value is "0", polling is disabled.
@@ -407,7 +407,7 @@ longhorn:
 
   longhornUI:
     # -- Replica count for Longhorn UI.
-    replicas: 2
+    replicas: 1
     # -- PriorityClass for Longhorn UI.
     priorityClass: *defaultPriorityClassNameRef
     # -- Toleration for Longhorn UI on nodes allowed to run Longhorn components.
@@ -431,7 +431,7 @@ longhorn:
 
     # -- IngressClass resource that contains ingress configuration, including the name of the Ingress controller.
     # ingressClassName can replace the kubernetes.io/ingress.class annotation used in earlier Kubernetes releases.
-    ingressClassName: network-system-traefik
+    # ingressClassName: network-system-traefik
 
     # -- Hostname of the Layer 7 load balancer.
     host: longhorn.q.t
