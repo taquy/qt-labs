@@ -11,3 +11,5 @@ helm install \
   helm upgrade --namespace $ns \
   -f values/minio.yaml \
   --namespace $ns $chart_name .
+
+kubectl apply -f manifests
