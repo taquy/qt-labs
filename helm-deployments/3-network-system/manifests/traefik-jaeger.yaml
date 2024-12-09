@@ -1,0 +1,45 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: opensearch-http
+  namespace: jaeger
+spec:
+  entryPoints:
+  - opensearch-9200
+  routes:
+  - match: Host(`jaeger.q.t`)
+    kind: Rule
+    services:
+    - name: opensearch-cluster-master
+      port: 9200---
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: opensearch-transport
+  namespace: jaeger
+spec:
+  entryPoints:
+  - opensearch-9300
+  routes:
+  - match: Host(`jaeger.q.t`)
+    kind: Rule
+    services:
+    - name: opensearch-cluster-master
+      port: 9300
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: opensearch-dashboard
+  namespace: jaeger
+spec:
+  entryPoints:
+  - opensearch-5601
+  routes:
+  - match: Host(`jaeger.q.t`)
+    kind: Rule
+    services:
+    - name: opensearch-dashboard
+      port: 5601

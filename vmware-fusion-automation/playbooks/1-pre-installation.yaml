@@ -1,6 +1,6 @@
 - name: Install basic tools
   become: true
-  hosts: all
+  hosts: "all"
   tasks:
   - include_vars: ../configs/vars/hosts.yaml
   - name: Update and upgrade apt packages

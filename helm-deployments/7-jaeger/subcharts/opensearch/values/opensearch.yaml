@@ -1,0 +1,126 @@
+opensearch:
+  enabled: true
+  clusterName: "opensearch"
+  nodeGroup: "master"
+
+  # If discovery.type in the opensearch configuration is set to "single-node",
+  # this should be set to "true"
+  # If "true", replicas will be forced to 1
+  singleNode: true
+
+  # The service that non master groups will try to connect to when joining the cluster
+  # This should be set to clusterName + "-" + nodeGroup for your master group
+  masterService: "opensearch-cluster-master"
+
+  # OpenSearch roles that will be applied to this nodeGroup
+  # These will be set as environment variable "node.roles". E.g. node.roles=master,ingest,data,remote_cluster_client
+  roles:
+    - master
+    - ingest
+    - data
+    - remote_cluster_client
+
+  replicas: 1
+  # Allows you to add any config files in {{ .Values.opensearchHome }}/config
+  opensearchHome: /usr/share/opensearch
+  # such as opensearch.yml and log4j2.properties
+  config:
+    opensearch.yml: |
+      plugins:
+        security:
+          ssl:
+            transport:
+              enabled: true
+              pemcert_filepath: ssl/tls.crt
+              pemkey_filepath: ssl/tls.key
+              pemtrustedcas_filepath: ssl/ca.crt
+              enforce_hostname_verification: false
+            http:
+              enabled: false
+              pemcert_filepath: ssl/tls.crt
+              pemkey_filepath: ssl/tls.key
+              pemtrustedcas_filepath: ssl/ca.crt
+          allow_unsafe_democertificates: false
+          allow_default_init_securityindex: true
+          nodes_dn:
+          - 'CN=*'
+          authcz:
+            admin_dn:
+            - 'CN=*'
+    # log4j2.properties:
+
+  # Extra environment variables to append to this nodeGroup
+  # This will be appended to the current 'env:' key. You can use any of the kubernetes env
+  # syntax here
+  extraEnvs: []
+  # - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+  #   value: QP6LMcoAHA53
+
+  # Allows you to load environment variables from kubernetes secret or config map
+  envFrom:
+  - secretRef:
+      name: opensearch-secrets
+  # - configMapRef:
+  #     name: config-map
+
+  secretMounts:
+  - name: tls-for-opensearch-key-pair
+    secretName: tls-for-opensearch-key-pair
+    path: /usr/share/opensearch/config/ssl
+
+  image:
+    repository: "opensearchproject/opensearch"
+    # override image tag, which is .Chart.AppVersion by default
+    tag: ""
+    pullPolicy: "IfNotPresent"
+
+  opensearchJavaOpts: "-Xmx512M -Xms512M"
+  persistence:
+    enabled: true
+    storageClass: "longhorn-static"
+    size: 8Gi
+
+  protocol: https
+  httpPort: 9200
+  transportPort: 9300
+  metricsPort: 9600
+
+  service:
+    type: LoadBalancer
+    httpPortName: http
+    transportPortName: transport
+    metricsPortName: metrics
+
+  securityConfig:
+    enabled: true
+    path: "/usr/share/opensearch/config/opensearch-security"
+    actionGroupsSecret:
+    configSecret:
+    internalUsersSecret:
+    rolesSecret:
+    rolesMappingSecret:
+    tenantsSecret:
+    config:
+      securityConfigSecret: ""
+      dataComplete: true
+      data: {}
+        # config.yml: |-
+        # internal_users.yml: |-
+        # roles.yml: |-
+        # roles_mapping.yml: |-
+        # action_groups.yml: |-
+        # tenants.yml: |-
+
+  nameOverride: ""
+  fullnameOverride: "opensearch"
+
+  masterTerminationFix: false
+  keystore: []
+  # To add secrets to the keystore:
+  #  - secretName: opensearch-encryption-key
+  plugins:
+    enabled: false
+    installList: []
+  serviceMonitor:
+    enabled: true
+    path: /_prometheus/metrics

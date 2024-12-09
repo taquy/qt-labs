@@ -1,0 +1,21 @@
+zipkin:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: openzipkin/zipkin-slim
+  command: ["start-zipkin"]
+  service:
+    type: ClusterIP
+    port: 9411
+  serviceMonitor:
+    enabled: true
+  zipkin:
+    selfTracing:
+      enabled: false
+    storage:
+      type: mem
+  extraServicePorts: []
+  #  - port: 9410
+  #    targetPort: 9410
+  #    protocol: TCP
+  #    name: scribe

@@ -21,7 +21,7 @@ grafana:
   persistence:
     type: pvc
     enabled: true
-    storageClassName: longhorn
+    storageClassName: longhorn-static
     accessModes:
       - ReadWriteOnce
     size: 10Gi
