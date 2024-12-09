@@ -15,7 +15,7 @@ alertmanager:
     enabled: false
   persistence:
     enabled: true
-    storageClass: "longhorn"
+    storageClass: "longhorn-static"
     size: 50Mi
   config:
     enabled: true

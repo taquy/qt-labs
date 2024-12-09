@@ -1,6 +1,6 @@
 loki:
   enabled: true
-  deploymentMode: Distributed
+  deploymentMode: SimpleScalable
   loki:
     enableServiceLinks: true
     configStorageType: ConfigMap
@@ -65,24 +65,29 @@ loki:
         service: "memcached-client"
         timeout: "500ms"
         default_validity: "12h"
-    schemaConfig: {}
+    schemaConfig:
+      configs:
+      - from: "2022-01-11"
+        index:
+          period: 24h
+          prefix: loki_ye
+        object_store: s3
+        schema: v12
+        store: boltdb-shipper
     useTestSchema: false
     tracing:
-      enabled: false
+      enabled: true
     bloom_build:
-      enabled: false
+      enabled: true
     bloom_gateway:
-      enabled: false
+      enabled: true
   lokiCanary:
     enabled: true
-
   adminApi:
-    replicas: 1
-      runAsNonRoot: true
-    
+    replicas: 0
   gateway:
-    enabled: true
-    replicas: 1
+    enabled: false
+    replicas: 0
     containerPort: 8080
     service:
       port: 80
@@ -94,104 +99,103 @@ loki:
   singleBinary:
     replicas: 0
   write:
-    replicas: 1
+    replicas: 0
     persistence:
       volumeClaimsEnabled: true
       enableStatefulSetAutoDeletePVC: true
       size: 10Gi
-      storageClass: longhorn
+      storageClass: longhorn-static
   read:
-    replicas: 1
+    replicas: 0
     persistence:
       enableStatefulSetAutoDeletePVC: true
       size: 10Gi
-      storageClass: longhorn
+      storageClass: longhorn-static
   backend:
-    replicas: 1
+    replicas: 0
     persistence:
       enableStatefulSetAutoDeletePVC: true
       size: 10Gi
-      storageClass: longhorn
+      storageClass: longhorn-static
   ingester:
-    replicas: 1
+    replicas: 0
     persistence:
       enabled: true
       inMemory: false
       claims:
         - name: data
           size: 10Gi
-          storageClass: longhorn
+          storageClass: longhorn-static
       enableStatefulSetAutoDeletePVC: true
   distributor:
-    replicas: 1
-   
+    replicas: 0
   querier:
-    replicas: 1
+    replicas: 0
     persistence:
       enabled: true
       size: 10Gi
-      storageClass: longhorn
+      storageClass: longhorn-static
   queryFrontend:
-    replicas: 1
+    replicas: 0
   queryScheduler:
-    replicas: 1
+    replicas: 0
   indexGateway:
-    replicas: 1
+    replicas: 0
     persistence:
       enabled: true
       inMemory: false
       size: 10Gi
-      storageClass: longhorn
+      storageClass: longhorn-static
       enableStatefulSetAutoDeletePVC: true
   compactor:
-    replicas: 1
+    replicas: 0
     persistence:
       enabled: true
       size: 10Gi
-      storageClass: longhorn
+      storageClass: longhorn-static
       claims:
         - name: data
           size: 10Gi
-          storageClass: longhorn
+          storageClass: longhorn-static
       enableStatefulSetAutoDeletePVC: false
   bloomGateway:
-    replicas: 1
+    replicas: 0
     persistence:
       enabled: true
       claims:
         - name: data
           size: 10Gi
-          storageClass: longhorn
+          storageClass: longhorn-static
       enableStatefulSetAutoDeletePVC: true
   bloomPlanner:
-    replicas: 1
+    replicas: 0
     persistence:
       enabled: true
       claims:
         - name: data
           size: 10Gi
-          storageClass: longhorn
+          storageClass: longhorn-static
       enableStatefulSetAutoDeletePVC: true
   bloomBuilder:
-    replicas: 1
+    replicas: 0
     maxUnavailable: 2
   patternIngester:
-    replicas: 1
+    replicas: 0
     persistence:
       enabled: true
       size: 10Gi
-      storageClass: longhorn
+      storageClass: longhorn-static
       claims:
         - name: data
           size: 10Gi
-          storageClass: longhorn
+          storageClass: longhorn-static
   ruler:
     enabled: true
-    replicas: 1
+    replicas: 0
     persistence:
       enabled: true
       size: 10Gi
-      storageClass: longhorn
+      storageClass: longhorn-static
   resultsCache:
     enabled: true
   chunksCache:
@@ -206,5 +210,5 @@ loki:
     serviceMonitor:
       enabled: true
   tableManager:
-    enabled: false
+    enabled: true
     

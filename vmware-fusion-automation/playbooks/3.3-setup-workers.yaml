@@ -1,4 +1,4 @@
-- name: Remove existing nodes in clusters
+- name: Clean up workers
   hosts: 'primary_masters'
   vars:
     k8s_env: 

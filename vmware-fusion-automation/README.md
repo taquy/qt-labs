@@ -22,6 +22,9 @@ sudo python 1-collect-vmware-machines.py
 
 # create inventories, variables and other configs
 python 2-create-ansible-inventory.py
+
+# start vm (and clean lck files)
+python 3-start-vmware-machines.py
 ```
 
 # execute playbooks
