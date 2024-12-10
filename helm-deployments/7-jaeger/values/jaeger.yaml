@@ -1,7 +1,7 @@
 jaeger:
-  enabled: true
+  enabled: false
   provisionDataStore:
-    cassandra: true
+    cassandra: false
     elasticsearch: false
     kafka: false
 
@@ -13,13 +13,13 @@ jaeger:
   storage:
     type: elasticsearch
     elasticsearch:
-      scheme: http
+      scheme: https
       host: opensearch-cluster-master
       port: 9200
       anonymous: false
-      user: elastic
+      user: admin
       usePassword: true
-      password: root1234
+      password: admin
       # indexPrefix: test
       ## Use existing secret (ignores previous password)
       # existingSecret:
@@ -41,12 +41,12 @@ jaeger:
         # es.index-prefix: test
       tls:
         enabled: false
-        secretName: es-tls-secret
+        secretName: tls-for-opensearch-key-pair
         # The mount properties of the secret
-        mountPath: /es-tls/ca-cert.pem
-        subPath: ca-cert.pem
+        mountPath: /es-tls/ca.crt
+        subPath: ca.crt
         # How ES_TLS_CA variable will be set in the various components
-        ca: /es-tls/ca-cert.pem
+        ca: /es-tls/ca.crt
   schema:
     image:
       repository: jaegertracing/jaeger-cassandra-schema
@@ -91,19 +91,15 @@ jaeger:
         # nodePort:
       # can accept Zipkin spans in JSON or Thrift
       zipkin:
-        {}
-        # port: 9411
-        # nodePort:
+        port: 9411
       otlp:
         grpc:
-          {}
-          # name: otlp-grpc
-          # port: 4317
+          name: otlp-grpc
+          port: 4317
           # nodePort:
         http:
-          {}
-          # name: otlp-http
-          # port: 4318
+          name: otlp-http
+          port: 4318
           # nodePort:
       admin:
         name: admin
@@ -130,15 +126,15 @@ jaeger:
     image:
       repository: jaegertracing/spark-dependencies
   esIndexCleaner:
-    enabled: false
+    enabled: true
     image:
       repository: jaegertracing/jaeger-es-index-cleaner
   esRollover:
-    enabled: false
+    enabled: true
     image:
       repository: jaegertracing/jaeger-es-rollover
   esLookback:
-    enabled: false
+    enabled: true
     image:
       repository: jaegertracing/jaeger-es-rollover
   hotrod:
