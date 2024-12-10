@@ -5,11 +5,5 @@ dependencies:
 - name: zipkin
   repository: https://zipkin.io/zipkin-helm
   version: 0.3.4
-- name: opensearch
-  repository: https://opensearch-project.github.io/helm-charts/
-  version: 2.27.1
-- name: opensearch-dashboards
-  repository: https://opensearch-project.github.io/helm-charts/
-  version: 2.25.0
-digest: sha256:4c2b2c7587117a279044555176194ac0c66145c33dc7503045caa6b22cab8138
-generated: "2024-12-05T23:02:12.869808-05:00"
+digest: sha256:fc6f38facc1ea8ba7a308f1c0aaad85f84702cef5e8f6b8af0387c7ebe6fd146
+generated: "2024-12-09T18:16:38.554098-05:00"

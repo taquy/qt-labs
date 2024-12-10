@@ -13,15 +13,5 @@ dependencies:
 - name: zipkin
   alias: zipkin
   condition: zipkin.enabled
-  repository: https://zipkin.io/zipkin-helm
-  version: 0.3.4
-- name: opensearch
-  alias: opensearch
-  condition: opensearch.enabled
-  repository: https://opensearch-project.github.io/helm-charts/
-  version: 2.27.1
-- name: opensearch-dashboards
-  alias: opensearch-dashboards
-  condition: opensearch-dashboards.enabled
-  repository: https://opensearch-project.github.io/helm-charts/
-  version: 2.25.0
+  repository: oci://registry-1.docker.io/bitnamicharts/
+  version: 1.0.5

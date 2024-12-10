@@ -1,39 +1,29 @@
 opensearch-dashboards:
   enabled: true
   opensearchHosts: "https://opensearch-cluster-master:9200"
-  replicaCount: 1
+  replicaCount: 3
 
   dashboardAnnotations: {}
 
-  config: {}
-    # Default OpenSearch Dashboards configuration from docker image of Dashboards
+  secretMounts:
+  - name: dashboard-certs
+    secretName: tls-for-dashboards-key-pair
+    path: /usr/share/dashboards/certs
+  - name: opensesarch-certs
+    secretName: tls-for-opensearch-key-pair
+    path: /usr/share/opensearch/certs
 
-    #  opensearch_dashboards.yml: |
-    #   server:
-    #     name: dashboards
-    #     host: "{{ .Values.serverHost }}"
-
-    #  opensearch_dashboards.yml:
-    #   server:
-    #     name: dashboards
-    #     host: "{{ .Values.serverHost }}"
-
-
+  config:
     # Dashboards TLS Config (Ensure the cert files are present before enabling SSL
-    # ssl:
-    #   enabled: true
-    #   key: /usr/share/opensearch-dashboards/certs/dashboards-key.pem
-    #   certificate: /usr/share/opensearch-dashboards/certs/dashboards-crt.pem
+    ssl:
+      enabled: true
+      key: /usr/share/dashboards/certs/tls.key
+      certificate: /usr/share/dashboards/certs/tls.crt
 
     # determines how dashboards will verify certificates (needs to be none for default opensearch certificates to work)
-    # opensearch:
-    #   ssl:
-    #     certificateAuthorities: /usr/share/opensearch-dashboards/certs/dashboards-root-ca.pem
-    #     if utilizing custom CA certs for connection to opensearch, provide the CA here
-
-  opensearchDashboardsYml:
-    defaultMode:
-    # value should be 0-0777
+    opensearch:
+      ssl:
+        certificateAuthorities: /usr/share/opensearch/certsca.crt
 
   opensearchAccount:
     secret: ""
@@ -42,9 +32,8 @@ opensearch-dashboards:
 
   fullnameOverride: "opensearch-dashboard"
 
-
   service:
-    type: ClusterIP
+    type: LoadBalancer
     port: 5601
     metricsPort: 9601
     httpPortName: http
