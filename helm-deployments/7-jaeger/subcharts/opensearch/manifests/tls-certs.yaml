@@ -16,7 +16,7 @@ spec:
   isCA: true
   duration: 43800h # 5 years
   commonName: q.t
-  secretName: ca-key-pair
+  secretName: opensearch-ca-key-pair
   privateKey:
     algorithm: RSA
     encoding: PKCS8
@@ -29,11 +29,11 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: opensearch-cluster-issuer-from-ca
+  name: opensearch-issuer-from-ca
   namespace: jaeger
 spec:
   ca:
-    secretName: ca-key-pair
+    secretName: opensearch--ca-key-pair
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -57,19 +57,19 @@ spec:
     - server auth
     - client auth
   issuerRef:
-    name: opensearch-cluster-issuer-from-ca
+    name: opensearch-issuer-from-ca
     kind: Issuer
     group: cert-manager.io
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: tls-for-dashboards
+  name: tls-for-opensearch-dashboards
   namespace: jaeger
 spec:
-  secretName: tls-for-dashboards-key-pair
+  secretName: tls-for-opensearch-dashboards-key-pair
   issuerRef:
-    name: opensearch-cluster-issuer-from-ca
+    name: opensearch-issuer-from-ca
     kind: Issuer
     group: cert-manager.io
   commonName: q.t
