@@ -1,0 +1,36 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: zipkin-selfsigned
+  namespace: jaeger
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ca-cert
+  namespace: jaeger
+spec:
+  isCA: true
+  duration: 43800h # 5 years
+  commonName: q.t
+  secretName: zipkin-ca-key-pair
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS8
+    size: 4096
+  issuerRef:
+    name: zipkin-selfsigned
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: zipkin-issuer-from-ca
+  namespace: jaeger
+spec:
+  ca:
+    secretName: zipkin-ca-key-pair
