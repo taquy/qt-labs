@@ -1,0 +1,36 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: opensearch-ca
+  namespace: jaeger-opensearch
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ca-cert
+  namespace: jaeger-opensearch
+spec:
+  isCA: true
+  duration: 43800h # 5 years
+  commonName: q.t
+  secretName: opensearch-ca-keypair
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS8
+    size: 4096
+  issuerRef:
+    name: opensearch-ca
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: opensearch-issuer-from-ca
+  namespace: jaeger-opensearch
+spec:
+  ca:
+    secretName: opensearch-ca-keypair

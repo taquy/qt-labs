@@ -1,0 +1,70 @@
+---
+# Source: jaeger/charts/certs/templates/certs.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opensearch-ca-cert
+spec:
+  isCA: true
+  duration: 43800h # 5 years
+  commonName: q.t
+  secretName: opensearch-ca-keypair
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS8
+    size: 4096
+  issuerRef:
+    name: opensearch-ca
+    kind: Issuer
+    group: cert-manager.io
+---
+# Source: jaeger/charts/certs/templates/certs.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: opensearch-admin-tls
+spec:
+  isCA: false
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  commonName: "q.t"
+  dnsNames:
+  - q.t
+  - jaeger.q.t
+  secretName: opensearch-admin-tls-keypair
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS8
+    size: 2048
+  keystores:
+    jks:
+      create: true
+      passwordSecretRef:
+        key: "opensearch-secrets"
+        name: "keystore-password"
+  usages:
+    - server auth
+    - client auth
+    - digital signature
+    - key encipherment
+  issuerRef:
+    name: opensearch-issuer-from-ca
+    kind: Issuer
+    group: cert-manager.io
+---
+# Source: jaeger/charts/certs/templates/certs.yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: opensearch-ca
+spec:
+  selfSigned: {}
+---
+# Source: jaeger/charts/certs/templates/certs.yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: opensearch-issuer-from-ca
+spec:
+  ca:
+    secretName: opensearch-ca-keypair

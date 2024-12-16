@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ns="jaeger"
+ns="jaeger-opensearch"
 chart_name="jaeger-opensearch"
 kubectl get namespace | grep -q "^$ns " || kubectl create namespace $ns
 

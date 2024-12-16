@@ -1,36 +1,64 @@
----
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: zipkin-selfsigned
-  namespace: jaeger
-spec:
-  selfSigned: {}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: ca-cert
-  namespace: jaeger
-spec:
-  isCA: true
-  duration: 43800h # 5 years
-  commonName: q.t
-  secretName: zipkin-ca-key-pair
-  privateKey:
-    algorithm: RSA
-    encoding: PKCS8
-    size: 4096
-  issuerRef:
-    name: zipkin-selfsigned
-    kind: Issuer
-    group: cert-manager.io
----
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: zipkin-issuer-from-ca
-  namespace: jaeger
-spec:
-  ca:
-    secretName: zipkin-ca-key-pair
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Issuer
+# metadata:
+#   name: zipkin-ca
+#   namespace: jaeger
+# spec:
+#   selfSigned: {}
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: zipkin-ca-cert
+#   namespace: jaeger
+# spec:
+#   isCA: true
+#   duration: 43800h # 5 years
+#   commonName: q.t
+#   secretName: zipkin-ca-keypair
+#   privateKey:
+#     algorithm: RSA
+#     encoding: PKCS8
+#     size: 4096
+#   issuerRef:
+#     name: zipkin-ca
+#     kind: Issuer
+#     group: cert-manager.io
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Issuer
+# metadata:
+#   name: zipkin-issuer-from-ca
+#   namespace: jaeger
+# spec:
+#   ca:
+#     secretName: zipkin-ca-keypair
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: zipkin-tls
+#   namespace: jaeger
+# spec:
+#   isCA: false
+#   duration: 2160h # 90d
+#   renewBefore: 360h # 15d
+#   commonName: q.t
+#   dnsNames:
+#   - q.t
+#   - jaeger.q.t
+#   - zipkin.q.t
+#   secretName: zipkin-tls-keypair
+#   privateKey:
+#     algorithm: RSA
+#     encoding: PKCS8
+#     size: 2048
+#   keystores:
+#     jks:
+#       create: true
+#       passwordSecretRef:
+#         key: keystore-password
+#         name: zipkin-secrets
+#   issuerRef:
+#     name: zipkin-issuer-from-ca

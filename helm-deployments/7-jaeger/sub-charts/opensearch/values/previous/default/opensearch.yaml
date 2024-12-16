@@ -1,3 +1,5 @@
+# opensearch/opensearch 2.27.1
+
 ---
 clusterName: "opensearch-cluster"
 nodeGroup: "master"

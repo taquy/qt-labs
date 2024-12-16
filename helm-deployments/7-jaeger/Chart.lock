@@ -1,9 +1,12 @@
 dependencies:
+- name: tls-certs
+  repository: file://./custom-charts/tls-certs
+  version: 0.1.0
 - name: jaeger
   repository: https://jaegertracing.github.io/helm-charts
   version: 3.3.3
 - name: zipkin
-  repository: https://zipkin.io/zipkin-helm
-  version: 0.3.4
-digest: sha256:fc6f38facc1ea8ba7a308f1c0aaad85f84702cef5e8f6b8af0387c7ebe6fd146
-generated: "2024-12-09T18:16:38.554098-05:00"
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 1.0.5
+digest: sha256:5e4d7a10e985fda9ec8d586e589b45e18876412b48b7afda48624c9f9a905c27
+generated: "2024-12-15T23:22:22.778564-05:00"
