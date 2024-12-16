@@ -1,32 +1,29 @@
 opensearch-dashboards:
   enabled: true
   opensearchHosts: "https://opensearch-cluster-master:9200"
-  replicaCount: 3
+  replicaCount: 1
 
   dashboardAnnotations: {}
 
   secretMounts:
   - name: dashboard-certs
-    secretName: tls-for-dashboards-key-pair
+    secretName: opensearch-dashboards-tls-keypair
     path: /usr/share/dashboards/certs
   - name: opensesarch-certs
-    secretName: tls-for-opensearch-key-pair
+    secretName: opensearch-tls-keypair
     path: /usr/share/opensearch/certs
 
   config:
-    # Dashboards TLS Config (Ensure the cert files are present before enabling SSL
     ssl:
       enabled: true
       key: /usr/share/dashboards/certs/tls.key
       certificate: /usr/share/dashboards/certs/tls.crt
-
-    # determines how dashboards will verify certificates (needs to be none for default opensearch certificates to work)
     opensearch:
       ssl:
-        certificateAuthorities: /usr/share/opensearch/certsca.crt
+        certificateAuthorities: /usr/share/opensearch/certs/ca.crt
 
   opensearchAccount:
-    secret: ""
+    secret: "opensearch-secrets"
     keyPassphrase:
       enabled: false
 

@@ -7,9 +7,6 @@ jaeger:
 
   allInOne:
     enabled: false
-    replicas: 1
-    image:
-      repository: jaegertracing/all-in-one
   storage:
     type: elasticsearch
     elasticsearch:
@@ -20,10 +17,10 @@ jaeger:
       user: admin
       usePassword: true
       password: admin
-      # indexPrefix: test
+      indexPrefix: jaeger
       ## Use existing secret (ignores previous password)
-      # existingSecret:
-      # existingSecretKey:
+      existingSecret: opensearch-secrets
+      existingSecretKey: password
       nodesWanOnly: false
       extraEnv: []
       ## ES related env vars to be configured on the concerned components
@@ -41,7 +38,7 @@ jaeger:
         # es.index-prefix: test
       tls:
         enabled: false
-        secretName: tls-for-opensearch-key-pair
+        secretName: opensearch-tls-keypair
         # The mount properties of the secret
         mountPath: /es-tls/ca.crt
         subPath: ca.crt
@@ -65,7 +62,7 @@ jaeger:
     daemonset:
       useHostPort: false
     service:
-      type: ClusterIP
+      type: LoadBalancer
       # zipkinThriftPort :accept zipkin.thrift over compact thrift protocol
       zipkinThriftPort: 5775
       # compactPort: accept jaeger.thrift over compact thrift protocol
@@ -116,7 +113,7 @@ jaeger:
       repository: jaegertracing/jaeger-query
     replicaCount: 1
     service:
-      type: ClusterIP
+      type: LoadBalancer
       port: 80
       admin:
         name: admin

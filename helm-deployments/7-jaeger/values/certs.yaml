@@ -1,0 +1,16 @@
+certs:
+  enabled: true
+  cn: q.t
+  issuers:
+  - name: opensearch
+    namespace: jaeger-opensearch
+    certs:
+    - admin
+    # - master
+    # - data
+    # - ingest
+    # - coordinating
+    subdomain:
+    - jaeger
+    existingSecret: opensearch-secrets
+    keystoreSecretKey: keystore-password
