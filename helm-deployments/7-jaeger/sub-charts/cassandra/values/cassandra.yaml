@@ -16,7 +16,7 @@ cassandra:
     datacenter: dc1
     rack: rack1
     endpointSnitch: SimpleSnitch
-    clientEncryption: true
+    clientEncryption: false
     extraSeeds: []
     enableUDF: false
   replicaCount: 1
@@ -24,9 +24,9 @@ cassandra:
   podManagementPolicy: OrderedReady
   resourcesPreset: "large"
   livenessProbe:
-    enabled: true
+    enabled: false
   readinessProbe:
-    enabled: true
+    enabled: false
   hostNetwork: false
   containerPorts:
     intra: 7000
