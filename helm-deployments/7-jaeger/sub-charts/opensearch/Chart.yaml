@@ -10,8 +10,3 @@ dependencies:
   condition: opensearch.enabled
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 1.4.0
-- name: opensearch-dashboards
-  alias: opensearch-dashboards
-  condition: opensearch-dashboards.enabled
-  repository: https://opensearch-project.github.io/helm-charts/
-  version: 2.25.0
