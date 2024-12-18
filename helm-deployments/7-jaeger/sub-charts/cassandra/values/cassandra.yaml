@@ -41,7 +41,7 @@ cassandra:
   serviceAccount:
     create: true
   service:
-    type: ClusterIP
+    type: LoadBalancer
     ports:
       cql: 9042
       metrics: 8080

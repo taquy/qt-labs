@@ -77,4 +77,29 @@ opensearch:
   sysctlImage:
     enabled: true
     resourcesPreset: "nano"
-   
+    
+  dashboards:
+    enabled: true
+    image:
+      repository: bitnami/opensearch-dashboards
+      tag: 2.17.1-debian-12-r1
+      debug: false
+    service:
+      type: LoadBalancer
+      ports:
+        http: 5601
+    containerPorts:
+      http: 5601
+    password: ""
+    replicaCount: 1
+    fullnameOverride: "opensearch-dashboards"
+    resourcesPreset: "small"
+    heapSize: 1024m
+    livenessProbe:
+      enabled: true
+    readinessProbe:
+      enabled: true
+    persistence:
+      enabled: true
+      storageClass: "nfs"
+      size: 8Gi

@@ -4,7 +4,6 @@ jaeger:
     cassandra: false
     elasticsearch: false
     kafka: false
-
   allInOne:
     enabled: false
   storage:
@@ -13,7 +12,7 @@ jaeger:
       scheme: https
       host: opensearch-cluster-master
       port: 9200
-      anonymous: false
+      anonymous: true
       user: admin
       usePassword: true
       password: admin

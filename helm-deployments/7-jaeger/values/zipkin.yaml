@@ -1,6 +1,5 @@
 zipkin: 
-  enabled: false
-
+  enabled: true
   nameOverride: ""
   fullnameOverride: ""
   configOverrides: {}
@@ -17,16 +16,6 @@ zipkin:
     http: 9411
   usePasswordFile: true
   storageType: cassandra3
-  ## TLS/SSL parameters
-  ## @param tls.enabled Enable TLS
-  ## @param tls.usePemCerts Use certificates in .pem format
-  ## @param tls.existingSecret Name of a secret containing the certificate files
-  ## @param tls.certFilename Filename inside the secret of the .crt file (when usePemCerts=true)
-  ## @param tls.certKeyFilename Filename inside the secret of the .key file (when usePemCerts=true)
-  ## @param tls.keystoreFilename Filename inside the secret of the .jks file (when usePemCerts=false)
-  ## @param tls.password Password of the Java keystore
-  ## @param tls.passwordSecret Name of a secret containing the password of the Java keystore
-  ##
   tls:
     enabled: false
     usePemCerts: true
@@ -49,9 +38,9 @@ zipkin:
 
   defaultInitContainers:
     waitForCassandra:
-      enabled: false
-    initCerts:
       enabled: true
+    initCerts:
+      enabled: false
       resourcesPreset: "nano"
   metrics:
     enabled: true
