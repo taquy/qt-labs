@@ -46,7 +46,7 @@ opensearch:
       transport: ""
   master:
     masterOnly: true
-    replicaCount: 3
+    replicaCount: 2
     pdb:
       create: true
     resourcesPreset: "small"
@@ -56,7 +56,7 @@ opensearch:
       enabled: true
       size: 8Gi
   data:
-    replicaCount: 3
+    replicaCount: 2
     pdb:
       create: true
     updateStrategy:
@@ -68,11 +68,11 @@ opensearch:
       enabled: true
       size: 8Gi
   coordinating:
-    replicaCount: 3
+    replicaCount: 2
     resourcesPreset: "small"
   ingest:
     enabled: true
-    replicaCount: 3
+    replicaCount: 2
     heapSize: 128m
   sysctlImage:
     enabled: true

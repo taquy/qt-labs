@@ -1,7 +1,7 @@
 opensearch-dashboards:
   enabled: true
   opensearchHosts: "http://jaeger-opensearch:9200"
-  replicaCount: 3
+  replicaCount: 1
 
   dashboardAnnotations: {}
 
