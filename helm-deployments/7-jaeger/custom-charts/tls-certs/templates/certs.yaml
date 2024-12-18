@@ -63,8 +63,8 @@ spec:
     jks:
       create: true
       passwordSecretRef:
-        key: {{ $issuer.existingSecret | quote }}
-        name: {{ $issuer.keystoreSecretKey | quote }}
+        key: {{ $issuer.keystoreSecretKey | quote }}
+        name: {{ $issuer.existingSecret | quote }}
   usages:
     - server auth
     - client auth

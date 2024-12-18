@@ -6,11 +6,20 @@ certs:
     namespace: jaeger-opensearch
     certs:
     - admin
-    # - master
-    # - data
-    # - ingest
-    # - coordinating
+    - master
+    - data
+    - ingest
+    - coordinating
+    - dashboard
     subdomain:
-    - jaeger
+    - jaeger-opensearch
     existingSecret: opensearch-secrets
-    keystoreSecretKey: keystore-password
+    keystoreSecretKey: storepass
+  - name: cassandra
+    namespace: jaeger-cassandra
+    certs:
+    - master
+    subdomain:
+    - jaeger-cassandra
+    existingSecret: cassandra-secrets
+    keystoreSecretKey: storepass

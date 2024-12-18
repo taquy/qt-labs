@@ -4,32 +4,14 @@ zipkin:
   nameOverride: ""
   fullnameOverride: ""
   configOverrides: {}
-
-  ## @param secretConfigOverrides Overwrite or add extra configuration options to the chart default (these will be added in a secret)
-  ## Example:
-  ## secretConfigOverrides:
-  ##   CASSANDRA_PASSWORD: test123
-  ##
   secretConfigOverrides: {}
-
-  ## @param existingConfigmap The name of an existing ConfigMap with your custom configuration for zipkin
-  ## NOTE: By providing a ConfigMap, other settings provided using values may be ignored.
-  ##
   existingConfigmap: ""
-
-  ## @param existingSecret The name of an existing Secret with your custom sensitive configuration for zipkin
-  ##
   existingSecret: ""
-
-  ## @param javaOpts Set extra Java Options when launching zipkin
-  ##
   javaOpts: ""
-
   image:
     registry: docker.io
     repository: bitnami/zipkin
     tag: 3.4.3-debian-12-r0
-
   replicaCount: 1
   containerPorts:
     http: 9411
@@ -46,7 +28,7 @@ zipkin:
   ## @param tls.passwordSecret Name of a secret containing the password of the Java keystore
   ##
   tls:
-    enabled: true
+    enabled: false
     usePemCerts: true
     passwordSecret: "zipkin-secrets"
     existingSecret: "zipkin-tls-keypair"
@@ -86,4 +68,3 @@ zipkin:
     keyspace: "zipkin"
   cassandra:
     enabled: false
-   
