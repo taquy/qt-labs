@@ -9,12 +9,12 @@ jaeger:
   storage:
     type: elasticsearch
     elasticsearch:
-      scheme: https
+      scheme: http
       host: opensearch-cluster-master
       port: 9200
       anonymous: true
       user: admin
-      usePassword: true
+      usePassword: false
       password: admin
       indexPrefix: jaeger
       ## Use existing secret (ignores previous password)

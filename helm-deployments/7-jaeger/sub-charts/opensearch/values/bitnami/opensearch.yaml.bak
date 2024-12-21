@@ -2,9 +2,7 @@ opensearch:
   enabled: true
   global:
     defaultStorageClass: "longhorn-static"
-  nameOverride: ""
   fullnameOverride: ""
-  namespaceOverride: ""
   diagnosticMode:
     enabled: false
   clusterName: jaeger
@@ -12,7 +10,7 @@ opensearch:
     restAPI: 9200
     transport: 9300
   security:
-    enabled: false
+    enabled: true
     existingSecret: "opensearch-secrets"
     tls:
       admin:
@@ -30,12 +28,12 @@ opensearch:
         existingSecret: "opensearch-ingest-tls-keypair"
       coordinating:
         existingSecret: "opensearch-coordinating-tls-keypair"
-      keystoreFilename: keystore.jks
-      truststoreFilename: truststore.jks
+      # keystoreFilename: keystore.jks
+      # truststoreFilename: truststore.jks
       usePemCerts: false
       passwordsSecret: "opensearch-secrets"
-      secretKeystoreKey: "storepass"
-      secretTruststoreKey: "storepass"
+      # secretKeystoreKey: "storepass"
+      # secretTruststoreKey: "storepass"
   service:
     type: LoadBalancer
     ports:
@@ -57,8 +55,6 @@ opensearch:
       size: 8Gi
   data:
     replicaCount: 2
-    pdb:
-      create: true
     updateStrategy:
       type: RollingUpdate
     resourcesPreset: "medium"
@@ -77,29 +73,3 @@ opensearch:
   sysctlImage:
     enabled: true
     resourcesPreset: "nano"
-    
-  dashboards:
-    enabled: true
-    image:
-      repository: bitnami/opensearch-dashboards
-      tag: 2.17.1-debian-12-r1
-      debug: false
-    service:
-      type: LoadBalancer
-      ports:
-        http: 5601
-    containerPorts:
-      http: 5601
-    password: ""
-    replicaCount: 1
-    fullnameOverride: "opensearch-dashboards"
-    resourcesPreset: "small"
-    heapSize: 1024m
-    livenessProbe:
-      enabled: true
-    readinessProbe:
-      enabled: true
-    persistence:
-      enabled: true
-      storageClass: "nfs"
-      size: 8Gi
