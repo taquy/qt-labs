@@ -1,0 +1,11 @@
+apiVersion: v2
+name: core-services
+description: Basic charts
+type: application
+version: 0.1.0
+appVersion: "1.16.0"
+dependencies:
+- name: reflector
+  alias: reflector
+  version: 7.1.288
+  repository: https://emberstack.github.io/helm-charts
