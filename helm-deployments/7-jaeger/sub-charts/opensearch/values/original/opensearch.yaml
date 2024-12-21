@@ -1,0 +1,100 @@
+opensearch:
+  enabled: true
+  clusterName: "opensearch-cluster"
+  nodeGroup: "master"
+  singleNode: true
+  masterService: "opensearch-cluster-master"
+  replicas: 1
+  config:
+    opensearch.yml: |
+      cluster.name: opensearch-cluster
+
+      # Bind to all interfaces because we don't know what IP address Docker will assign to us.
+      network.host: 0.0.0.0
+
+      # Setting network.host to a non-loopback address enables the annoying bootstrap checks. "Single-node" mode disables them again.
+      # Implicitly done if ".singleNode" is set to "true".
+      # discovery.type: single-node
+
+      # Start OpenSearch Security Demo Configuration
+      # WARNING: revise all the lines below before you go into production
+      # plugins:
+      #   security:
+      #     ssl:
+      #       transport:
+      #         pemcert_filepath: esnode.pem
+      #         pemkey_filepath: esnode-key.pem
+      #         pemtrustedcas_filepath: root-ca.pem
+      #         enforce_hostname_verification: false
+      #       http:
+      #         enabled: true
+      #         pemcert_filepath: esnode.pem
+      #         pemkey_filepath: esnode-key.pem
+      #         pemtrustedcas_filepath: root-ca.pem
+      #     allow_unsafe_democertificates: true
+      #     allow_default_init_securityindex: true
+
+  extraEnvs:
+   - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+     value: nrqQrt$m9mCs
+
+  # Allows you to load environment variables from kubernetes secret or config map
+  envFrom: []
+  # - secretRef:
+  #     name: env-secret
+  # - configMapRef:
+  #     name: config-map
+
+  # A list of secrets and their paths to mount inside the pod
+  # This is useful for mounting certificates for security and for mounting
+  # the X-Pack license
+  secretMounts: []
+  opensearchJavaOpts: "-Xmx512M -Xms512M"
+  persistence:
+    enabled: false
+    enableInitChown: false
+    storageClass: longhorn-static
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
+
+  extraInitContainers: []
+  enableServiceLinks: false
+
+  protocol: https
+  httpPort: 9200
+  transportPort: 9300
+  metricsPort: 9600
+
+  service:
+    type: ClusterIP
+    annotations: {}
+    httpPortName: http
+    transportPortName: transport
+    metricsPortName: metrics
+
+  securityConfig:
+    enabled: true
+
+  terminationGracePeriod: 120
+  sysctlVmMaxMapCount: 262144
+
+  nameOverride: ""
+  fullnameOverride: ""
+
+  masterTerminationFix: false
+  keystore: []
+  # To add secrets to the keystore:
+  #  - secretName: opensearch-encryption-key
+
+  sysctl:
+    enabled: false
+  sysctlInit:
+    enabled: false
+    
+  plugins:
+    enabled: false
+    installList: []
+  serviceMonitor:
+    enabled: false
+
