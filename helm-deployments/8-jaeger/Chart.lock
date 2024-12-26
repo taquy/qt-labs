@@ -6,7 +6,7 @@ dependencies:
   repository: https://jaegertracing.github.io/helm-charts
   version: 3.3.3
 - name: zipkin
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 1.1.0
-digest: sha256:3d6f497331f508b30b2da51278dc8748d6b6d175de6ae3840562df102e86afdb
-generated: "2024-12-26T02:23:01.694825-05:00"
+  repository: https://zipkin.io/zipkin-helm
+  version: 0.3.4
+digest: sha256:0128c48d5deab9af497d31624b026be95222d512a82dd6c86829ddde9ed369e9
+generated: "2024-12-26T02:35:22.61581-05:00"
