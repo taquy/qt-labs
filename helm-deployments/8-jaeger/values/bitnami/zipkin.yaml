@@ -7,6 +7,7 @@ zipkin:
   javaOpts: ""
   image:
     debug: false
+    tag: latest
   replicaCount: 1
   containerPorts:
     http: 9411
@@ -35,10 +36,11 @@ zipkin:
     enabled: true
   readinessProbe:
     enabled: true
-  resourcesPreset: "small"
+  resourcesPreset: "medium"
   containerSecurityContext:
-    enabled: false
-  automountServiceAccountToken: false
+    enabled: true
+  javaOpts: "-Xmx1G"
+  automountServiceAccountToken: true
   service:
     type: ClusterIP
     ports:

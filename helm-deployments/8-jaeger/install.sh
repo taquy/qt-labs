@@ -4,8 +4,8 @@ ns="jaeger"
 chart_name="jaeger"
 kubectl get namespace | grep -q "^$ns " || kubectl create namespace $ns
 
-# chart_source=original
-chart_source=bitnami
+chart_source=original
+# chart_source=bitnami
 
 # install or upgrade the helm charts
 helm install \
