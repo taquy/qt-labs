@@ -8,6 +8,11 @@ jaeger:
     enabled: false
   storage:
     type: elasticsearch
+    kafka:
+      brokers:
+        - jaeger-kafka.jaeger-kafka.svc.cluster.local:9092
+      topic: jaeger_v1_test
+      authentication: none
     elasticsearch:
       scheme: http
       host: jaeger-opensearch.jaeger-opensearch.svc.cluster.local
