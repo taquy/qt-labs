@@ -7,6 +7,6 @@ dependencies:
   version: 3.3.3
 - name: zipkin
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 1.0.5
-digest: sha256:5e4d7a10e985fda9ec8d586e589b45e18876412b48b7afda48624c9f9a905c27
-generated: "2024-12-15T23:22:22.778564-05:00"
+  version: 1.1.0
+digest: sha256:3d6f497331f508b30b2da51278dc8748d6b6d175de6ae3840562df102e86afdb
+generated: "2024-12-26T02:23:01.694825-05:00"
