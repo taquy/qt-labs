@@ -1,5 +1,7 @@
 kafka:
   enabled: true
+  extraConfig: |
+    auto.create.topics.enable=true
   global:
     defaultStorageClass: "longhorn-static"
   fullnameOverride: ""
@@ -80,7 +82,7 @@ kafka:
       enabled: false
       size: 8Gi
   broker:
-    replicaCount: 0
+    replicaCount: 3
     minId: 100
     zookeeperMigrationMode: false
     heapOpts: -Xmx1024m -Xms1024m
