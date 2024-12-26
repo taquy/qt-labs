@@ -10,7 +10,7 @@ jaeger:
     type: elasticsearch
     elasticsearch:
       scheme: http
-      host: opensearch-cluster-master
+      host: jaeger-opensearch.jaeger-opensearch.svc.cluster.local
       port: 9200
       anonymous: true
       user: admin
@@ -61,7 +61,7 @@ jaeger:
     daemonset:
       useHostPort: false
     service:
-      type: LoadBalancer
+      type: ClusterIP
       # zipkinThriftPort :accept zipkin.thrift over compact thrift protocol
       zipkinThriftPort: 5775
       # compactPort: accept jaeger.thrift over compact thrift protocol
@@ -112,7 +112,7 @@ jaeger:
       repository: jaegertracing/jaeger-query
     replicaCount: 1
     service:
-      type: LoadBalancer
+      type: ClusterIP
       port: 80
       admin:
         name: admin
