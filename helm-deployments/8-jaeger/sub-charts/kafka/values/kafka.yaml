@@ -1,7 +1,5 @@
 kafka:
   enabled: true
-  extraConfig: |
-    auto.create.topics.enable=true
   global:
     defaultStorageClass: "longhorn-static"
   fullnameOverride: ""
@@ -18,21 +16,21 @@ kafka:
   listeners:
     client:
       containerPort: 9092
-      protocol: SASL_PLAINTEXT
+      protocol: PLAINTEXT
       name: CLIENT
       sslClientAuth: ""
     controller:
       name: CONTROLLER
       containerPort: 9093
-      protocol: SASL_PLAINTEXT
+      protocol: PLAINTEXT
       sslClientAuth: ""
     interbroker:
       containerPort: 9094
-      protocol: SASL_PLAINTEXT
+      protocol: PLAINTEXT
       name: INTERNAL
     external:
       containerPort: 9095
-      protocol: SASL_PLAINTEXT
+      protocol: PLAINTEXT
       name: EXTERNAL
       sslClientAuth: ""
     extraListeners: []
@@ -63,10 +61,11 @@ kafka:
       user: ""
       password: ""
     existingSecret: ""
-  extraVolumeMounts: []
   controller:
-    replicaCount: 3
+    replicaCount: 1
     controllerOnly: false
+    extraConfig: |
+      auto.create.topics.enable=true
     minId: 0
     zookeeperMigrationMode: false
     heapOpts: -Xmx1024m -Xms1024m
@@ -76,19 +75,19 @@ kafka:
       enabled: true
     resourcesPreset: "small"
     persistence:
-      enabled: true
+      enabled: false
       size: 8Gi
     logPersistence:
       enabled: false
       size: 8Gi
   broker:
-    replicaCount: 3
+    replicaCount: 1
     minId: 100
     zookeeperMigrationMode: false
     heapOpts: -Xmx1024m -Xms1024m
     resourcesPreset: "small"
     persistence:
-      enabled: true
+      enabled: false
       size: 8Gi
   service:
     type: ClusterIP
@@ -119,7 +118,7 @@ kafka:
         serverUsers: ""
         serverPasswords: ""
     persistence:
-      enabled: true
+      enabled: false
       accessModes:
         - ReadWriteOnce
       size: 8Gi
