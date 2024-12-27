@@ -9,12 +9,12 @@ chart_source=original
 
 # install or upgrade the helm charts
 helm install \
-  -f values/jaeger.yaml \
+  -f values/${chart_source}/jaeger.yaml \
   -f values/${chart_source}/zipkin.yaml \
   -f values/certs.yaml \
   --namespace $ns $chart_name . ||
   helm upgrade --namespace $ns \
-  -f values/jaeger.yaml \
+  -f values/${chart_source}/jaeger.yaml \
   -f values/${chart_source}/zipkin.yaml \
   -f values/certs.yaml \
   --namespace $ns $chart_name .

@@ -1,0 +1,212 @@
+jaeger:
+  enabled: true
+  provisionDataStore:
+    cassandra: false
+    elasticsearch: false
+    kafka: false
+  fullnameOverride: ""
+  storage:
+    type: cassandra
+    cassandra:
+      host: jaeger-cassandra.jaeger-cassandra.svc.cluster.local
+      port: 9042
+      # Change this value to false if you want to avoid starting the
+      # -cassandra-schema Job
+      schemaJobEnabled: true
+      user: cassandra
+      usePassword: true
+      password: root1234
+      keyspace: jaeger
+
+    elasticsearch:
+      scheme: http
+      host: jaeger-opensearch.jaeger-opensearch.svc.cluster.local
+      port: 9200
+      anonymous: true
+      user: root
+      usePassword: false
+      password: root1234
+      indexPrefix: jaeger
+      existingSecret: opensearch-secrets
+      existingSecretKey: password
+      nodesWanOnly: false
+      cmdlineParams:
+
+    kafka:
+      brokers:
+        - kafka:9092
+      topic: jaeger_v1_test
+      authentication: none
+      extraEnv: []
+    grpcPlugin:
+      extraEnv: []
+    badger:
+      ephemeral: true
+      persistence:
+        mountPath: /mnt/data
+        useExistingPvcName: ""
+      extraEnv: []
+    memory:
+      extraEnv: []
+
+  # Begin: Override values on the Cassandra subchart to customize for Jaeger
+  cassandra:
+    persistence:
+      # To enable persistence, please see the documentation for the Cassandra chart
+      enabled: false
+    config:
+      cluster_name: jaeger
+      seed_size: 1
+      dc_name: dc1
+      rack_name: rack1
+      endpoint_snitch: GossipingPropertyFileSnitch
+  ingester:
+    enabled: false
+    replicaCount: 1
+    service:
+      type: ClusterIP
+  agent:
+    daemonset:
+      useHostPort: false
+    service:
+      type: ClusterIP
+      # zipkinThriftPort :accept zipkin.thrift over compact thrift protocol
+      zipkinThriftPort: 5775
+      # compactPort: accept jaeger.thrift over compact thrift protocol
+      compactPort: 6831
+      # binaryPort: accept jaeger.thrift over binary thrift protocol
+      binaryPort: 6832
+      # samplingPort: (HTTP) serve configs, sampling strategies
+      samplingPort: 5778
+    useHostNetwork: false
+    dnsPolicy: ClusterFirst
+  collector:
+    podSecurityContext: {}
+    securityContext: {}
+    enabled: true
+    annotations: {}
+    basePath: /
+    replicaCount: 1
+    service:
+      type: ClusterIP
+      grpc:
+        port: 14250
+        # nodePort:
+      # httpPort: can accept spans directly from clients in jaeger.thrift format
+      http:
+        port: 14268
+        # nodePort:
+      # can accept Zipkin spans in JSON or Thrift
+      zipkin:
+        {}
+        # port: 9411
+        # nodePort:
+      otlp:
+        grpc:
+          {}
+          # name: otlp-grpc
+          # port: 4317
+          # nodePort:
+        http:
+          {}
+          # name: otlp-http
+          # port: 4318
+          # nodePort:
+      admin:
+        name: admin
+        targetPort: admin
+
+  query:
+    enabled: true
+    basePath: /
+    initContainers: []
+    oAuthSidecar:
+      enabled: false
+    replicaCount: 1
+    service:
+      type: ClusterIP
+      port: 80
+      admin:
+        name: admin
+        targetPort: admin
+   
+  spark:
+    enabled: false
+    securityContext: {}
+    podSecurityContext: {}
+    annotations: {}
+    image:
+      registry: ""
+      repository: jaegertracing/spark-dependencies
+      tag: latest
+      digest: ""
+      pullPolicy: IfNotPresent
+      pullSecrets: []
+    cmdlineParams: {}
+    extraEnv: []
+    schedule: "49 23 * * *"
+    successfulJobsHistoryLimit: 5
+    failedJobsHistoryLimit: 5
+    concurrencyPolicy: Forbid
+
+  esIndexCleaner:
+    enabled: false
+    schedule: "55 23 * * *"
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 3
+    concurrencyPolicy: Forbid
+    numberOfDays: 7
+  esRollover:
+    enabled: false
+    extraEnv:
+      - name: CONDITIONS
+        value: '{"max_age": "1d"}'
+    schedule: "10 0 * * *"
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 3
+    concurrencyPolicy: Forbid
+    initHook:
+      extraEnv:
+        []
+        # - name: SHARDS
+        #   value: "3"
+      annotations: {}
+      podAnnotations: {}
+      podLabels: {}
+      ttlSecondsAfterFinished: 120
+
+  esLookback:
+    enabled: false
+    extraEnv:
+      - name: UNIT
+        value: days
+      - name: UNIT_COUNT
+        value: "7"
+    schedule: "5 0 * * *"
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 3
+    concurrencyPolicy: Forbid
+   
+  hotrod:
+    enabled: false
+    podSecurityContext: {}
+    securityContext: {}
+    replicaCount: 1
+    # set the primary command(s) for the hotrod application
+    args:
+      - all
+    # add extra arguments to the hotrod application to customize tracing
+    extraArgs: []
+    #   - --otel-exporter=otlp
+    #   - --jaeger-ui=http://jaeger.chart.local
+    # add extra environment variables to the hotrod application
+    extraEnv: []
+    #   - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    #     value: http://my-otel-collector.chart.local:4318
+    service:
+      name: hotrod
+      type: ClusterIP
+      port: 80
+    tracing:
+      host: null
+      port: 6831

@@ -63,6 +63,7 @@ cassandra:
     # create keyspace for zipkin
     create_keyspace.cql: |
       CREATE KEYSPACE zipkin WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+      CREATE KEYSPACE jaeger WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
   extraEnvVars:
   - name: CASSANDRA_CFG_YAML_SASI_INDEXES_ENABLED
     value: "true"
