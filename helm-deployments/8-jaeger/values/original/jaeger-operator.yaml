@@ -1,0 +1,31 @@
+jaeger-operator:
+  enabled: true
+  image:
+    repository: jaegertracing/jaeger-operator
+    tag: 1.61.0
+  certs:
+    issuer:
+      create: true
+      name: ""
+    certificate:
+      create: true
+      namespace: "jaeger"
+      secretName: ""
+      # Specify the cert-manager issuer kind to use an existing cert-manager
+      # issuer; typically Issuer or ClusterIssuer
+      # This field will be ignored if issuer.create is true
+      issuerKind: Issuer
+  webhooks:
+    mutatingWebhook:
+      create: true
+    validatingWebhook:
+      create: true
+    port: 9443
+    service:
+      create: true
+  jaeger:
+    create: false
+  service:
+    type: ClusterIP
+  replicaCount: 1
+
