@@ -1,5 +1,5 @@
 apiVersion: v2
-name: opentelemetry-operator
+name: opentelemetry-system
 description: Basic charts
 type: application
 version: 0.1.0
@@ -10,3 +10,8 @@ dependencies:
   condition: opentelemetry-operator.enabled
   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
   version: 0.75.1
+- name: opentelemetry-collector
+  alias: opentelemetry-collector
+  condition: opentelemetry-collector.enabled
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.111.0
