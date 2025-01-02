@@ -15,3 +15,14 @@ dependencies:
   condition: opentelemetry-collector.enabled
   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
   version: 0.111.0
+- name: opentelemetry-ebpf
+  alias: opentelemetry-ebpf
+  condition: opentelemetry-ebpf.enabled
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.1.4
+- name: opentelemetry-kube-stack
+  alias: opentelemetry-kube-stack
+  condition: opentelemetry-kube-stack.enabled
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.3.9
+  
