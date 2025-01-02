@@ -97,14 +97,21 @@ kafka:
       interbroker: 9094
       external: 9095
   provisioning:
-    enabled: false
-    automountServiceAccountToken: false
+    enabled: true
     numPartitions: 1
     replicationFactor: 1
     parallel: 1
     resourcesPreset: "micro"
     waitForKafka: true
     useHelmHooks: true
+    topics:
+    - name: jaeger
+      partitions: 1
+      replicationFactor: 1
+      ## https://kafka.apache.org/documentation/#topicconfigs
+      config:
+        max.message.bytes: 64000
+        flush.messages: 1
   kraft:
     enabled: true
   zookeeper:
