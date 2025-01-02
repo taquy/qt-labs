@@ -21,3 +21,7 @@ kubectl apply -f manifests
 ```sh
 bash install.sh
 ```
+
+# Dependencies
+- Jaeger is depending on cassandra and kafka
+- Zipkin is depending on opensearch

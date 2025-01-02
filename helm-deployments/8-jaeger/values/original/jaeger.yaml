@@ -34,21 +34,14 @@ jaeger:
 
     kafka:
       brokers:
-        - kafka:9092
-      topic: jaeger_v1_test
+        - jaeger-kafka.jaeger-kafka.svc.cluster.local:9092
+      topic: jaeger
       authentication: none
-      extraEnv: []
-    grpcPlugin:
-      extraEnv: []
     badger:
       ephemeral: true
       persistence:
         mountPath: /mnt/data
         useExistingPvcName: ""
-      extraEnv: []
-    memory:
-      extraEnv: []
-
   # Begin: Override values on the Cassandra subchart to customize for Jaeger
   cassandra:
     persistence:
