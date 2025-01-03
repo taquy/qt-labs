@@ -10,12 +10,20 @@ opentelemetry-kube-stack:
     enabled: true
     crds:
       create: false
+  resources:
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
   collectors:
     daemon:
       suffix: daemon
       mode: daemonset
       enabled: true
       scrape_configs_file: "daemon_scrape_configs.yaml"
+      resources:
+        limits:
+          cpu: 500m
+          memory: 1000Mi
       presets:
         logsCollection:
           enabled: false
