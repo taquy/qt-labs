@@ -1,0 +1,65 @@
+alertmanager-snmp-notifier:
+  enabled: true
+  image:
+    repository: maxwo/snmp-notifier
+  fullnameOverride: ""
+  snmpNotifier:
+    # extraArgs allows to pass SNMP notifier configurations, as described on https://github.com/maxwo/snmp_notifier#snmp-notifier-configuration
+    extraArgs: []
+    # - --alert.severity-label=severity
+
+    # snmpDestinations is the list of SNMP servers to send the traps to
+    snmpDestinations:
+      - snmp-server:162
+
+    # SNMP authentication secrets, that may be instanciated by the chart, or may use an already created secret
+    # snmpCommunity: public
+    # snmpAuthenticationUsername: my_authentication_username
+    # snmpAuthenticationPassword: my_authentication_password
+    # snmpPrivatePassword: my_private_password
+    # snmpCommunitySecret:
+    #   name: existingsecret
+    #   key: community
+    # snmpAuthenticationUsernameSecret:
+    #   name: existingsecret
+    #   key: authenticationUsername
+    # snmpAuthenticationPasswordSecret:
+    #   name: existingsecret
+    #   key: authenticationPassword
+    # snmpPrivatePasswordSecret:
+    #   name: existingsecret
+    #   key: privatePassword
+
+    # snmpTemplates allows to customize the description of the traps, and add extra trap fields
+    snmpTemplates: {}
+    #   description: |
+    #     {{- if .Alerts -}}
+    #     {{ len .Alerts }}/{{ len .DeclaredAlerts }} alerts are firing:
+
+    #     {{ range $severity, $alerts := (groupAlertsByLabel .Alerts "severity") -}}
+    #     Status: {{ $severity }}
+
+    #     {{- range $index, $alert := $alerts }}
+    #     - Alert: {{ $alert.Labels.alertname }}
+    #       Summary: {{ $alert.Annotations.summary }}
+    #       Description: {{ $alert.Annotations.description }}
+    #     {{ end }}
+    #     {{ end }}
+    #     {{ else -}}
+    #     Status: OK
+    #     {{- end -}}
+
+    #   extraFields:
+    #     - subId: 4
+    #       template: |
+    #         {{- if .Alerts -}}
+    #         Status: NOK
+    #         {{- else -}}
+    #         Status: OK
+    #         {{- end -}}
+    #     - subId: 5
+    #       template: |
+    #         This is a constant
+  service:
+    type: ClusterIP
+    port: 9464

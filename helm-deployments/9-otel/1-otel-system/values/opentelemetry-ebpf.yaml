@@ -1,8 +1,7 @@
 opentelemetry-ebpf:
-  enabled: true
-  fullnameOverride: ""
+  enabled: false
+  fullnameOverride: "otel-ebpf"
   image:
-    tag: ""
     registry: otel
   endpoint:
     port: 4317
@@ -14,33 +13,21 @@ opentelemetry-ebpf:
   kernelCollector:
     enabled: true
     image:
-      registry: ""
       name: opentelemetry-ebpf-kernel-collector
-
-    nodeSelector: {}
     disableHttpMetrics: false
-
   cloudCollector:
     enabled: false
   k8sCollector:
     enabled: true
     relay:
       image:
-        registry: ""
-        tag: ""
         name: opentelemetry-ebpf-k8s-relay
     watcher:
       image:
-        registry: ""
-        tag: ""
         name: opentelemetry-ebpf-k8s-watcher
-
-    tolerations: []
-    affinity: {}
 
   reducer:
     image:
-      registry: ""
       name: opentelemetry-ebpf-reducer
     ingestShards: 1
     matchingShards: 1
