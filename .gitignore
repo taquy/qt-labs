@@ -40,3 +40,7 @@ vmware-fusion-automation/configs/
 *.tgz
 
 terraform-deployments/pihole/tf.plan
+
+*.sol
+
+vagrant-virtualbox-automation/.vagrant

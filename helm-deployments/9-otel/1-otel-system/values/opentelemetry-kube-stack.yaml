@@ -1,6 +1,6 @@
 opentelemetry-kube-stack:
   enabled: false
-  fullnameOverride: ""
+  fullnameOverride: otel-kube-stack
   # Enables a cleanup job to make sure the CRs are uninstalled before the operator
   cleanupJob:
     enabled: true
@@ -52,7 +52,7 @@ opentelemetry-kube-stack:
       suffix: cluster-stats
       replicas: 1
       mode: deployment
-      enabled: true
+      enabled: false
       presets:
         kubernetesAttributes:
           enabled: true

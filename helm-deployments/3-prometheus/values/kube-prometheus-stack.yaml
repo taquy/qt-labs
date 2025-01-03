@@ -1,0 +1,114 @@
+kube-prometheus-stack:
+  enabled: true
+  fullnameOverride: prometheus
+  crds:
+    enabled: true
+  defaultRules:
+    create: true
+    rules:
+      alertmanager: true
+      etcd: true
+      configReloaders: true
+      general: true
+      k8sContainerCpuUsageSecondsTotal: true
+      k8sContainerMemoryCache: true
+      k8sContainerMemoryRss: true
+      k8sContainerMemorySwap: true
+      k8sContainerResource: true
+      k8sContainerMemoryWorkingSetBytes: true
+      k8sPodOwner: true
+      kubeApiserverAvailability: true
+      kubeApiserverBurnrate: true
+      kubeApiserverHistogram: true
+      kubeApiserverSlos: true
+      kubeControllerManager: true
+      kubelet: true
+      kubeProxy: true
+      kubePrometheusGeneral: true
+      kubePrometheusNodeRecording: true
+      kubernetesApps: true
+      kubernetesResources: true
+      kubernetesStorage: true
+      kubernetesSystem: true
+      kubeSchedulerAlerting: true
+      kubeSchedulerRecording: true
+      kubeStateMetrics: true
+      network: true
+      node: true
+      nodeExporterAlerting: true
+      nodeExporterRecording: true
+      prometheus: true
+      prometheusOperator: true
+      windows: true
+
+  alertmanager:
+    enabled: false
+  grafana:
+    enabled: false
+  kubernetesServiceMonitors:
+    enabled: false
+  ## Component scraping the kube api server
+  ##
+  kubeApiServer:
+    enabled: false
+
+  kubelet:
+    enabled: false
+    namespace: kube-system
+
+  kubeControllerManager:
+    enabled: false
+    service:
+      enabled: false
+    serviceMonitor:
+      enabled: false
+    
+  coreDns:
+    enabled: false
+    service:
+      enabled: false
+    serviceMonitor:
+      enabled: false  
+
+  kubeEtcd:
+    enabled: false
+    service:
+      enabled: false
+    serviceMonitor:
+      enabled: false
+
+  kubeScheduler:
+    enabled: false
+    service:
+      enabled: false
+    serviceMonitor:
+      enabled: false
+    
+  kubeProxy:
+    enabled: false
+    service:
+      enabled: false
+    serviceMonitor:
+      enabled: false
+
+  kubeStateMetrics:
+    enabled: true
+
+  nodeExporter:
+    enabled: true
+    forceDeployDashboards: true
+
+  prometheusOperator:
+    enabled: true
+    service:
+      type: ClusterIP
+    kubeletService:
+      enabled: true
+      namespace: kube-system
+    serviceMonitor:
+      selfMonitor: true
+    
+  prometheus:
+    enabled: true
+    ingress:
+      enabled: false
