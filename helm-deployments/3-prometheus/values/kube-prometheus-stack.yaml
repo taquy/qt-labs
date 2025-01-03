@@ -95,7 +95,7 @@ kube-prometheus-stack:
     enabled: true
 
   nodeExporter:
-    enabled: true
+    enabled: false
     forceDeployDashboards: true
 
   prometheusOperator:

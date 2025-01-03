@@ -20,8 +20,3 @@ dependencies:
   condition: alertmanager.enabled
   repository: https://prometheus-community.github.io/helm-charts
   version: 1.13.1
-- name: alertmanager-snmp-notifier
-  alias: alertmanager-snmp-notifier
-  condition: alertmanager-snmp-notifier.enabled
-  repository: https://prometheus-community.github.io/helm-charts
-  version: 0.4.0
