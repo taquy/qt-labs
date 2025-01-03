@@ -447,7 +447,7 @@ prometheus:
             - source_labels: [__meta_kubernetes_pod_node_name]
               action: replace
               target_label: node
-
+ 
   alertmanager:
     enabled: false
   kube-state-metrics:
