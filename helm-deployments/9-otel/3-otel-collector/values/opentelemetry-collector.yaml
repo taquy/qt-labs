@@ -2,7 +2,8 @@ opentelemetry-collector:
   enabled: true
   fullnameOverride: otel-collector
   # Valid values are "daemonset", "deployment", and "statefulset".
-  mode: "statefulset"
+  mode: "deployment"
+  replicaCount: 3
   image:
     repository: "otel/opentelemetry-collector-k8s"
   presets:

@@ -1,0 +1,200 @@
+
+opentelemetry-kube-stack:
+  enabled: true
+  fullnameOverride: "kubestack"
+  cleanupJob:
+    enabled: true
+  crds:
+    install: true
+  opentelemetry-operator:
+    enabled: true
+    crds:
+      create: false
+  collectors:
+    daemon:
+      suffix: daemon
+      mode: daemonset
+      enabled: true
+      scrape_configs_file: "daemon_scrape_configs.yaml"
+      presets:
+        logsCollection:
+          enabled: false
+        kubeletMetrics:
+          enabled: false
+        hostMetrics:
+          enabled: false
+        kubernetesAttributes:
+          enabled: true
+      config:
+        receivers:
+          otlp:
+            protocols:
+              grpc:
+                endpoint: 0.0.0.0:4317
+              http:
+                endpoint: 0.0.0.0:4318
+        processors:
+          batch:
+            send_batch_size: 1000
+            timeout: 1s
+            send_batch_max_size: 1500
+          resourcedetection/env:
+            detectors: [env]
+            timeout: 2s
+            override: false
+        exporters:
+          debug: {}
+
+        service:
+          pipelines:
+            traces:
+              receivers:
+                - otlp
+              processors:
+                - resourcedetection/env
+                - batch
+              exporters:
+                - debug
+            metrics:
+              receivers:
+                - otlp
+              processors:
+                - resourcedetection/env
+                - batch
+              exporters:
+                - debug
+            logs:
+              receivers:
+                - otlp
+              processors:
+                - resourcedetection/env
+                - batch
+              exporters:
+                - debug
+    cluster:
+      suffix: cluster-stats
+      replicas: 1
+      mode: statefulset
+      enabled: false
+      presets:
+        kubernetesAttributes:
+          enabled: true
+        kubernetesEvents:
+          enabled: true
+        clusterMetrics:
+          enabled: true
+      config:
+        receivers: {}
+        processors:
+          batch:
+            send_batch_size: 1000
+            timeout: 1s
+            send_batch_max_size: 1500
+          resourcedetection/env:
+            detectors: [env]
+            timeout: 2s
+            override: false
+        exporters:
+          debug: {}
+        service:
+          pipelines:
+            metrics:
+              receivers: [k8s_cluster]
+              processors: [resourcedetection/env, batch]
+              exporters: [debug]
+            logs:
+              receivers: [k8sobjects]
+              processors: [resourcedetection/env, batch]
+              exporters: [debug]
+  instrumentation:
+    enabled: false
+    exporter:
+      endpoint: http://kubestack-collector:4317
+    resource:
+      addK8sUIDAttributes: true
+
+    propagators:
+      - tracecontext
+      - baggage
+      - b3
+      - b3multi
+      - jaeger
+      - xray
+      - ottrace
+    sampler: {}
+    env: []
+    java: {}
+    nodejs: {}
+    python: {}
+    dotnet: {}
+    go: {}
+  opAMPBridge:
+    enabled: false
+    endpoint: http://opamp-server:8080
+    capabilities:
+      AcceptsOpAMPConnectionSettings: true
+      AcceptsOtherConnectionSettings: true
+      AcceptsRemoteConfig: true
+      AcceptsRestartCommand: true
+      ReportsEffectiveConfig: true
+      ReportsHealth: true
+      ReportsOwnLogs: true
+      ReportsOwnMetrics: true
+      ReportsOwnTraces: true
+      ReportsRemoteConfig: true
+      ReportsStatus: true
+  kubernetesServiceMonitors:
+    enabled: false
+    ignoreNamespaceSelectors: false
+  kubeApiServer:
+    enabled: false
+  kubelet:
+    enabled: false
+    namespace: kube-system
+  kubeControllerManager:
+    enabled: false
+    serviceMonitor:
+      enabled: false
+  coreDns:
+    enabled: false
+    serviceMonitor:
+      enabled: false
+  kubeDns:
+    enabled: false
+    serviceMonitor:
+      enabled: false
+  kubeEtcd:
+    enabled: false
+    serviceMonitor:
+      enabled: false
+  kubeScheduler:
+    enabled: false
+    service:
+      enabled: false
+    serviceMonitor:
+      enabled: false
+  kubeProxy:
+    enabled: false
+    service:
+      enabled: false
+    serviceMonitor:
+      enabled: false
+  kubeStateMetrics:
+    enabled: false
+  kube-state-metrics:
+    selfMonitor:
+      enabled: false
+  nodeExporter:
+    enabled: false
+  prometheus-node-exporter:
+    podLabels:
+      jobLabel: node-exporter
+    releaseLabel: true
+    extraArgs:
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
+      - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$
+    service:
+      portName: http-metrics
+    prometheus:
+      monitor:
+        enabled: false

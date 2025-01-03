@@ -1,17 +1,13 @@
 #!/bin/bash
 
-ns="otel-system"
-chart_name="otel-system"
+ns="otel-collector"
+chart_name="otel-collector"
 kubectl get namespace | grep -q "^$ns " || kubectl create namespace $ns
 
 # install or upgrade the helm charts
 helm install \
-  -f values/opentelemetry-operator.yaml \
   -f values/opentelemetry-collector.yaml \
-  -f values/opentelemetry-kube-stack.yaml \
   --namespace $ns $chart_name . ||
   helm upgrade --namespace $ns \
-  -f values/opentelemetry-operator.yaml \
   -f values/opentelemetry-collector.yaml \
-  -f values/opentelemetry-kube-stack.yaml \
   --namespace $ns $chart_name .
