@@ -1,5 +1,5 @@
 opentelemetry-kube-stack:
-  enabled: false
+  enabled: true
   fullnameOverride: otel-kube-stack
   # Enables a cleanup job to make sure the CRs are uninstalled before the operator
   cleanupJob:
@@ -27,13 +27,6 @@ opentelemetry-kube-stack:
       suffix: daemon
       mode: daemonset
       enabled: true
-      resources:
-        limits:
-          cpu: 100m
-          memory: 250Mi
-        requests:
-          cpu: 100m
-          memory: 128Mi
       # A scrape config file to instruct the daemon collector to pull metrics from any matching targets on the same node with
       # prometheus.io/scrape=true
       # This config also scrapes a running node exporter and the kubelet CAdvisor metrics which aren't currently supported.
@@ -47,7 +40,6 @@ opentelemetry-kube-stack:
           enabled: false
         kubernetesAttributes:
           enabled: false
-
     cluster:
       suffix: cluster-stats
       replicas: 1
@@ -115,54 +107,6 @@ opentelemetry-kube-stack:
 
     # Sampler configuration
     sampler: {}
-  opAMPBridge:
-    # Whether OpAMP bridge is enabled or not
-    enabled: false
-
-    # Adds `opentelemetry.io/opamp-reporting: true` to all collectors
-    addReportingLabel: true
-    # Adds `opentelemetry.io/opamp-managed: true` to all collectors
-    addManagedLabel: false
-
-    # Endpoint for OpAMP server
-    endpoint: http://opamp-server:8080
-
-    # Headers configuration for OpAMP bridge
-    headers: {}
-    # Authorization: Bearer your_access_token
-    # Custom-Header: Custom-Value
-
-    # Capabilities of OpAMP bridge
-    # You can learn more about OpAMP's capabilities here:
-    # https://github.com/open-telemetry/opamp-spec/blob/main/specification.md#agenttoservercapabilities
-    capabilities:
-      AcceptsOpAMPConnectionSettings: true
-      AcceptsOtherConnectionSettings: true
-      AcceptsRemoteConfig: true
-      AcceptsRestartCommand: true
-      ReportsEffectiveConfig: true
-      ReportsHealth: true
-      ReportsOwnLogs: true
-      ReportsOwnMetrics: true
-      ReportsOwnTraces: true
-      ReportsRemoteConfig: true
-      ReportsStatus: true
-
-    # Image for OpAMP bridge
-    image:
-      repository: ghcr.io/open-telemetry/opentelemetry-operator/operator-opamp-bridge
-    # Bridge cluster role configuration
-    # In order to function the bridge is given its default role to
-    # list and get pods and opentelemetry collectors
-    clusterRole:
-      # Whether the bridge cluster role is enabled or not
-      enabled: true
-
-      # Annotations for the bridge cluster role
-      annotations: {}
-
-      # Rules for the bridge cluster role
-      rules: []
   kubernetesServiceMonitors:
     enabled: false
     ignoreNamespaceSelectors: false

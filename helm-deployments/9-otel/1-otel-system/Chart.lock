@@ -5,11 +5,8 @@ dependencies:
 - name: opentelemetry-collector
   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
   version: 0.111.0
-- name: opentelemetry-ebpf
-  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
-  version: 0.1.4
 - name: opentelemetry-kube-stack
   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
   version: 0.3.9
-digest: sha256:e344048413e55479a22fc191ab21f3102538b1205ad7c34f209e57ad14ee753a
-generated: "2025-01-02T16:37:20.259063-05:00"
+digest: sha256:d07f956fd2cbff31c4597c1bb339e2f6166fc7ed7bedd63fb6c9685606003f59
+generated: "2025-01-03T11:55:25.830077-05:00"
