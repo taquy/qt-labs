@@ -10,8 +10,3 @@ dependencies:
   condition: opentelemetry-operator.enabled
   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
   version: 0.75.1
-# - name: opentelemetry-collector
-#   alias: opentelemetry-collector
-#   condition: opentelemetry-collector.enabled
-#   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
-#   version: 0.111.0

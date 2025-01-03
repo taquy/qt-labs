@@ -5,7 +5,7 @@ opentelemetry-collector:
   mode: "deployment"
   replicaCount: 3
   image:
-    repository: "otel/opentelemetry-collector-k8s"
+    repository: otel/opentelemetry-collector-k8s
   presets:
     logsCollection:
       enabled: true
@@ -23,7 +23,7 @@ opentelemetry-collector:
     kubernetesEvents:
       enabled: true
     clusterMetrics:
-      enabled: true
+      enabled: false
   configMap:
     create: true
   config:
@@ -134,12 +134,7 @@ opentelemetry-collector:
       servicePort: 8888
       protocol: TCP
   useGOMEMLIMIT: true
-  replicaCount: 1
   revisionHistoryLimit: 10
-  service:
-    type: ClusterIP
   statefulset:
     persistentVolumeClaimRetentionPolicy:
       enabled: false
-      whenDeleted: Retain
-      whenScaled: Retain
