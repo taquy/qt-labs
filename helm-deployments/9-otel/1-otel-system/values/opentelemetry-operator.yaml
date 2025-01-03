@@ -1,5 +1,5 @@
 opentelemetry-operator:
-  enabled: false
+  enabled: true
   fullnameOverride: otel-operator
   replicaCount: 1
   manager:

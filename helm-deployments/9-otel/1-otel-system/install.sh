@@ -8,12 +8,10 @@ kubectl get namespace | grep -q "^$ns " || kubectl create namespace $ns
 helm install \
   -f values/opentelemetry-operator.yaml \
   -f values/opentelemetry-collector.yaml \
-  -f values/opentelemetry-ebpf.yaml \
   -f values/opentelemetry-kube-stack.yaml \
   --namespace $ns $chart_name . ||
   helm upgrade --namespace $ns \
   -f values/opentelemetry-operator.yaml \
   -f values/opentelemetry-collector.yaml \
-  -f values/opentelemetry-ebpf.yaml \
   -f values/opentelemetry-kube-stack.yaml \
   --namespace $ns $chart_name .
