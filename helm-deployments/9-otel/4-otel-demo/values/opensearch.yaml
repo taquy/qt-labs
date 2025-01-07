@@ -13,15 +13,9 @@ opensearch:
       value: "true"
     - name: "DISABLE_SECURITY_PLUGIN"
       value: "true"
-    # - name: "LD_BIND_NOW"
-    #   value: "1"
   image:
     repository: "opensearchproject/opensearch"
     tag: "2.0.0"
-  resources:
-    limits:
-      memory: 1Gi
   persistence:
     enabled: false
-  opensearchJavaOpts: "-Xmx512M -Xms512M -XX:UseSVE=0"
     

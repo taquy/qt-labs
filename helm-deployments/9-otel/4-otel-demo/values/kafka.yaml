@@ -1,0 +1,44 @@
+kafka:
+  enabled: true
+  listeners:
+    client:
+      containerPort: 9092
+      protocol: PLAINTEXT
+    controller:
+      name: CONTROLLER
+      containerPort: 9093
+      protocol: PLAINTEXT
+    interbroker:
+      containerPort: 9094
+      protocol: PLAINTEXT
+    external:
+      containerPort: 9095
+      protocol: PLAINTEXT
+
+  controller:
+    replicaCount: 1
+    persistence:
+      enabled: false
+    
+  broker:
+    replicaCount: 1
+    persistence:
+      enabled: false
+
+  provisioning:
+    enabled: false
+    numPartitions: 1
+    replicationFactor: 1
+    topics: []
+
+  kraft:
+    enabled: true
+    clusterId: "1"
+    
+  extraEnvVars:
+    - name: KAFKA_ADVERTISED_LISTENERS
+      value: 'PLAINTEXT://otel-demo-kafka:9092'
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: http://$(OTEL_COLLECTOR_NAME):4318
+    - name: KAFKA_HEAP_OPTS
+      value: "-Xmx400M -Xms400M"

@@ -1,9 +1,15 @@
 dependencies:
-- name: opentelemetry-demo
-  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
-  version: 0.33.8
 - name: opensearch
   repository: https://opensearch-project.github.io/helm-charts/
   version: 2.30.0
-digest: sha256:b24983383c12a3cbb4ba2d9611a1d6f71a89e6ca769d192346f6aec8117f8cf4
-generated: "2025-01-04T23:35:33.414207-05:00"
+- name: kafka
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 31.1.1
+- name: valkey
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 2.2.1
+- name: opentelemetry-demo
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.33.8
+digest: sha256:0319ff0ee9bae3f87ef52b5b620a329a231012e396193e1b462623c49c9e89cc
+generated: "2025-01-07T16:35:27.340278-05:00"
