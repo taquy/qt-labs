@@ -33,6 +33,7 @@ ansible-playbook -i inventories.yaml -K playbooks/1-pre-installation.yaml
 ansible-playbook -i inventories.yaml -K playbooks/2.1-setup-loadbalancer.yaml
 ansible-playbook -i inventories.yaml -K playbooks/2.2-setup-dns.yaml
 ansible-playbook -i inventories.yaml -K playbooks/2.3-setup-nfs-server.yaml
+ansible-playbook -i inventories.yaml -K playbooks/2.4-setup-db.yaml
 ansible-playbook -i inventories.yaml -K playbooks/3.1-upload-tokens.yaml
 ansible-playbook -i inventories.yaml -K playbooks/3.2-setup-masters.yaml
 ansible-playbook -i inventories.yaml -K playbooks/3.3-setup-workers.yaml

@@ -1,0 +1,94 @@
+- name: Install Databases
+  hosts: 'databases'
+  become: true
+  tasks:
+  # - name: Install Postgresql
+  #   shell: |
+  #     apt update -y && apt upgrade -y
+  #     apt install -y postgresql-16
+  # - name: Check if file exists postgresql.conf.bak
+  #   stat:
+  #     path: /etc/postgresql/16/main/postgresql.conf.bak
+  #   register: p
+  # - name: Copy file postgresql.conf.bak if not exists
+  #   command: cp /etc/postgresql/16/main/postgresql.conf /etc/postgresql/16/main/postgresql.conf.bak
+  #   when: p.stat.exists == False
+  # - name: Refresh backup file postgresql.conf.bak
+  #   command: cp /etc/postgresql/16/main/postgresql.conf.bak /etc/postgresql/16/main/postgresql.conf
+  #   when: p.stat.exists == True
+  # - name: Check if file exists pg_hba.conf.bak
+  #   stat:
+  #     path: /etc/postgresql/16/main/pg_hba.conf.bak
+  #   register: p
+  # - name: Copy file pg_hba.conf.bak if not exists
+  #   command: cp /etc/postgresql/16/main/pg_hba.conf /etc/postgresql/16/main/pg_hba.conf.bak
+  #   when: p.stat.exists == False
+  # - name: Refresh backup file pg_hba.conf.bak
+  #   command: cp /etc/postgresql/16/main/pg_hba.conf.bak /etc/postgresql/16/main/pg_hba.conf
+  #   when: p.stat.exists == True
+  # - name: Configure PostgreSQL to allow all access to postgres user (no authentication)
+  #   shell: |
+  #     FILE=/etc/postgresql/16/main/postgresql.conf
+  #     cat ${FILE} | sed -e "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" > ${FILE}.2
+  #     cp ${FILE}.2 ${FILE} && rm ${FILE}.2
+  #     FILE=/etc/postgresql/16/main/pg_hba.conf
+  #     cat ${FILE} | sed -e "s/127.0.0.1\/32/0.0.0.0\/0/" > ${FILE}.2
+  #     cat ${FILE}.2 | sed -e "s/scram-sha-256/trust/" > ${FILE}.3 && rm ${FILE}.2
+  #     cat ${FILE}.3 | sed -e "s/peer/trust/" > ${FILE}.4 && rm ${FILE}.3
+  #     cp ${FILE}.4 ${FILE} && rm ${FILE}.4
+  #     systemctl restart postgresql
+  # - name: Set password for postgres (in case we want to enable authentication in future)
+  #   shell: |
+  #     sudo psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'root1234';"
+  # - name: Install Opensearch dependencies
+  #   apt:
+  #     pkg:
+  #     - curl
+  #     - lsb-release
+  #     - ca-certificates
+  # - name: Add docker repository
+  #   shell: |
+  #     for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
+  #     sudo apt-get -y update
+  #     sudo install -y -m 0755 -d /etc/apt/keyrings
+  #     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  #     sudo chmod a+r /etc/apt/keyrings/docker.asc
+  #     echo \
+  #       "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  #       $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  #       sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  #     sudo apt-get update -y
+  # - name: Install Docker
+  #   apt:
+  #     pkg:
+  #       - docker-ce
+  #       - docker-ce-cli
+  #       - containerd.io
+  #       - docker-buildx-plugin
+  #       - docker-compose-plugin
+  # - name: Install Docker compose
+  #   shell: |
+  #     curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  #     chmod +x /usr/local/bin/docker-compose
+  #     groupadd docker
+  #     usermod -aG docker qt
+  - name: Upload PgAdmin4 docker compose
+    copy:
+      src: ../templates/docker-compose-pgadmin.yaml
+      dest: /home/qt/docker-compose-pgadmin.yaml
+  - name: Upload PgAdmin4 servers.json
+    copy:
+      src: ../templates/pgadmin4-servers.json
+      dest: /home/qt/pgadmin4-servers.json
+  - name: Install PgAdmin4
+    shell: |
+      FILE=/home/qt/docker-compose-pgadmin.yaml
+      docker-compose -f $FILE down && docker-compose -f $FILE up -d
+  # - name: Upload OpenSearch docker compose
+  #   copy:
+  #     src: ../templates/docker-compose-opensearch.yaml
+  #     dest: /home/qt/docker-compose-opensearch.yaml
+  # - name: Run Opensearch 
+  #   shell: |
+  #     docker-compose -f docker-compose-opensearch.yaml up -d
+  #   chdir: /home/qt/

@@ -1,0 +1,19 @@
+{
+  "Servers": {
+      "1": {
+          "Name": "Fully Defined Server",
+          "Group": "Server Group 2",
+          "Host": "localhost",
+          "HostAddr": "192.168.19.155",
+          "Port": 5432,
+          "MaintenanceDB": "postgres",
+          "Username": "postgres",
+          "SSLMode": "prefer",
+          "Comment": "This server has every option configured in the JSON",
+          "Shared": true,
+          "SharedUsername": "postgres",
+          "BGColor": "#ff9900",
+          "FGColor": "#000000"
+      }
+  }
+}

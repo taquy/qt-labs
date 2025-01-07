@@ -1,0 +1,27 @@
+opensearch:
+  enabled: true
+  clusterName: demo-cluster
+  nodeGroup: otel-demo
+  singleNode: true
+  masterService: "opensearch-cluster-master"
+  fullnameOverride: otel-demo-opensearch
+  replicas: 1
+  extraEnvs:
+    - name: "bootstrap.memory_lock"
+      value: "true"
+    - name: "DISABLE_INSTALL_DEMO_CONFIG"
+      value: "true"
+    - name: "DISABLE_SECURITY_PLUGIN"
+      value: "true"
+    # - name: "LD_BIND_NOW"
+    #   value: "1"
+  image:
+    repository: "opensearchproject/opensearch"
+    tag: "2.0.0"
+  resources:
+    limits:
+      memory: 1Gi
+  persistence:
+    enabled: false
+  opensearchJavaOpts: "-Xmx512M -Xms512M -XX:UseSVE=0"
+    
