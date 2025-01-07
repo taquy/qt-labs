@@ -23,5 +23,5 @@ for root, dirs, files in os.walk(vm_dir):
 # start vms
 for filepath in Path(vm_dir).glob('*vmwarevm'):
   fn = filepath.absolute()
-  subprocess.run(['vmrun', 'start', fn, 'nogui'])
+  subprocess.run(['vmrun', 'stop', fn,])
 

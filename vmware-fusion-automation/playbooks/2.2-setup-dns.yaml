@@ -8,7 +8,6 @@
 - name: Uninstall pihole
   import_playbook: subs/remove-pihole.yaml
   when: not hostvars.localhost.pihole.enabled
-
 - name: Reboot DNS server
   hosts: 'dns'
   become: true
