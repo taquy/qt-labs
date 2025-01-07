@@ -10,6 +10,16 @@ dependencies:
   condition: opensearch.enabled
   repository: https://opensearch-project.github.io/helm-charts/
   version: 2.30.0
+- name: kafka
+  alias: kafka
+  condition: kafka.enabled
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 31.1.1
+- name: valkey
+  alias: valkey
+  condition: valkey.enabled
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 2.2.1
 - name: opentelemetry-demo
   alias: opentelemetry-demo
   condition: opentelemetry-demo.enabled

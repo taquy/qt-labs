@@ -25,7 +25,7 @@ opentelemetry-demo:
         env: true
       env:
         - name: KAFKA_SERVICE_ADDR
-          value: '{{ include "otel-demo.name" . }}-kafka:9092'
+          value: 'otel-demo-kafka:9092'
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4318
       resources:
@@ -34,7 +34,7 @@ opentelemetry-demo:
       initContainers:
         - name: wait-for-kafka
           image: busybox:latest
-          command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-kafka 9092; do echo waiting for kafka; sleep 2; done;']
+          command: ['sh', '-c', 'until nc -z -v -w30 otel-demo-kafka 9092; do echo waiting for kafka; sleep 2; done;']
 
     adService:
       enabled: true
@@ -106,7 +106,7 @@ opentelemetry-demo:
         - name: SHIPPING_SERVICE_ADDR
           value: '{{ include "otel-demo.name" . }}-shippingservice:8080'
         - name: KAFKA_SERVICE_ADDR
-          value: '{{ include "otel-demo.name" . }}-kafka:9092'
+          value: 'otel-demo-kafka:9092'
         - name: FLAGD_HOST
           value: '{{ include "otel-demo.name" . }}-flagd'
         - name: FLAGD_PORT
@@ -119,7 +119,7 @@ opentelemetry-demo:
       initContainers:
         - name: wait-for-kafka
           image: busybox:latest
-          command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-kafka 9092; do echo waiting for kafka; sleep 2; done;']
+          command: ['sh', '-c', 'until nc -z -v -w30 otel-demo-kafka 9092; do echo waiting for kafka; sleep 2; done;']
 
     currencyService:
       enabled: true
@@ -155,7 +155,7 @@ opentelemetry-demo:
         env: true
       env:
         - name: KAFKA_SERVICE_ADDR
-          value: '{{ include "otel-demo.name" . }}-kafka:9092'
+          value: 'otel-demo-kafka:9092'
         - name: FLAGD_HOST
           value: '{{ include "otel-demo.name" . }}-flagd'
         - name: FLAGD_PORT
@@ -168,7 +168,7 @@ opentelemetry-demo:
       initContainers:
         - name: wait-for-kafka
           image: busybox:latest
-          command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-kafka 9092; do echo waiting for kafka; sleep 2; done;']
+          command: ['sh', '-c', 'until nc -z -v -w30 otel-demo-kafka 9092; do echo waiting for kafka; sleep 2; done;']
 
     frontend:
       enabled: true
@@ -480,22 +480,8 @@ opentelemetry-demo:
             name: '{{ include "otel-demo.name" . }}-flagd-config'
 
     kafka:
-      enabled: true
-      useDefault:
-        env: true
-      replicas: 1
-      ports:
-        - name: plaintext
-          value: 9092
-        - name: controller
-          value: 9093
-      env:
-        - name: KAFKA_ADVERTISED_LISTENERS
-          value: 'PLAINTEXT://{{ include "otel-demo.name" . }}-kafka:9092'
-        - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: http://$(OTEL_COLLECTOR_NAME):4318
-        - name: KAFKA_HEAP_OPTS
-          value: "-Xmx400M -Xms400M"
+      enabled: false
+
     valkey:
       enabled: true
       useDefault:
@@ -560,12 +546,12 @@ opentelemetry-demo:
         #   endpoint: 'http://{{ include "otel-demo.name" . }}-prometheus-server:9090/api/v1/otlp'
         #   tls:
         #     insecure: true
-        # opensearch:
-        #   logs_index: otel
-        #   http:
-        #     endpoint: "http://otel-demo-opensearch:9200"
-        #     tls:
-        #       insecure: true
+        opensearch:
+          logs_index: otel
+          http:
+            endpoint: "http://otel-demo-opensearch:9200"
+            tls:
+              insecure: true
 
       processors:
         transform:

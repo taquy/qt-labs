@@ -8,8 +8,12 @@ kubectl get namespace | grep -q "^$ns " || kubectl create namespace $ns
 helm install \
   -f values/opentelemetry-demo.yaml \
   -f values/opensearch.yaml \
+  -f values/kafka.yaml \
+  -f values/valkey.yaml \
   --namespace $ns $chart_name . ||
   helm upgrade --namespace $ns \
   -f values/opentelemetry-demo.yaml \
   -f values/opensearch.yaml \
+  -f values/kafka.yaml \
+  -f values/valkey.yaml \
   --namespace $ns $chart_name .
