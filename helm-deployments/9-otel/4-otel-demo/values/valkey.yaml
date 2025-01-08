@@ -1,6 +1,6 @@
 valkey:
   enabled: true
-  architecture: replication
+  architecture: standalone
   auth:
     enabled: false
   primary:
@@ -8,7 +8,6 @@ valkey:
     persistence:
       enabled: false
   replica:
-    replicaCount: 3
+    replicaCount: 0
     persistence:
       enabled: false
-      

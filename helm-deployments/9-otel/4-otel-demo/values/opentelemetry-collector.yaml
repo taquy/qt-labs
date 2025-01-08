@@ -1,0 +1,88 @@
+opentelemetry-collector:
+  enabled: true
+  nameOverride: ""
+  fullnameOverride: ""
+  mode: "deployment"
+  presets:
+    kubernetesAttributes:
+      enabled: true
+      extractAllPodLabels: false
+      extractAllPodAnnotations: false
+  image:
+    repository: "otel/opentelemetry-collector-contrib"
+    # repository: otel/opentelemetry-collector-k8s
+  replicaCount: 1
+  service:
+    type: ClusterIP
+  config:
+    receivers:
+      otlp:
+        protocols:
+          http:
+            cors:
+              allowed_origins:
+                - "http://*"
+                - "https://*"
+      httpcheck/frontendproxy:
+        targets:
+          - endpoint: 'http://otel-demo-frontendproxy:8080'
+      redis:
+        endpoint: "valkey-cart:6379"
+        collection_interval: 10s
+
+    exporters:
+      otlp:
+        endpoint: 'otel-demo-jaeger-collector:4317'
+        tls:
+          insecure: true
+      otlphttp/prometheus:
+        endpoint: 'http://otel-demo-prometheus-server:9090/api/v1/otlp'
+        tls:
+          insecure: true
+      opensearch:
+        logs_index: otel
+        http:
+          endpoint: "http://otel-demo-opensearch:9200"
+          tls:
+            insecure: true
+
+    processors:
+      transform:
+        error_mode: ignore
+        trace_statements:
+          - context: span
+            statements:
+              - replace_pattern(name, "\\?.*", "")
+              - replace_match(name, "GET /api/products/*", "GET /api/products/{productId}")
+      resource:
+        attributes:
+        - key: service.instance.id
+          from_attribute: k8s.pod.uid
+          action: insert
+    connectors:
+      spanmetrics: {}
+    service:
+      pipelines:
+        traces:
+          processors: [memory_limiter, resource, transform, batch]
+          exporters: [otlp, debug, spanmetrics]
+        metrics:
+          receivers: [httpcheck/frontendproxy, redis, otlp, spanmetrics]
+          processors: [memory_limiter, resource, batch]
+          exporters: [otlphttp/prometheus, debug]
+        logs:
+          processors: [memory_limiter, resource, batch]
+          exporters: [opensearch, debug]
+
+  ports:
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+      containerPort: 9464
+      servicePort: 9464
+      protocol: TCP
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9464"
+    opentelemetry_community_demo: "true"
