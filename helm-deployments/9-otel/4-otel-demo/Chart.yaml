@@ -20,6 +20,16 @@ dependencies:
   condition: valkey.enabled
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 2.2.1
+- name: jaeger
+  alias: jaeger
+  condition: jaeger.enabled
+  repository: https://jaegertracing.github.io/helm-charts
+  version: 3.3.3
+- name: prometheus
+  alias: prometheus
+  condition: prometheus.enabled
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 26.1.0
 - name: opentelemetry-demo
   alias: opentelemetry-demo
   condition: opentelemetry-demo.enabled
