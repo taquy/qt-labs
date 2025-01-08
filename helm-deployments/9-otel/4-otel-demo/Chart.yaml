@@ -30,6 +30,21 @@ dependencies:
   condition: prometheus.enabled
   repository: https://prometheus-community.github.io/helm-charts
   version: 26.1.0
+- name: grafana
+  alias: grafana
+  condition: grafana.enabled
+  repository: https://grafana.github.io/helm-charts
+  version: 8.8.2
+- name: open-feature-operator
+  alias: flagd
+  condition: flagd.enabled
+  repository: https://open-feature.github.io/open-feature-operator/
+  version: v0.8.1
+- name: opentelemetry-collector
+  alias: opentelemetry-collector
+  condition: opentelemetry-collector.enabled
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.111.1
 - name: opentelemetry-demo
   alias: opentelemetry-demo
   condition: opentelemetry-demo.enabled
