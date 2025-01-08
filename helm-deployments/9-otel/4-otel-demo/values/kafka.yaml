@@ -34,11 +34,11 @@ kafka:
   kraft:
     enabled: true
     clusterId: "1"
-    
+
   extraEnvVars:
     - name: KAFKA_ADVERTISED_LISTENERS
       value: 'PLAINTEXT://otel-demo-kafka:9092'
     - name: OTEL_EXPORTER_OTLP_ENDPOINT
       value: http://$(OTEL_COLLECTOR_NAME):4318
-    - name: KAFKA_HEAP_OPTS
-      value: "-Xmx400M -Xms400M"
+
+  heapOpts: "-Xmx400M -Xms400M"

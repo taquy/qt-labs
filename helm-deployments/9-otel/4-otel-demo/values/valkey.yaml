@@ -1,23 +1,14 @@
 valkey:
   enabled: true
-  global:
-    defaultStorageClass: ""
-    valkey:
-      password: ""
-  fullnameOverride: ""
   architecture: replication
   auth:
     enabled: false
   primary:
     replicaCount: 1
-    kind: StatefulSet
     persistence:
       enabled: false
   replica:
-    kind: StatefulSet
     replicaCount: 3
     persistence:
-      ## @param replica.persistence.enabled Enable persistence on Valkey replicas nodes using Persistent Volume Claims
-      ##
       enabled: false
       

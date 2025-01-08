@@ -28,9 +28,6 @@ opentelemetry-demo:
           value: 'otel-demo-kafka:9092'
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4318
-      resources:
-        limits:
-          memory: 120Mi
       initContainers:
         - name: wait-for-kafka
           image: busybox:latest
@@ -38,8 +35,6 @@ opentelemetry-demo:
 
     adService:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8080
       env:
@@ -53,14 +48,8 @@ opentelemetry-demo:
           value: http://$(OTEL_COLLECTOR_NAME):4318
         - name: OTEL_LOGS_EXPORTER
           value: otlp
-      resources:
-        limits:
-          memory: 300Mi
-
     cartService:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8080
       env:
@@ -69,20 +58,17 @@ opentelemetry-demo:
         - name: ASPNETCORE_URLS
           value: http://*:$(CART_SERVICE_PORT)
         - name: VALKEY_ADDR
-          value: '{{ include "otel-demo.name" . }}-valkey:6379'
+          value: 'otel-demo-valkey-primary:6379'
         - name: FLAGD_HOST
           value: '{{ include "otel-demo.name" . }}-flagd'
         - name: FLAGD_PORT
           value: "8013"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4317
-      resources:
-        limits:
-          memory: 160Mi
       initContainers:
         - name: wait-for-valkey
           image: busybox:latest
-          command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-valkey 6379; do echo waiting for valkey; sleep 2; done;']
+          command: ['sh', '-c', 'until nc -z -v -w30 otel-demo-valkey-primary 6379; do echo waiting for valkey; sleep 2; done;']
 
     checkoutService:
       enabled: true
@@ -123,8 +109,6 @@ opentelemetry-demo:
 
     currencyService:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8080
       env:
@@ -137,8 +121,6 @@ opentelemetry-demo:
 
     emailService:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8080
       env:
@@ -151,8 +133,6 @@ opentelemetry-demo:
 
     frauddetectionService:
       enabled: true
-      useDefault:
-        env: true
       env:
         - name: KAFKA_SERVICE_ADDR
           value: 'otel-demo-kafka:9092'
@@ -162,9 +142,6 @@ opentelemetry-demo:
           value: "8013"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4318
-      resources:
-        limits:
-          memory: 300Mi
       initContainers:
         - name: wait-for-kafka
           image: busybox:latest
@@ -207,18 +184,9 @@ opentelemetry-demo:
           value: frontend-web
         - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
           value: http://localhost:8080/otlp-http/v1/traces             # This expects users to use `kubectl port-forward ...`
-      resources:
-        limits:
-          memory: 250Mi
-      securityContext:
-        runAsUser: 1001  # nextjs
-        runAsGroup: 1001
-        runAsNonRoot: true
 
     frontendProxy:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8080
       env:
@@ -258,18 +226,9 @@ opentelemetry-demo:
           value: "4317"
         - name: OTEL_COLLECTOR_PORT_HTTP
           value: "4318"
-      resources:
-        limits:
-          memory: 50Mi
-      securityContext:
-        runAsUser: 101  # envoy
-        runAsGroup: 101
-        runAsNonRoot: true
 
     imageprovider:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8081
       env:
@@ -279,14 +238,9 @@ opentelemetry-demo:
           value: "4317"
         - name: OTEL_COLLECTOR_HOST
           value: $(OTEL_COLLECTOR_NAME)
-      resources:
-        limits:
-          memory: 50Mi
 
     loadgenerator:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8089
       env:
@@ -318,8 +272,6 @@ opentelemetry-demo:
 
     paymentService:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8080
       env:
@@ -331,18 +283,9 @@ opentelemetry-demo:
           value: "8013"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4317
-      resources:
-        limits:
-          memory: 120Mi
-      securityContext:
-        runAsUser: 1000  # node
-        runAsGroup: 1000
-        runAsNonRoot: true
 
     productCatalogService:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8080
       env:
@@ -360,8 +303,6 @@ opentelemetry-demo:
 
     quoteService:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8080
       env:
@@ -381,8 +322,6 @@ opentelemetry-demo:
 
     recommendationService:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8080
       env:
@@ -406,8 +345,6 @@ opentelemetry-demo:
 
     shippingService:
       enabled: true
-      useDefault:
-        env: true
       service:
         port: 8080
       env:
@@ -426,8 +363,6 @@ opentelemetry-demo:
       imageOverride:
         repository: "ghcr.io/open-feature/flagd"
         tag: "v0.11.1"
-      useDefault:
-        env: true
       replicas: 1
       service:
         port: 8013
@@ -450,8 +385,6 @@ opentelemetry-demo:
       # flgad-ui as a sidecar container in the same pod so the flag json file can be shared
       sidecarContainers:
         - name: flagdui
-          useDefault:
-            env: true
           service:
             port: 4000
           env:
@@ -459,12 +392,6 @@ opentelemetry-demo:
               value: otel
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://$(OTEL_COLLECTOR_NAME):4318
-          resources:
-            limits:
-              memory: 75Mi
-          volumeMounts:
-            - name: config-rw
-              mountPath: /app/data
       initContainers:
         - name: init-config
           image: busybox
@@ -478,21 +405,10 @@ opentelemetry-demo:
         - name: config-ro
           configMap:
             name: '{{ include "otel-demo.name" . }}-flagd-config'
-
     kafka:
       enabled: false
-
     valkey:
-      enabled: true
-      useDefault:
-        env: true
-      imageOverride:
-        repository: "valkey/valkey"
-        tag: "7.2-alpine"
-      replicas: 1
-      ports:
-        - name: valkey
-          value: 6379
+      enabled: false
   opentelemetry-collector:
     image:
       repository: "otel/opentelemetry-collector-contrib"
@@ -502,11 +418,6 @@ opentelemetry-demo:
     presets:
       kubernetesAttributes:
         enabled: true
-    resources:
-      limits:
-        memory: 200Mi
-    service:
-      type: ClusterIP
     ports:
       metrics:
         enabled: true
@@ -534,7 +445,6 @@ opentelemetry-demo:
         redis:
           endpoint: "valkey-cart:6379"
           collection_interval: 10s
-
       exporters:
         ## Create an exporter to Jaeger using the standard `otlp` export format
         otlp:
@@ -586,103 +496,8 @@ opentelemetry-demo:
 
   jaeger:
     enabled: false
-    provisionDataStore:
-      cassandra: false
-    allInOne:
-      enabled: true
-      args:
-        - "--memory.max-traces=5000"
-        - "--query.base-path=/jaeger/ui"
-        - "--prometheus.server-url=http://{{ include \"otel-demo.name\" . }}-prometheus-server:9090"
-        - "--prometheus.query.normalize-calls=true"
-        - "--prometheus.query.normalize-duration=true"
-      extraEnv:
-        - name: METRICS_STORAGE_TYPE
-          value: prometheus
-        - name: COLLECTOR_OTLP_GRPC_HOST_PORT
-          value: 0.0.0.0:4317
-        - name: COLLECTOR_OTLP_HTTP_HOST_PORT
-          value: 0.0.0.0:4318
-      resources:
-        limits:
-          memory: 400Mi
-    storage:
-      type: memory
-    agent:
-      enabled: false
-    collector:
-      enabled: false
-    query:
-      enabled: false
-
   prometheus:
     enabled: false
-    alertmanager:
-      enabled: false
-    configmapReload:
-      prometheus:
-        enabled: false
-    kube-state-metrics:
-      enabled: false
-    prometheus-node-exporter:
-      enabled: false
-    prometheus-pushgateway:
-      enabled: false
-
-    server:
-      extraFlags:
-        - "enable-feature=exemplar-storage"
-        - "web.enable-otlp-receiver"
-      global:
-        scrape_interval: 5s
-        scrape_timeout: 3s
-        evaluation_interval: 30s
-      tsdb:
-        out_of_order_time_window: 30m
-      prometheus.yml:
-        otlp:
-          keep_identifying_resource_attributes: true
-          # Recommended attributes to be promoted to labels.
-          promote_resource_attributes:
-            - service.instance.id
-            - service.name
-            - service.namespace
-            - cloud.availability_zone
-            - cloud.region
-            - container.name
-            - deployment.environment.name
-            - k8s.cluster.name
-            - k8s.container.name
-            - k8s.cronjob.name
-            - k8s.daemonset.name
-            - k8s.deployment.name
-            - k8s.job.name
-            - k8s.namespace.name
-            - k8s.pod.name
-            - k8s.replicaset.name
-            - k8s.statefulset.name
-      persistentVolume:
-        enabled: false
-      service:
-        servicePort: 9090
-      resources:
-        limits:
-          memory: 300Mi
-
-    serverFiles:
-      prometheus.yml:
-        scrape_configs:
-          - job_name: 'otel-collector'
-            honor_labels: true
-            kubernetes_sd_configs:
-              - role: pod
-                namespaces:
-                  own_namespace: true
-            relabel_configs:
-              - source_labels: [__meta_kubernetes_pod_annotation_opentelemetry_community_demo]
-                action: keep
-                regex: true
-
   grafana:
     enabled: false
     testFramework:
