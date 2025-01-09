@@ -1,5 +1,5 @@
 opentelemetry-demo:
-  enabled: false
+  enabled: true
   # yaml-language-server: $schema=./values.schema.json
   default:
     # List of environment variables applied to all components
@@ -10,7 +10,7 @@ opentelemetry-demo:
             apiVersion: v1
             fieldPath: "metadata.labels['app.kubernetes.io/component']"
       - name: OTEL_COLLECTOR_NAME
-        value: '{{ include "otel-demo.name" . }}-otelcol'
+        value: 'otel-colletor'
       - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
         value: cumulative
       - name: OTEL_RESOURCE_ATTRIBUTES
@@ -37,15 +37,6 @@ opentelemetry-demo:
       tolerations: []
     # Default securityContext for all components
     securityContext: {}
-
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: true
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
 
   components:
     ## Demo Components are named objects (services) with several properties
@@ -164,7 +155,7 @@ opentelemetry-demo:
         env: true
       env:
         - name: KAFKA_SERVICE_ADDR
-          value: '{{ include "otel-demo.name" . }}-kafka:9092'
+          value: 'deps-kafka:9092'
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4318
       resources:
@@ -173,7 +164,7 @@ opentelemetry-demo:
       initContainers:
         - name: wait-for-kafka
           image: busybox:latest
-          command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-kafka 9092; do echo waiting for kafka; sleep 2; done;']
+          command: ['sh', '-c', 'until nc -z -v -w30 deps-kafka 9092; do echo waiting for kafka; sleep 2; done;']
 
     adService:
       enabled: true
@@ -208,7 +199,7 @@ opentelemetry-demo:
         - name: ASPNETCORE_URLS
           value: http://*:$(CART_SERVICE_PORT)
         - name: VALKEY_ADDR
-          value: '{{ include "otel-demo.name" . }}-valkey:6379'
+          value: 'valkey-primary:6379'
         - name: FLAGD_HOST
           value: '{{ include "otel-demo.name" . }}-flagd'
         - name: FLAGD_PORT
@@ -221,7 +212,7 @@ opentelemetry-demo:
       initContainers:
         - name: wait-for-valkey
           image: busybox:latest
-          command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-valkey 6379; do echo waiting for valkey; sleep 2; done;']
+          command: ['sh', '-c', 'until nc -z -v -w30 valkey-primary 6379; do echo waiting for valkey; sleep 2; done;']
 
     checkoutService:
       enabled: true
@@ -245,7 +236,7 @@ opentelemetry-demo:
         - name: SHIPPING_SERVICE_ADDR
           value: '{{ include "otel-demo.name" . }}-shippingservice:8080'
         - name: KAFKA_SERVICE_ADDR
-          value: '{{ include "otel-demo.name" . }}-kafka:9092'
+          value: 'deps-kafka:9092'
         - name: FLAGD_HOST
           value: '{{ include "otel-demo.name" . }}-flagd'
         - name: FLAGD_PORT
@@ -258,7 +249,7 @@ opentelemetry-demo:
       initContainers:
         - name: wait-for-kafka
           image: busybox:latest
-          command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-kafka 9092; do echo waiting for kafka; sleep 2; done;']
+          command: ['sh', '-c', 'until nc -z -v -w30 deps-kafka 9092; do echo waiting for kafka; sleep 2; done;']
 
     currencyService:
       enabled: true
@@ -300,7 +291,7 @@ opentelemetry-demo:
         env: true
       env:
         - name: KAFKA_SERVICE_ADDR
-          value: '{{ include "otel-demo.name" . }}-kafka:9092'
+          value: 'deps-kafka:9092'
         - name: FLAGD_HOST
           value: '{{ include "otel-demo.name" . }}-flagd'
         - name: FLAGD_PORT
@@ -313,7 +304,7 @@ opentelemetry-demo:
       initContainers:
         - name: wait-for-kafka
           image: busybox:latest
-          command: ['sh', '-c', 'until nc -z -v -w30 {{ include "otel-demo.name" . }}-kafka 9092; do echo waiting for kafka; sleep 2; done;']
+          command: ['sh', '-c', 'until nc -z -v -w30 deps-kafka 9092; do echo waiting for kafka; sleep 2; done;']
 
     frontend:
       enabled: true
@@ -352,13 +343,6 @@ opentelemetry-demo:
           value: frontend-web
         - name: PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
           value: http://localhost:8080/otlp-http/v1/traces             # This expects users to use `kubectl port-forward ...`
-      resources:
-        limits:
-          memory: 250Mi
-      securityContext:
-        runAsUser: 1001  # nextjs
-        runAsGroup: 1001
-        runAsNonRoot: true
 
     frontendProxy:
       enabled: true
@@ -382,7 +366,7 @@ opentelemetry-demo:
         - name: FRONTEND_PORT
           value: "8080"
         - name: GRAFANA_SERVICE_HOST
-          value: '{{ include "otel-demo.name" . }}-grafana'
+          value: 'otel-demo-grafana'
         - name: GRAFANA_SERVICE_PORT
           value: "80"
         - name: IMAGE_PROVIDER_HOST
@@ -390,7 +374,7 @@ opentelemetry-demo:
         - name: IMAGE_PROVIDER_PORT
           value: "8081"
         - name: JAEGER_SERVICE_HOST
-          value: '{{ include "otel-demo.name" . }}-jaeger-query'
+          value: 'jaeger-query'
         - name: JAEGER_SERVICE_PORT
           value: "16686"
         - name: LOCUST_WEB_HOST
@@ -403,14 +387,7 @@ opentelemetry-demo:
           value: "4317"
         - name: OTEL_COLLECTOR_PORT_HTTP
           value: "4318"
-      resources:
-        limits:
-          memory: 50Mi
-      securityContext:
-        runAsUser: 101  # envoy
-        runAsGroup: 101
-        runAsNonRoot: true
-
+  
     imageprovider:
       enabled: true
       useDefault:
@@ -424,10 +401,7 @@ opentelemetry-demo:
           value: "4317"
         - name: OTEL_COLLECTOR_HOST
           value: $(OTEL_COLLECTOR_NAME)
-      resources:
-        limits:
-          memory: 50Mi
-
+    
     loadgenerator:
       enabled: true
       useDefault:
@@ -457,10 +431,7 @@ opentelemetry-demo:
           value: "8013"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4317
-      resources:
-        limits:
-          memory: 1500Mi
-
+ 
     paymentService:
       enabled: true
       useDefault:
@@ -476,14 +447,7 @@ opentelemetry-demo:
           value: "8013"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4317
-      resources:
-        limits:
-          memory: 120Mi
-      securityContext:
-        runAsUser: 1000  # node
-        runAsGroup: 1000
-        runAsNonRoot: true
-
+ 
     productCatalogService:
       enabled: true
       useDefault:
@@ -499,10 +463,7 @@ opentelemetry-demo:
           value: "8013"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4317
-      resources:
-        limits:
-          memory: 20Mi
-
+ 
     quoteService:
       enabled: true
       useDefault:
@@ -545,9 +506,6 @@ opentelemetry-demo:
           value: "8013"
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4317
-      resources:
-        limits:
-          memory: 500Mi            # This is high to enable supporting the recommendationCache feature flag use case
 
     shippingService:
       enabled: true
@@ -562,9 +520,6 @@ opentelemetry-demo:
           value: 'http://{{ include "otel-demo.name" . }}-quoteservice:8080'
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: http://$(OTEL_COLLECTOR_NAME):4317
-      resources:
-        limits:
-          memory: 20Mi
 
     flagd:
       enabled: true
@@ -637,80 +592,7 @@ opentelemetry-demo:
   prometheus:
     enabled: false
   grafana:
-    enabled: true
-    testFramework:
-      enabled: false
-    grafana.ini:
-      auth:
-        disable_login_form: true
-      auth.anonymous:
-        enabled: true
-        org_name: Main Org.
-        org_role: Admin
-      server:
-        root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"
-        serve_from_sub_path: true
-    adminPassword: admin
-    plugins:
-      - grafana-opensearch-datasource
-    datasources:
-      datasources.yaml:
-        apiVersion: 1
-        datasources:
-          - name: Prometheus
-            uid: webstore-metrics
-            type: prometheus
-            url: 'http://{{ include "otel-demo.name" . }}-prometheus-server:9090'
-            editable: true
-            isDefault: true
-            jsonData:
-              exemplarTraceIdDestinations:
-                - datasourceUid: webstore-traces
-                  name: trace_id
-
-                - url: http://localhost:8080/jaeger/ui/trace/$${__value.raw}
-                  name: trace_id
-                  urlDisplayLabel: View in Jaeger UI
-
-          - name: Jaeger
-            uid: webstore-traces
-            type: jaeger
-            url: 'http://{{ include "otel-demo.name" . }}-jaeger-query:16686/jaeger/ui'
-            editable: true
-            isDefault: false
-
-          - name: OpenSearch
-            type: grafana-opensearch-datasource
-            url: 'http://otel-demo-opensearch:9200/'
-            access: proxy
-            editable: true
-            isDefault: false
-            jsonData:
-              database: otel
-              flavor: opensearch
-              logLevelField: severity
-              logMessageField: body
-              pplEnabled: true
-              timeField: observedTimestamp
-              version: 2.18.0
-    dashboardProviders:
-      dashboardproviders.yaml:
-        apiVersion: 1
-        providers:
-          - name: 'default'
-            orgId: 1
-            folder: ''
-            type: file
-            disableDeletion: false
-            editable: true
-            options:
-              path: /var/lib/grafana/xx`s/default
-    dashboardsConfigMaps:
-      default: '{{ include "otel-demo.name" . }}-grafana-dashboards'
-    resources:
-      limits:
-        memory: 150Mi
-
+    enabled: false
   opensearch:
     enabled: false
    

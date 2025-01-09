@@ -1,0 +1,12 @@
+apiVersion: v2
+name: opentelemetry-demo-applications
+description: Basic charts
+type: application
+version: 0.1.0
+appVersion: "1.16.0"
+dependencies:
+- name: opentelemetry-demo
+  alias: opentelemetry-demo
+  condition: opentelemetry-demo.enabled
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.33.8

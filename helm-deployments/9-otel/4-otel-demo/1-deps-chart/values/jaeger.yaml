@@ -1,5 +1,6 @@
 jaeger:
   enabled: true
+  fullnameOverride: jaeger
   provisionDataStore:
     cassandra: false
   allInOne:
@@ -8,7 +9,7 @@ jaeger:
     args:
       - "--memory.max-traces=5000"
       - "--query.base-path=/jaeger/ui"
-      - "--prometheus.server-url=http://otel-demo-prometheus-server:9090"
+      - "--prometheus.server-url=http://deps-prometheus-server:9090"
       - "--prometheus.query.normalize-calls=true"
       - "--prometheus.query.normalize-duration=true"
     extraEnv:

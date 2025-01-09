@@ -22,7 +22,7 @@ grafana:
         - name: Prometheus
           uid: webstore-metrics
           type: prometheus
-          url: 'http://otel-demo-prometheus-server:9090'
+          url: 'http://deps-prometheus-server:9090'
           editable: true
           isDefault: true
           jsonData:
@@ -37,13 +37,13 @@ grafana:
         - name: Jaeger
           uid: webstore-traces
           type: jaeger
-          url: 'http://otel-demo-jaeger-query:16686/jaeger/ui'
+          url: 'http://jaeger-query:16686/jaeger/ui'
           editable: true
           isDefault: false
 
         - name: OpenSearch
           type: grafana-opensearch-datasource
-          url: 'http://otel-demo-opensearch:9200/'
+          url: 'http://opensearch-0:9200/'
           access: proxy
           editable: true
           isDefault: false

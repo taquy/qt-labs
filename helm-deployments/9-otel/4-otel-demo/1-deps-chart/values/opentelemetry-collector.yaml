@@ -1,7 +1,6 @@
 opentelemetry-collector:
   enabled: true
-  nameOverride: ""
-  fullnameOverride: ""
+  fullnameOverride: "otel-colletor"
   mode: "deployment"
   presets:
     kubernetesAttributes:
@@ -32,17 +31,17 @@ opentelemetry-collector:
 
     exporters:
       otlp:
-        endpoint: 'otel-demo-jaeger-collector:4317'
+        endpoint: 'jaeger-collector:4317'
         tls:
           insecure: true
       otlphttp/prometheus:
-        endpoint: 'http://otel-demo-prometheus-server:9090/api/v1/otlp'
+        endpoint: 'http://deps-prometheus-server:9090/api/v1/otlp'
         tls:
           insecure: true
       opensearch:
         logs_index: otel
         http:
-          endpoint: "http://otel-demo-opensearch:9200"
+          endpoint: "http://opensearch:9200"
           tls:
             insecure: true
 

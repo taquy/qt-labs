@@ -1,5 +1,6 @@
 valkey:
   enabled: true
+  fullnameOverride: valkey
   architecture: standalone
   auth:
     enabled: false

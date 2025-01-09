@@ -1,10 +1,11 @@
 opensearch:
   enabled: true
+  fullnameOverride: opensearch
   clusterName: demo-cluster
   nodeGroup: otel-demo
   singleNode: true
   masterService: "opensearch-cluster-master"
-  fullnameOverride: otel-demo-opensearch
+  fullnameOverride: opensearch
   replicas: 1
   extraEnvs:
     - name: "bootstrap.memory_lock"
