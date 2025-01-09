@@ -1,5 +1,7 @@
 kafka:
   enabled: true
+  fullnameOverride: kafka
+  nameOverride: kafka
   listeners:
     client:
       containerPort: 9092
@@ -37,8 +39,8 @@ kafka:
 
   extraEnvVars:
     - name: KAFKA_ADVERTISED_LISTENERS
-      value: 'PLAINTEXT://otel-demo-kafka:9092'
+      value: 'PLAINTEXT://deps-kafka:9092'
     - name: OTEL_EXPORTER_OTLP_ENDPOINT
-      value: http://$(OTEL_COLLECTOR_NAME):4318
+      value: http://otel-colletor:4318
 
   heapOpts: "-Xmx400M -Xms400M"

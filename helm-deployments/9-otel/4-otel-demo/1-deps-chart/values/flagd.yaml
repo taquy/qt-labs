@@ -1,0 +1,5 @@
+flagd:
+  enabled: true
+  defaultNamespace: otel-demo
+  namespace:
+    create: false
