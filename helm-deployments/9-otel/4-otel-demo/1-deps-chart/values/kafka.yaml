@@ -16,31 +16,26 @@ kafka:
     external:
       containerPort: 9095
       protocol: PLAINTEXT
-
   controller:
-    replicaCount: 1
+    replicaCount: 3
     persistence:
       enabled: false
-    
   broker:
-    replicaCount: 1
+    replicaCount: 3
     persistence:
       enabled: false
-
   provisioning:
     enabled: false
     numPartitions: 1
     replicationFactor: 1
     topics: []
-
   kraft:
     enabled: true
     clusterId: "1"
-
   extraEnvVars:
     - name: KAFKA_ADVERTISED_LISTENERS
-      value: 'PLAINTEXT://deps-kafka:9092'
+      value: 'PLAINTEXT://kafka:9092'
     - name: OTEL_EXPORTER_OTLP_ENDPOINT
-      value: http://otel-colletor:4318
+      value: http://otel-collector:4318
 
   heapOpts: "-Xmx400M -Xms400M"

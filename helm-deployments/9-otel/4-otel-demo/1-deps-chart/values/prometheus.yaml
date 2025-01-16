@@ -13,6 +13,8 @@ prometheus:
   prometheus-pushgateway:
     enabled: false
   server:
+    persistentVolume:
+      enabled: false
     service:
       servicePort: 9090
     extraFlags:
@@ -27,7 +29,6 @@ prometheus:
     prometheus.yml:
       otlp:
         keep_identifying_resource_attributes: true
-        # Recommended attributes to be promoted to labels.
         promote_resource_attributes:
           - service.instance.id
           - service.name
@@ -59,5 +60,4 @@ prometheus:
             - source_labels: [__meta_kubernetes_pod_annotation_opentelemetry_community_demo]
               action: keep
               regex: true
-  persistentVolume:
-    enabled: false
+

@@ -24,4 +24,4 @@ for root, dirs, files in os.walk(vm_dir):
 for filepath in Path(vm_dir).glob('*vmwarevm'):
   fn = filepath.absolute()
   subprocess.run(['vmrun', 'stop', fn,])
-
+  print(f'Stopped vm {fn}')

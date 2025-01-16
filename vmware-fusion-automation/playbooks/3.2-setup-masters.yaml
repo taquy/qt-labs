@@ -9,21 +9,22 @@
   - name: Enable the rke2-server service
     systemd_service:
       enabled: true
-      name: rke2-server.service
-- name: Start RKE in primary master
-  hosts: 'primary_masters'
-  become: true
-  tasks:
-  - name: Start the rke2-server service in primary masters
-    systemd_service:
       state: started
       name: rke2-server.service
-- name: Start RKE in secondary masters
-  hosts: 'secondary_masters'
-  become: true
-  tasks:
-  - name: Start the rke2-server service in secondary masters
-    systemd_service:
-      state: started
-      name: rke2-server.service
+# - name: Start RKE in primary master
+#   hosts: 'primary_masters'
+#   become: true
+#   tasks:
+#   - name: Start the rke2-server service in primary masters
+#     systemd_service:
+#       state: started
+#       name: rke2-server.service
+# - name: Start RKE in secondary masters
+#   hosts: 'secondary_masters'
+#   become: true
+#   tasks:
+#   - name: Start the rke2-server service in secondary masters
+#     systemd_service:
+#       state: started
+#       name: rke2-server.service
         

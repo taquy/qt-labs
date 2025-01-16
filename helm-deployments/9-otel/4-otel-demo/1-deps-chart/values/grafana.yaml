@@ -43,7 +43,7 @@ grafana:
 
         - name: OpenSearch
           type: grafana-opensearch-datasource
-          url: 'http://opensearch-0:9200/'
+          url: 'http://opensearch:9200/'
           access: proxy
           editable: true
           isDefault: false
