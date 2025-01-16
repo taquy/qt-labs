@@ -707,7 +707,7 @@ opentelemetry-collector:
         targets:
           - endpoint: 'http://{{ include "otel-demo.name" . }}-frontendproxy:8080'
       redis:
-        endpoint: "valkey-cart:6379"
+        endpoint: "valkey-primary:6379"
         collection_interval: 10s
 
     exporters:
@@ -906,7 +906,7 @@ grafana:
 
         - name: OpenSearch
           type: grafana-opensearch-datasource
-          url: 'http://opensearch:9200/'
+          url: 'http://otel-demo-opensearch:9200/'
           access: proxy
           editable: true
           isDefault: false

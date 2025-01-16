@@ -1,6 +1,6 @@
 opentelemetry-collector:
   enabled: true
-  fullnameOverride: "otel-colletor"
+  fullnameOverride: "otel-collector"
   mode: "deployment"
   presets:
     kubernetesAttributes:
@@ -24,9 +24,9 @@ opentelemetry-collector:
                 - "https://*"
       httpcheck/frontendproxy:
         targets:
-          - endpoint: 'http://otel-demo-frontendproxy:8080'
+          - endpoint: 'http://apps-frontendproxy:8080'
       redis:
-        endpoint: "valkey-cart:6379"
+        endpoint: "valkey-primary:6379"
         collection_interval: 10s
 
     exporters:
@@ -72,7 +72,6 @@ opentelemetry-collector:
         logs:
           processors: [memory_limiter, resource, batch]
           exporters: [opensearch, debug]
-
   ports:
     metrics:
       enabled: true
