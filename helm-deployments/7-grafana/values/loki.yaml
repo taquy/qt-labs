@@ -1,6 +1,9 @@
 loki:
-  enabled: false
-  deploymentMode: SimpleScalable
+  enabled: true
+  fullnameOverride: loki
+  limits_config:
+    reject_old_samples: true
+    volume_enabled: false
   loki:
     storage:
       bucketNames:
@@ -114,15 +117,12 @@ loki:
     enabled: true
   chunksCache:
     enabled: true
+    allocatedMemory: 50
+    persistence:
+      enabled: false
   rollout_operator:
     enabled: true
   minio:
     enabled: false
-  monitoring:
-    dashboards:
-      enabled: true
-    serviceMonitor:
-      enabled: true
   tableManager:
-    enabled: true
-    
+    enabled: false
