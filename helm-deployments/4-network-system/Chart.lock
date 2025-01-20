@@ -1,12 +1,12 @@
 dependencies:
 - name: metallb
   repository: https://metallb.github.io/metallb
-  version: 0.14.8
+  version: 0.14.9
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.16.2
 - name: traefik
   repository: https://traefik.github.io/charts
-  version: 33.0.0
-digest: sha256:6cb8448248e1ca935671bc58ba205bf108d53dd6f7db00ba72a84b5c04ba3ada
-generated: "2024-12-03T04:42:31.999726-05:00"
+  version: 34.1.0
+digest: sha256:df7faf8643059a6582f34d0417eacb2e4e96ca27cc356f25ed21dd72705db25b
+generated: "2025-01-19T20:04:53.240007-05:00"

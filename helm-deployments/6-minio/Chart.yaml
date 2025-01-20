@@ -9,4 +9,4 @@ dependencies:
   alias: minio
   condition: minio.enabled
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 14.8.5
+  version: 14.10.4

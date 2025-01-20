@@ -9,14 +9,19 @@ dependencies:
   alias: alertmanager
   condition: alertmanager.enabled
   repository: https://prometheus-community.github.io/helm-charts
-  version: 1.13.1
+  version: 1.14.0
 - name: grafana
   alias: grafana
   condition: grafana.enabled
   repository: https://grafana.github.io/helm-charts
-  version: 8.6.4
+  version: 8.8.4
+- name: memcached
+  alias: memcached
+  condition: memcached.enabled
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 7.6.1
 - name: loki
   alias: loki
   condition: loki.enabled
   repository: https://grafana.github.io/helm-charts
-  version: 6.22.0
+  version: 6.25.0

@@ -10,7 +10,7 @@ dependencies:
   alias: metallb
   condition: metallb.enabled
   repository: https://metallb.github.io/metallb
-  version: 0.14.8
+  version: 0.14.9
 # cert manager
 - name: cert-manager
   alias: cert-manager
@@ -22,4 +22,4 @@ dependencies:
   alias: traefik
   condition: traefik.enabled
   repository: https://traefik.github.io/charts
-  version: 33.0.0
+  version: 34.1.0

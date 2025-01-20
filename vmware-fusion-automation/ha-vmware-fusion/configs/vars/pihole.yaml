@@ -1,0 +1,8 @@
+pihole:
+  default_domain: q.rke
+  default_ns:
+  - 8.8.8.8
+  - 8.8.4.4
+  - 1.1.1.1
+  enabled: true
+  web_password: root1234
