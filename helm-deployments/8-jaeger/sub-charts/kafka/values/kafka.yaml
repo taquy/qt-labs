@@ -3,10 +3,6 @@ kafka:
   global:
     defaultStorageClass: "longhorn-static"
   fullnameOverride: ""
-  serviceBindings:
-    enabled: false
-  diagnosticMode:
-    enabled: false
   image:
     registry: docker.io
     repository: bitnami/kafka
@@ -18,12 +14,10 @@ kafka:
       containerPort: 9092
       protocol: PLAINTEXT
       name: CLIENT
-      sslClientAuth: ""
     controller:
       name: CONTROLLER
       containerPort: 9093
       protocol: PLAINTEXT
-      sslClientAuth: ""
     interbroker:
       containerPort: 9094
       protocol: PLAINTEXT
@@ -32,35 +26,15 @@ kafka:
       containerPort: 9095
       protocol: PLAINTEXT
       name: EXTERNAL
-      sslClientAuth: ""
     extraListeners: []
   sasl:
     enabledMechanisms: PLAIN,SCRAM-SHA-256,SCRAM-SHA-512
     interBrokerMechanism: PLAIN
     controllerMechanism: PLAIN
-    oauthbearer:
-      tokenEndpointUrl: ""
-      jwksEndpointUrl: ""
-      expectedAudience: ""
-      subClaimName: "sub"
-    interbroker:
-      user: inter_broker_user
-      password: ""
-      clientId: inter_broker_client
-      clientSecret: ""
-    controller:
-      user: controller_user
-      password: ""
-      clientId: controller_broker_client
-      clientSecret: ""
     client:
       users:
         - user1
       passwords: ""
-    zookeeper:
-      user: ""
-      password: ""
-    existingSecret: ""
   controller:
     replicaCount: 1
     controllerOnly: false
@@ -76,10 +50,8 @@ kafka:
     resourcesPreset: "small"
     persistence:
       enabled: false
-      size: 8Gi
     logPersistence:
       enabled: false
-      size: 8Gi
   broker:
     replicaCount: 1
     minId: 100
@@ -88,14 +60,6 @@ kafka:
     resourcesPreset: "small"
     persistence:
       enabled: false
-      size: 8Gi
-  service:
-    type: ClusterIP
-    ports:
-      client: 9092
-      controller: 9093
-      interbroker: 9094
-      external: 9095
   provisioning:
     enabled: true
     numPartitions: 1
@@ -116,16 +80,3 @@ kafka:
     enabled: true
   zookeeper:
     enabled: false
-    replicaCount: 1
-    auth:
-      client:
-        enabled: false
-        clientUser: ""
-        clientPassword: ""
-        serverUsers: ""
-        serverPasswords: ""
-    persistence:
-      enabled: false
-      accessModes:
-        - ReadWriteOnce
-      size: 8Gi
