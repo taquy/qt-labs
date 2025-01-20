@@ -1,0 +1,17 @@
+
+token-file: /etc/rancher/rke2/server_token
+agent-token-file: /etc/rancher/rke2/agent_token
+node-taint:
+  - "CriticalAddonsOnly=true:NoExecute"
+tls-san:
+  - 192.168.19.128
+  - 192.168.19.154
+  - 192.168.19.153
+  - 192.168.19.151
+  - 192.168.19.152
+  - 192.168.19.150
+  - 192.168.19.131
+  - 172.0.0.1
+  - 127.0.1.1
+  - localhost
+debug: true

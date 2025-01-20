@@ -1,36 +1,8 @@
 loki:
-  enabled: true
+  enabled: false
   deploymentMode: SimpleScalable
   loki:
-    enableServiceLinks: true
-    configStorageType: ConfigMap
-    auth_enabled: false
-    # -- memberlist configuration (overrides embedded default)
-    memberlistConfig: {}
-    # -- Extra memberlist configuration
-    extraMemberlistConfig: {}
-    # -- Tenants list to be created on nginx htpasswd file, with name and password keys
-    tenants: []
-    # -- Check https://grafana.com/docs/loki/latest/configuration/#server for more info on the server configuration.
-    server:
-      http_listen_port: 3100
-      grpc_listen_port: 9095
-      http_server_read_timeout: 600s
-      http_server_write_timeout: 600s
-    # -- Limits config
-    limits_config:
-      reject_old_samples: true
-      reject_old_samples_max_age: 168h
-      max_cache_freshness_per_query: 10m
-      split_queries_by_interval: 15m
-      query_timeout: 300s
-      volume_enabled: true
-    commonConfig:
-      path_prefix: /var/loki
-      replication_factor: 3
     storage:
-      # Loki requires a bucket for chunks and the ruler. GEL requires a third bucket for the admin API.
-      # Please provide these values if you are using object storage.
       bucketNames:
         chunks: loki-chunks
         ruler: loki-ruler
@@ -38,33 +10,23 @@ loki:
       type: s3
       s3:
         s3: null
-        endpoint: minio.q.t # add this to pihole dns server
-        region: null
+        endpoint: minio.minio.svc.cluster.local
+        region: earth
         secretAccessKey: root1234
         accessKeyId: admin
         s3ForcePathStyle: true
         insecure: true
-        http_config: {}
-        # -- Check https://grafana.com/docs/loki/latest/configure/#s3_storage_config for more info on how to provide a backoff_config
-        backoff_config: {}
-        disable_dualstack: false
       filesystem:
         chunks_directory: /var/loki/chunks
         rules_directory: /var/loki/rules
         admin_api_directory: /var/loki/admin
     memcached:
       chunk_cache:
-        enabled: false
-        host: ""
-        service: "memcached-client"
-        batch_size: 256
-        parallelism: 10
+        enabled: true
+        host: "grafana-memcached"
       results_cache:
-        enabled: false
-        host: ""
-        service: "memcached-client"
-        timeout: "500ms"
-        default_validity: "12h"
+        enabled: true
+        host: "grafana-memcached"
     schemaConfig:
       configs:
       - from: "2022-01-11"
@@ -88,10 +50,6 @@ loki:
   gateway:
     enabled: false
     replicas: 0
-    containerPort: 8080
-    service:
-      port: 80
-      type: ClusterIP
     ingress:
       enabled: false
     basicAuth:
@@ -102,39 +60,23 @@ loki:
     replicas: 0
     persistence:
       volumeClaimsEnabled: true
-      enableStatefulSetAutoDeletePVC: true
-      size: 10Gi
-      storageClass: longhorn-static
   read:
     replicas: 0
     persistence:
-      enableStatefulSetAutoDeletePVC: true
-      size: 10Gi
-      storageClass: longhorn-static
   backend:
     replicas: 0
     persistence:
-      enableStatefulSetAutoDeletePVC: true
-      size: 10Gi
-      storageClass: longhorn-static
   ingester:
     replicas: 0
     persistence:
-      enabled: true
-      inMemory: false
-      claims:
-        - name: data
-          size: 10Gi
-          storageClass: longhorn-static
-      enableStatefulSetAutoDeletePVC: true
+      enabled: false
+      inMemory: true
   distributor:
     replicas: 0
   querier:
     replicas: 0
     persistence:
-      enabled: true
-      size: 10Gi
-      storageClass: longhorn-static
+      enabled: false
   queryFrontend:
     replicas: 0
   queryScheduler:
@@ -142,60 +84,32 @@ loki:
   indexGateway:
     replicas: 0
     persistence:
-      enabled: true
+      enabled: false
       inMemory: false
-      size: 10Gi
-      storageClass: longhorn-static
-      enableStatefulSetAutoDeletePVC: true
   compactor:
     replicas: 0
     persistence:
-      enabled: true
-      size: 10Gi
-      storageClass: longhorn-static
-      claims:
-        - name: data
-          size: 10Gi
-          storageClass: longhorn-static
-      enableStatefulSetAutoDeletePVC: false
+      enabled: false
   bloomGateway:
     replicas: 0
     persistence:
-      enabled: true
-      claims:
-        - name: data
-          size: 10Gi
-          storageClass: longhorn-static
-      enableStatefulSetAutoDeletePVC: true
+      enabled: false
   bloomPlanner:
     replicas: 0
     persistence:
-      enabled: true
-      claims:
-        - name: data
-          size: 10Gi
-          storageClass: longhorn-static
-      enableStatefulSetAutoDeletePVC: true
+      enabled: false
   bloomBuilder:
     replicas: 0
     maxUnavailable: 2
   patternIngester:
     replicas: 0
     persistence:
-      enabled: true
-      size: 10Gi
-      storageClass: longhorn-static
-      claims:
-        - name: data
-          size: 10Gi
-          storageClass: longhorn-static
+      enabled: false
   ruler:
     enabled: true
     replicas: 0
     persistence:
-      enabled: true
-      size: 10Gi
-      storageClass: longhorn-static
+      enabled: false
   resultsCache:
     enabled: true
   chunksCache:

@@ -1,0 +1,6 @@
+
+server: https://192.168.19.131:9345
+token-file: /etc/rancher/rke2/agent_token
+node-label:
+  - "worker-type=generic"
+debug: true

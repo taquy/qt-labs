@@ -1,12 +1,7 @@
 alertmanager:
   enabled: true
+  fullnameOverride: "alertmanager"
   replicaCount: 1
-  baseURL: "http://alertmanager.q.t"
-  automountServiceAccountToken: true
-  service:
-    type: ClusterIP
-    port: 9093
-    clusterPort: 9094
   servicePerReplica:
     enabled: false
   ingress:
@@ -14,9 +9,7 @@ alertmanager:
   ingressPerReplica:
     enabled: false
   persistence:
-    enabled: true
-    storageClass: "longhorn-static"
-    size: 50Mi
+    enabled: false
   config:
     enabled: true
   configmapReload:

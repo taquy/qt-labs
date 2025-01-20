@@ -1,0 +1,13 @@
+hosts:
+- ip_addr: 192.168.19.162
+  name: w3
+- ip_addr: 192.168.19.168
+  name: w2
+- ip_addr: 192.168.19.165
+  name: w4
+- ip_addr: 192.168.19.164
+  name: w5
+- ip_addr: 192.168.19.160
+  name: w1
+- ip_addr: 192.168.19.167
+  name: w6

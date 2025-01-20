@@ -1,0 +1,37 @@
+hosts:
+  api_servers:
+  - ip_addr: 192.168.19.128
+    name: m1
+  - ip_addr: 192.168.19.154
+    name: m3
+  - ip_addr: 192.168.19.153
+    name: m2
+  cluster_nodes:
+    masters:
+      primary:
+      - 192.168.19.128
+      secondary:
+      - 192.168.19.154
+      - 192.168.19.153
+    workers:
+      generic:
+      - 192.168.19.162
+      - 192.168.19.168
+      - 192.168.19.165
+      - 192.168.19.164
+      - 192.168.19.160
+      - 192.168.19.167
+  load_balancers:
+  - ip_addr: 192.168.19.151
+    name: lb2
+  - ip_addr: 192.168.19.152
+    name: lb3
+  - ip_addr: 192.168.19.150
+    name: lb1
+  other_nodes:
+    databases:
+    - 192.168.19.155
+    dns:
+    - 192.168.19.158
+    nfs:
+    - 192.168.19.159

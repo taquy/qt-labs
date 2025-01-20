@@ -1,30 +1,16 @@
 grafana:
   enabled: true
   replicas: 1
-  headlessService: false
-  automountServiceAccountToken: true
-  image:
-    registry: docker.io
-  downloadDashboards:
+  downloadDashboards: {}
   podPortName: grafana
   gossipPortName: gossip
   service:
-    enabled: true
-    type: LoadBalancer
     port: 80
     targetPort: 3000
-    portName: service
-
   ingress:
     enabled: false
-
   persistence:
-    type: pvc
-    enabled: true
-    storageClassName: longhorn-static
-    accessModes:
-      - ReadWriteOnce
-    size: 10Gi
+    enabled: false
   adminUser: admin
   adminPassword: root1234
   admin:
@@ -56,17 +42,5 @@ grafana:
     existingSecret: ""
     userKey: "user"
     passwordKey: "password"
-
   imageRenderer:
-    deploymentStrategy: {}
     enabled: false
-    replicas: 1
-    serverURL: ""
-    renderingCallbackURL: ""
-    service:
-      enabled: true
-    serviceMonitor:
-      enabled: true
- 
-  useStatefulSet: false
-  assertNoLeakedSecrets: false
