@@ -1,7 +1,8 @@
-master_nodes:
+masters:
   hosts:
     192.168.64.6: ''
 workers:
   hosts:
     192.168.64.12: ''
     192.168.64.5: ''
+# kubectl is located at /var/lib/rancher/rke2/bin/kubectl in an RKE2 node

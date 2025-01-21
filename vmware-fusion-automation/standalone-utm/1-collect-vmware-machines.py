@@ -5,6 +5,7 @@ from pathlib import Path
 import os
 import paramiko
 import re
+import math
 
 master_nodes = []
 worker_nodes = []
@@ -28,9 +29,11 @@ master_nodes_obj = {ip: "" for ip in master_nodes}
 worker_nodes_obj = {ip: "" for ip in worker_nodes}
 
 inventories = {
-    'master_nodes': {'hosts': master_nodes_obj},
+    'masters': {'hosts': master_nodes_obj},
     'workers': {'hosts': worker_nodes_obj},
 }
 
 with open('inventories.yaml', 'w') as file:
   yaml.dump(inventories, file)
+
+

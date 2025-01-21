@@ -13,7 +13,6 @@
         - net-tools
         - iproute2
         - iputils-ping
-        
     - name: Install RKE2
       shell: curl -sfL https://get.rke2.io | sh -
 
@@ -34,6 +33,13 @@
     - name: Set node token fact
       set_fact:
         node_token: "{{ node_token.stdout }}"
+        master_ip: "{{ ansible_host }}"
+
+    - name: Fetch node token to local machine
+      fetch:
+        src: /var/lib/rancher/rke2/server/node-token
+        dest: node-token
+        flat: yes
 
     - name: Create .kube directory
       file:
@@ -54,6 +60,51 @@
     - name: Change ownership of kube config
       command: chown {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}/.kube/config
 
+    - name: Copy RKE2 kubeconfig to /tmp directory
+      copy:
+        src: /etc/rancher/rke2/rke2.yaml
+        dest: /tmp/rke2.yaml
+        remote_src: yes
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+    - name: Update kubeconfig server address
+      replace:
+        path: /tmp/rke2.yaml
+        regexp: 'https://127.0.0.1:6443'
+        replace: 'https://{{ ansible_host }}:9345'
+    - name: Fetch kubeconfig to local machine
+      fetch:
+        src:  /tmp/rke2.yaml
+        dest: ./kubeconfig
+        flat: yes
+
+- name: Install NFS server
+  hosts: 'masters'
+  become: true
+  tasks:
+  - name: Install NFS
+    apt:
+      pkg:
+      - nfs-kernel-server
+  - name: Enable NFS service
+    systemd_service:
+      enabled: true
+      name: nfs-kernel-server.service
+  - name: Create NFS storage directory
+    file:
+      path: /nfs-storage
+      state: directory
+      recurse: yes
+  - shell: |
+      chown nobody:nogroup /nfs-storage
+      chmod -R 777 /nfs-storage
+  - name: Update /etc/exports
+    lineinfile:
+      dest: /etc/exports
+      line: /nfs-storage *(rw,sync,no_root_squash,insecure,no_subtree_check)
+  - shell: exportfs -a
+
 - name: Configure RKE2 agents on other nodes
   hosts: workers
   become: yes
@@ -62,16 +113,24 @@
       file:
         path: /etc/rancher/rke2
         state: directory
-
     - name: Configure RKE2 agent
       copy:
         content: |
-          server: https://{{ hostvars['masters']['ansible_host'] }}:9345
-          token: {{ hostvars['masters']['node_token'] }}
+          server: https://{{ hostvars[groups['masters'][0]]['master_ip'] }}:9345
+          token: {{ hostvars[groups['masters'][0]]['node_token'] }}
         dest: /etc/rancher/rke2/config.yaml
-
     - name: Enable and start RKE2 agent service
       systemd:
         name: rke2-agent
         enabled: yes
         state: started
+      register: rke2_agent_status
+      failed_when: rke2_agent_status.status != 0
+    - name: Print RKE2 agent service logs if failed
+      command: journalctl -u rke2-agent.service
+      when: rke2_agent_status.status != 0
+      register: rke2_agent_logs
+    - name: Debug RKE2 agent service logs
+      debug:
+        msg: "{{ rke2_agent_logs.stdout }}"
+      when: rke2_agent_status.status != 0
