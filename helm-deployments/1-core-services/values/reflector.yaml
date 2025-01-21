@@ -1,18 +1,2 @@
 reflector:
   enabled: true
-  replicaCount: 3
-  image:
-    repository: emberstack/kubernetes-reflector
-  cron:
-    enabled: false
-    schedule: "*/15 * * * *"
-    activeDeadlineSeconds: 600
-  configuration:
-    logging:
-      minimumLevel: Information
-    watcher:
-      timeout: ""
-    kubernetes:
-      skipTlsVerify: true
-  rbac:
-    enabled: true

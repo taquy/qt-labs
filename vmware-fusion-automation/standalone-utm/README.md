@@ -1,3 +1,4 @@
+# Preparation
 ```sh
 # install qemu guest agent
 apt -y install qemu-guest-agent
@@ -7,11 +8,11 @@ systemctl enable qemu-guest-agent
 systemctl start qemu-guest-agent
 systemctl status qemu-guest-agent
 
-# change hostname
+# change hostname (optional)
 sudo hostnamectl set-hostname n1
 sudo reboot
 
-# set static ip address
+# set static ip address (optional)
 sudo cp /etc/netplan/50-cloud-init.yaml /etc/netplan/50-cloud-init.yaml.bak
 rm /etc/netplan/50-cloud-init.yaml
 sudo cat /etc/netplan/50-cloud-init.yaml.bak
