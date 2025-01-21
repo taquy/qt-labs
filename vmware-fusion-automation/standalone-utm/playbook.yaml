@@ -1,0 +1,77 @@
+---
+- name: Install RKE2 on all nodes
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure the system is up to date
+      apt:
+        update_cache: yes
+        upgrade: dist
+    - name: Install a list of packages
+      apt:
+        pkg:
+        - net-tools
+        - iproute2
+        - iputils-ping
+        
+    - name: Install RKE2
+      shell: curl -sfL https://get.rke2.io | sh -
+
+- name: Configure RKE2 server on the first node
+  hosts: masters
+  become: yes
+  tasks:
+    - name: Enable and start RKE2 server service
+      systemd:
+        name: rke2-server
+        enabled: yes
+        state: started
+
+    - name: Retrieve node token
+      shell: cat /var/lib/rancher/rke2/server/node-token
+      register: node_token
+
+    - name: Set node token fact
+      set_fact:
+        node_token: "{{ node_token.stdout }}"
+
+    - name: Create .kube directory
+      file:
+        path: /home/{{ ansible_user }}/.kube
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Copy RKE2 kubeconfig to user's kube config
+      copy:
+        src: /etc/rancher/rke2/rke2.yaml
+        dest: /home/{{ ansible_user }}/.kube/config
+        remote_src: yes
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+
+    - name: Change ownership of kube config
+      command: chown {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}/.kube/config
+
+- name: Configure RKE2 agents on other nodes
+  hosts: workers
+  become: yes
+  tasks:
+    - name: Create RKE2 config directory
+      file:
+        path: /etc/rancher/rke2
+        state: directory
+
+    - name: Configure RKE2 agent
+      copy:
+        content: |
+          server: https://{{ hostvars['masters']['ansible_host'] }}:9345
+          token: {{ hostvars['masters']['node_token'] }}
+        dest: /etc/rancher/rke2/config.yaml
+
+    - name: Enable and start RKE2 agent service
+      systemd:
+        name: rke2-agent
+        enabled: yes
+        state: started
