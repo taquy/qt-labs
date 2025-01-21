@@ -1,37 +1,37 @@
 hosts:
   api_servers:
-  - ip_addr: 192.168.19.128
+  - ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/m1.vmwarevm/m1.vmx'
     name: m1
-  - ip_addr: 192.168.19.154
+  - ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/m3.vmwarevm/m3.vmx'
     name: m3
-  - ip_addr: 192.168.19.153
+  - ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/m2.vmwarevm/m2.vmx'
     name: m2
   cluster_nodes:
     masters:
       primary:
-      - 192.168.19.128
+      - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/m1.vmwarevm/m1.vmx'
       secondary:
-      - 192.168.19.154
-      - 192.168.19.153
+      - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/m3.vmwarevm/m3.vmx'
+      - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/m2.vmwarevm/m2.vmx'
     workers:
       generic:
-      - 192.168.19.162
-      - 192.168.19.168
-      - 192.168.19.165
-      - 192.168.19.164
-      - 192.168.19.160
-      - 192.168.19.167
+      - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w3.vmwarevm/w3.vmx'
+      - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w2.vmwarevm/w2.vmx'
+      - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w4.vmwarevm/w4.vmx'
+      - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w5.vmwarevm/w5.vmx'
+      - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w1.vmwarevm/w1.vmx'
+      - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w6.vmwarevm/w6.vmx'
   load_balancers:
-  - ip_addr: 192.168.19.151
+  - ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/lb2.vmwarevm/lb2.vmx'
     name: lb2
-  - ip_addr: 192.168.19.152
+  - ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/lb3.vmwarevm/lb3.vmx'
     name: lb3
-  - ip_addr: 192.168.19.150
+  - ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/lb1.vmwarevm/lb1.vmx'
     name: lb1
   other_nodes:
     databases:
-    - 192.168.19.155
+    - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/db.vmwarevm/db.vmx'
     dns:
-    - 192.168.19.158
+    - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/dns.vmwarevm/dns.vmx'
     nfs:
-    - 192.168.19.159
+    - 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/nfs.vmwarevm/nfs.vmx'

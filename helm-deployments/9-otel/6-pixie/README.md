@@ -35,13 +35,14 @@ kubectl create namespace plc
 curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
 
 # generate manifests and apply
-kustomize build k8s/cloud_deps/base/elastic/operator > 1-operators 
+kustomize build k8s/cloud_deps/base/elastic/operator > 1-operators.yaml
 kubectl apply -f 1-operators.yaml
 
 kustomize build k8s/cloud_deps/public > 2-deps.yaml
 kubectl apply -f 2-deps.yaml
 
-kustomize build k8s/cloud/public/ | kubectl apply -f -
+kustomize build k8s/cloud/public/ > 3-apps.yaml
+kubectl apply -f 3-apps.yaml
 
 # to delete
 kustomize build k8s/cloud_deps/base/elastic/operator | kubectl delete -f -
@@ -60,5 +61,23 @@ go build src/utils/dev_dns_updater/dev_dns_updater.go
 
 ```sh
 mkdir -p manifests
-kustomize build k8s/cloud_deps/public/postgres >  manifests/1-postgres.yaml
+
+# create postgres manifest
+kustomize build k8s/cloud_deps/public/postgres > manifests/1-postgres.yaml
+kubectl apply -f manifests/1-postgres.yaml
+
+# create elasticsearch manifest
+kustomize build k8s/cloud_deps/public/elastic > manifests/2-elastic.yaml
+kubectl apply -f manifests/2-elastic.yaml
+
+# create nats manifest
+kustomize build k8s/cloud_deps/public/nats > manifests/nats.yaml
+kubectl apply -f manifests/nats.yaml
+
+
+# generate config.yaml by commenting out
+# - elastic
+# - nats
+# - postgres
+kustomize build k8s/cloud_deps/public/ > manifests/config.yaml
 ```

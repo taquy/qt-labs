@@ -1,13 +1,13 @@
 hosts:
-- ip_addr: 192.168.19.162
+- ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w3.vmwarevm/w3.vmx'
   name: w3
-- ip_addr: 192.168.19.168
+- ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w2.vmwarevm/w2.vmx'
   name: w2
-- ip_addr: 192.168.19.165
+- ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w4.vmwarevm/w4.vmx'
   name: w4
-- ip_addr: 192.168.19.164
+- ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w5.vmwarevm/w5.vmx'
   name: w5
-- ip_addr: 192.168.19.160
+- ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w1.vmwarevm/w1.vmx'
   name: w1
-- ip_addr: 192.168.19.167
+- ip_addr: 'Error: The virtual machine is not powered on: /Users/qt/Virtual Machines.localized/w6.vmwarevm/w6.vmx'
   name: w6
