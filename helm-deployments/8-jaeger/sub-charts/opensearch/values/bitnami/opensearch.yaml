@@ -1,7 +1,7 @@
 opensearch:
   enabled: true
   global:
-    defaultStorageClass: "longhorn-static"
+    defaultStorageClass: "nfs"
   fullnameOverride: "jaeger-opensearch"
   clusterName: open
   useIstioLabels: false
@@ -15,7 +15,8 @@ opensearch:
       enabled: false
   data:
     replicaCount: 2
-    resourcesPreset: "small"
+    resourcesPreset: "medium"
+    javaOpts: "-Xmx1g -Xms1g"
     persistence:
       enabled: false
   coordinating:
@@ -33,6 +34,7 @@ opensearch:
       type: ClusterIP
     password: ""
     replicaCount: 1
+    resourcesPreset: "small"
     tls:
       enabled: false
     persistence:
@@ -41,4 +43,3 @@ opensearch:
     enabled: false
     persistence:
       enabled: false
-    

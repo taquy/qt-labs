@@ -3,7 +3,7 @@ zipkin:
   replicaCount: 1
   image:
     repository: openzipkin/zipkin-slim
-    tag: 2.23.14-arm64
+    # tag: 2.23.14-arm64
   service:
     type: ClusterIP
     port: 9411
@@ -18,4 +18,4 @@ zipkin:
         index: zipkin
         sslNoVerify: true
     extraEnv: {}
-  #    JAVA_OPTS: "-Xms128m -Xmx512m -XX:+ExitOnOutOfMemoryError"
+    

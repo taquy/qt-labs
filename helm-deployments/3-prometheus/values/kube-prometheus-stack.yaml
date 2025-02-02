@@ -4,7 +4,7 @@ kube-prometheus-stack:
   crds:
     enabled: true
   defaultRules:
-    create: true
+    create: false
     rules:
       alertmanager: true
       etcd: true
@@ -47,43 +47,35 @@ kube-prometheus-stack:
     enabled: false
   kubernetesServiceMonitors:
     enabled: false
-  ## Component scraping the kube api server
-  ##
   kubeApiServer:
     enabled: false
-
   kubelet:
     enabled: false
     namespace: kube-system
-
   kubeControllerManager:
     enabled: false
     service:
       enabled: false
     serviceMonitor:
       enabled: false
-    
   coreDns:
     enabled: false
     service:
       enabled: false
     serviceMonitor:
       enabled: false  
-
   kubeEtcd:
     enabled: false
     service:
       enabled: false
     serviceMonitor:
       enabled: false
-
   kubeScheduler:
     enabled: false
     service:
       enabled: false
     serviceMonitor:
       enabled: false
-    
   kubeProxy:
     enabled: false
     service:
@@ -100,13 +92,11 @@ kube-prometheus-stack:
 
   prometheusOperator:
     enabled: true
-    service:
-      type: ClusterIP
     kubeletService:
       enabled: true
       namespace: kube-system
     serviceMonitor:
-      selfMonitor: true
+      selfMonitor: false
     
   prometheus:
     enabled: true

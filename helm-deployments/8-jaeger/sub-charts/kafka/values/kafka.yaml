@@ -1,14 +1,8 @@
 kafka:
   enabled: true
   global:
-    defaultStorageClass: "longhorn-static"
+    defaultStorageClass: "nfs"
   fullnameOverride: ""
-  image:
-    registry: docker.io
-    repository: bitnami/kafka
-    tag: 3.9.0-debian-12-r4
-    debug: false
-  extraConfigYaml: {}
   listeners:
     client:
       containerPort: 9092
@@ -80,3 +74,4 @@ kafka:
     enabled: true
   zookeeper:
     enabled: false
+
