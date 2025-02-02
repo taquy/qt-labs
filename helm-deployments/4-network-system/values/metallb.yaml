@@ -1,15 +1,10 @@
 metallb: 
-  enabled: true
+  enabled: false
   controller:
     enabled: true
   speaker:
     enabled: true
     tolerateMaster: true
-    memberlist:
-      enabled: true
-      mlBindPort: 7946
-    excludeInterfaces:
-      enabled: true
     ignoreExcludeLB: false
     frr:
       enabled: true

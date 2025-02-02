@@ -3,7 +3,7 @@ traefik:
   deployment:
     enabled: true
     kind: Deployment
-    replicas: 3
+    replicas: 1
   ingressClass:  # @schema additionalProperties: false
     enabled: true
     isDefaultClass: true
@@ -27,37 +27,6 @@ traefik:
         - name: api@internal
           kind: TraefikService
       entryPoints: ["web"]
-  providers:  # @schema additionalProperties: false
-    kubernetesCRD:
-      # -- Load Kubernetes IngressRoute provider
-      enabled: true
-      # -- Allows IngressRoute to reference resources in namespace other than theirs
-      allowCrossNamespace: true
-      # -- Allows to reference ExternalName services in IngressRoute
-      allowExternalNameServices: true
-      # -- Allows to return 503 when there is no endpoints available
-      allowEmptyServices: true
-      # -- When the parameter is set, only resources containing an annotation with the same value are processed. Otherwise, resources missing the annotation, having an empty value, or the value traefik are processed. It will also set required annotation on Dashboard and Healthcheck IngressRoute when enabled.
-      ingressClass: ""
-      # labelSelector: environment=production,method=traefik
-      # -- Array of namespaces to watch. If left empty, Traefik watches all namespaces.
-      namespaces: []
-      # -- Defines whether to use Native Kubernetes load-balancing mode by default.
-      nativeLBByDefault: false
-
-    kubernetesIngress:
-      enabled: true
-      allowExternalNameServices: true
-      allowEmptyServices: true
-      publishedService:
-        enabled: true
-
-    kubernetesGateway:
-      enabled: false
-    file:
-      enabled: false
-      watch: true
-      content: ""
   ports:
     traefik:
       port: 8080
@@ -101,14 +70,6 @@ traefik:
 
   persistence:
     enabled: false
-    name: data
-    accessMode: ReadWriteOnce
-    size: 128Mi
-    storageClass: ""
-  # -- Certificates resolvers configuration.
-  # Ref: https://doc.traefik.io/traefik/https/acme/#certificate-resolvers
-  # See EXAMPLES.md for more details.
-  certificatesResolvers: {}
  
   # Traefik Hub configuration. See https://doc.traefik.io/traefik-hub/
   hub:

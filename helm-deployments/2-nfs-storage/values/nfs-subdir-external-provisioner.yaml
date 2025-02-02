@@ -1,7 +1,8 @@
 nfs:
   enabled: true
   nfs:
-    server: 192.168.64.6
+    server: 10.200.27.111
+    path: /nfs-storage
   storageClass:
     name: nfs
   resources:

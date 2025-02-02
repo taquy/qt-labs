@@ -1,23 +1,7 @@
 cert-manager:
   enabled: true
-  installCRDs: false
   crds:
     enabled: true
-    keep: true
-  replicaCount: 3
-  clusterResourceNamespace: ""
-  namespace: ""
-  enableCertificateOwnerRef: false
-  dns01RecursiveNameservers: ""
-  dns01RecursiveNameserversOnly: false
-  disableAutoApproval: false
-  approveSignerNames:
-  - issuers.cert-manager.io/*
-  - clusterissuers.cert-manager.io/*
+  replicaCount: 1
   prometheus:
     enabled: false
-    servicemonitor:
-      enabled: false
-  startupapicheck:
-    enabled: true
-  creator: "helm"

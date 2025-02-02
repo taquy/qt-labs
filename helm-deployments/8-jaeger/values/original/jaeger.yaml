@@ -57,12 +57,12 @@ jaeger:
     enabled: false
     replicaCount: 1
     service:
-      type: ClusterIP
+      type: NodePort
   agent:
     daemonset:
       useHostPort: false
     service:
-      type: ClusterIP
+      type: NodePort
       # zipkinThriftPort :accept zipkin.thrift over compact thrift protocol
       zipkinThriftPort: 5775
       # compactPort: accept jaeger.thrift over compact thrift protocol
@@ -81,30 +81,25 @@ jaeger:
     basePath: /
     replicaCount: 1
     service:
-      type: ClusterIP
+      type: NodePort
       grpc:
         port: 14250
-        # nodePort:
       # httpPort: can accept spans directly from clients in jaeger.thrift format
       http:
         port: 14268
         # nodePort:
       # can accept Zipkin spans in JSON or Thrift
       zipkin:
-        {}
-        # port: 9411
-        # nodePort:
+        port: 9411
       otlp:
         grpc:
-          {}
-          # name: otlp-grpc
-          # port: 4317
-          # nodePort:
+          name: otlp-grpc
+          port: 4317
+          nodePort: 30662
         http:
-          {}
-          # name: otlp-http
-          # port: 4318
-          # nodePort:
+          name: otlp-http
+          port: 4318
+          nodePort: 30663
       admin:
         name: admin
         targetPort: admin
@@ -117,7 +112,7 @@ jaeger:
       enabled: false
     replicaCount: 1
     service:
-      type: ClusterIP
+      type: NodePort
       port: 80
       admin:
         name: admin
@@ -198,7 +193,7 @@ jaeger:
     #     value: http://my-otel-collector.chart.local:4318
     service:
       name: hotrod
-      type: ClusterIP
+      type: NodePort
       port: 80
     tracing:
       host: null
