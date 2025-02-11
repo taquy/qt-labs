@@ -1,0 +1,36 @@
+rook-ceph:
+  enabled: true
+  crds:
+    enabled: true
+  csi:
+    # -- Enable Ceph CSI RBD driver
+    enableRbdDriver: true
+    # -- Enable Ceph CSI CephFS driver
+    enableCephfsDriver: true
+    # -- Disable the CSI driver.
+    disableCsiDriver: "false"
+    # -- Enable host networking for CSI CephFS and RBD nodeplugins. This may be necessary
+    # in some network configurations where the SDN does not provide access to an external cluster or
+    # there is significant drop in read/write performance
+    enableCSIHostNetwork: true
+    # -- Enable Snapshotter in CephFS provisioner pod
+    enableCephfsSnapshotter: false
+    # -- Enable Snapshotter in NFS provisioner pod
+    enableNFSSnapshotter: false
+    # -- Enable Snapshotter in RBD provisioner pod
+    enableRBDSnapshotter: false
+    # -- Enable Host mount for `/etc/selinux` directory for Ceph CSI nodeplugins
+    enablePluginSelinuxHostMount: false
+    enableCSIEncryption: false
+    enableVolumeGroupSnapshot: true
+    enableMetadata: false
+    provisionerReplicas: 2
+    clusterName:
+    csiDriverNamePrefix:
+    nfs:
+      enabled: false
+  enableDiscoveryDaemon: false
+  discoveryDaemonInterval: 60m
+  cephCommandsTimeoutSeconds: "15"
+  useOperatorHostNetwork:
+  scaleDownOperator: false

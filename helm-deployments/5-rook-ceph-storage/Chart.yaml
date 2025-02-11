@@ -1,0 +1,12 @@
+apiVersion: v2
+name: rook-ceph-storage
+description: Basic charts
+type: application
+version: 0.1.0
+appVersion: "1.16.0"
+dependencies:
+- name: rook-ceph
+  alias: rook-ceph
+  condition: rook-ceph.enabled
+  repository: https://charts.rook.io/release
+  version: v1.16.3

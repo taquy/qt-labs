@@ -1,5 +1,5 @@
 traefik:
-  enabled: false
+  enabled: true
   deployment:
     enabled: true
     kind: Deployment
@@ -64,28 +64,7 @@ traefik:
     enabled: true
     single: false
     type: LoadBalancer
-   
   autoscaling:
     enabled: false
-
   persistence:
     enabled: false
- 
-  # Traefik Hub configuration. See https://doc.traefik.io/traefik-hub/
-  hub:
-    # -- Name of `Secret` with key 'token' set to a valid license token.
-    # It enables API Gateway.
-    token: ""
-    redis:
-      # -- Enable Redis Cluster. Default: true.
-      cluster:    # @schema type:[boolean, null]
-      # -- Database used to store information. Default: "0".
-      database:   # @schema type:[string, null]
-      endpoints: ""
-      username: ""
-      password: ""
-      sentinel:
-        # -- Name of the set of main nodes to use for main selection. Required when using Sentinel. Default: "".
-        masterset: ""
-        username: ""
-        password: ""

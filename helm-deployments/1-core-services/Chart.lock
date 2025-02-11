@@ -2,5 +2,14 @@ dependencies:
 - name: reflector
   repository: https://emberstack.github.io/helm-charts
   version: 7.1.288
-digest: sha256:3ab0f13edbe4b963537ef01a1830f80904e12f6e397faef6c287df0af990dfce
-generated: "2024-12-21T10:50:47.586953-05:00"
+- name: metallb
+  repository: https://metallb.github.io/metallb
+  version: 0.14.9
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.16.2
+- name: traefik
+  repository: https://traefik.github.io/charts
+  version: 34.1.0
+digest: sha256:1d27a6962e35bbf8f33e356136a4145ef4953f0cb7d057eefb2f3901bfa45491
+generated: "2025-02-10T23:16:57.242276-05:00"

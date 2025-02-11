@@ -1,7 +1,7 @@
 opentelemetry-operator:
   enabled: true
   fullnameOverride: otel-operator
-  replicaCount: 3
+  replicaCount: 1
   manager:
     image:
       repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
@@ -52,4 +52,4 @@ opentelemetry-operator:
       recreate: true
       certPeriodDays: 365
   crds:
-    create: false
+    create: true

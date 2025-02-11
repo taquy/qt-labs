@@ -22,15 +22,15 @@ kafka:
       name: EXTERNAL
     extraListeners: []
   sasl:
-    enabledMechanisms: PLAIN,SCRAM-SHA-256,SCRAM-SHA-512
-    interBrokerMechanism: PLAIN
-    controllerMechanism: PLAIN
+    enabled: false
+    enabledMechanisms: ""
+    interBrokerMechanism: ""
+    controllerMechanism: ""
     client:
-      users:
-        - user1
+      users: []
       passwords: ""
   controller:
-    replicaCount: 1
+    replicaCount: 3
     controllerOnly: false
     extraConfig: |
       auto.create.topics.enable=true
@@ -47,7 +47,7 @@ kafka:
     logPersistence:
       enabled: false
   broker:
-    replicaCount: 1
+    replicaCount: 3
     minId: 100
     zookeeperMigrationMode: false
     heapOpts: -Xmx1024m -Xms1024m
