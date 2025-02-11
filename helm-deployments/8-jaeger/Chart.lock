@@ -11,5 +11,8 @@ dependencies:
 - name: zipkin
   repository: https://zipkin.io/zipkin-helm
   version: 0.3.4
-digest: sha256:b4dacdc67f8cd1cca4d829084f70afd2389f1d0ca89bd6f4424ce6d920070af2
-generated: "2024-12-27T15:07:59.65557-05:00"
+- name: opentelemetry-collector
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.111.2
+digest: sha256:135f669d59257bd5fd15e8dae3fbcdfef33c217ffdd3935a6c1d66eca4dd6efe
+generated: "2025-02-03T23:26:32.864985-05:00"

@@ -1,0 +1,187 @@
+opentelemetry-collector:
+  enabled: true
+  fullnameOverride: "jaeger-opentelemetry-collector"
+  # Valid values are "daemonset", "deployment", and "statefulset".
+  mode: "deployment"
+  presets:
+    # Configures the collector to collect logs.
+    # Adds the filelog receiver to the logs pipeline
+    # and adds the necessary volumes and volume mounts.
+    # Best used with mode = daemonset.
+    # See https://opentelemetry.io/docs/kubernetes/collector/components/#filelog-receiver for details on the receiver.
+    logsCollection:
+      enabled: false
+      includeCollectorLogs: false
+      # Enabling this writes checkpoints in /var/lib/otelcol/ host directory.
+      # Note this changes collector's user to root, so that it can write to host directory.
+      storeCheckpoints: false
+      # The maximum bytes size of the recombined field.
+      # Once the size exceeds the limit, all received entries of the source will be combined and flushed.
+      maxRecombineLogSize: 102400
+    # Configures the collector to collect host metrics.
+    # Adds the hostmetrics receiver to the metrics pipeline
+    # and adds the necessary volumes and volume mounts.
+    # Best used with mode = daemonset.
+    # See https://opentelemetry.io/docs/kubernetes/collector/components/#host-metrics-receiver for details on the receiver.
+    hostMetrics:
+      enabled: false
+    # Configures the Kubernetes Processor to add Kubernetes metadata.
+    # Adds the k8sattributes processor to all the pipelines
+    # and adds a preset of minimum required RBAC rules to ClusterRole.
+    # Best used with mode = daemonset.
+    # See https://opentelemetry.io/docs/kubernetes/collector/components/#kubernetes-attributes-processor for details on the receiver.
+    kubernetesAttributes:
+      enabled: false
+      # When enabled the processor will extra all labels for an associated pod and add them as resource attributes.
+      # The label's exact name will be the key.
+      extractAllPodLabels: false
+      # When enabled the processor will extra all annotations for an associated pod and add them as resource attributes.
+      # The annotation's exact name will be the key.
+      extractAllPodAnnotations: false
+    # Configures the collector to collect node, pod, and container metrics from the API server on a kubelet..
+    # Adds the kubeletstats receiver to the metrics pipeline
+    # and adds the necessary rules to ClusterRole.
+    # Best used with mode = daemonset.
+    # See https://opentelemetry.io/docs/kubernetes/collector/components/#kubeletstats-receiver for details on the receiver.
+    kubeletMetrics:
+      enabled: false
+    # Configures the collector to collect kubernetes events.
+    # Adds the k8sobjects receiver to the logs pipeline
+    # and collects kubernetes events by default.
+    # Best used with mode = deployment or statefulset.
+    # See https://opentelemetry.io/docs/kubernetes/collector/components/#kubernetes-objects-receiver for details on the receiver.
+    kubernetesEvents:
+      enabled: false
+    # Configures the Kubernetes Cluster Receiver to collect cluster-level metrics.
+    # Adds the k8s_cluster receiver to the metrics pipeline
+    # and adds the necessary rules to ClusterRole.
+    # Best used with mode = deployment or statefulset.
+    # See https://opentelemetry.io/docs/kubernetes/collector/components/#kubernetes-cluster-receiver for details on the receiver.
+    clusterMetrics:
+      enabled: false
+
+  configMap:
+    create: true
+    existingName: ""
+  config:
+    exporters:
+      debug:
+        verbosity: detailed
+      otlp:
+        endpoint: jaeger-collector:4317 # Point to the Jaeger Collector gRPC endpoint
+        tls:
+          insecure: true
+    extensions:
+      health_check:
+        endpoint: ${env:MY_POD_IP}:13133
+    processors:
+      batch: {}
+      memory_limiter:
+        check_interval: 5s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+    receivers:
+      jaeger:
+        protocols:
+          grpc:
+            endpoint: ${env:MY_POD_IP}:14250
+          thrift_http:
+            endpoint: ${env:MY_POD_IP}:14268
+          thrift_compact:
+            endpoint: ${env:MY_POD_IP}:6831
+      otlp:
+        protocols:
+          grpc:
+            endpoint: ${env:MY_POD_IP}:4317
+          http:
+            endpoint: ${env:MY_POD_IP}:4318
+      zipkin:
+        endpoint: ${env:MY_POD_IP}:9411
+    service:
+      extensions:
+        - health_check
+      pipelines:
+        logs:
+          exporters:
+            - debug
+          processors:
+            - memory_limiter
+            - batch
+          receivers:
+            - otlp
+        metrics:
+          exporters:
+            - debug
+          processors:
+            - memory_limiter
+            - batch
+          receivers:
+            - otlp
+            - prometheus
+        traces:
+          exporters:
+            - debug
+          processors:
+            - memory_limiter
+            - batch
+          receivers:
+            - otlp
+            - jaeger
+            - zipkin
+
+  image:
+    repository: "otel/opentelemetry-collector"
+
+  ports:
+    otlp:
+      enabled: true
+      containerPort: 4317
+      servicePort: 4317
+      hostPort: 4317
+      protocol: TCP
+      # nodePort: 30317
+      appProtocol: grpc
+    otlp-http:
+      enabled: true
+      containerPort: 4318
+      servicePort: 4318
+      hostPort: 4318
+      protocol: TCP
+    jaeger-compact:
+      enabled: true
+      containerPort: 6831
+      servicePort: 6831
+      hostPort: 6831
+      protocol: UDP
+    jaeger-thrift:
+      enabled: true
+      containerPort: 14268
+      servicePort: 14268
+      hostPort: 14268
+      protocol: TCP
+    jaeger-grpc:
+      enabled: true
+      containerPort: 14250
+      servicePort: 14250
+      hostPort: 14250
+      protocol: TCP
+    zipkin:
+      enabled: true
+      containerPort: 9411
+      servicePort: 9411
+      hostPort: 9411
+      protocol: TCP
+    metrics:
+      # The metrics port is disabled by default. However you need to enable the port
+      # in order to use the ServiceMonitor (serviceMonitor.enabled) or PodMonitor (podMonitor.enabled).
+      enabled: false
+      containerPort: 8888
+      servicePort: 8888
+      protocol: TCP
+  service:
+    enabled: true
+    type: NodePort
+    # type: LoadBalancer
+
+  ingress:
+    enabled: false

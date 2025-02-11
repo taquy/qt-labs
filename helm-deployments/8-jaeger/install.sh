@@ -13,10 +13,12 @@ helm install \
   -f values/original/jaeger-operator.yaml \
   -f values/${chart_source}/zipkin.yaml \
   -f values/certs.yaml \
+  -f values/opentelemetry-collector.yaml \
   --namespace $ns $chart_name . ||
   helm upgrade --namespace $ns \
   -f values/${chart_source}/jaeger.yaml \
   -f values/original/jaeger-operator.yaml \
   -f values/${chart_source}/zipkin.yaml \
   -f values/certs.yaml \
+  -f values/opentelemetry-collector.yaml \
   --namespace $ns $chart_name .

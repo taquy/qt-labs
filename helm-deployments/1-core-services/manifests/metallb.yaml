@@ -3,13 +3,13 @@ apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
   name: default
-  namespace: network-system
+  namespace: core-services
 spec:
   addresses:
-  - 192.168.19.200-192.168.19.220
+  - 10.123.123.50-10.123.123.99
 ---
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
 metadata:
   name: default
-  namespace: network-system
+  namespace: core-services

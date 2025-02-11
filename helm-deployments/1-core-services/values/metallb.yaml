@@ -1,5 +1,5 @@
 metallb: 
-  enabled: false
+  enabled: true
   controller:
     enabled: true
   speaker:

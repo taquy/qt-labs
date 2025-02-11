@@ -9,3 +9,21 @@ dependencies:
   alias: reflector
   version: 7.1.288
   repository: https://emberstack.github.io/helm-charts
+# load balancer
+- name: metallb
+  alias: metallb
+  condition: metallb.enabled
+  repository: https://metallb.github.io/metallb
+  version: 0.14.9
+# cert manager
+- name: cert-manager
+  alias: cert-manager
+  condition: cert-manager.enabled
+  repository: https://charts.jetstack.io
+  version: v1.16.2
+# ingress controller
+- name: traefik
+  alias: traefik
+  condition: traefik.enabled
+  repository: https://traefik.github.io/charts
+  version: 34.1.0
