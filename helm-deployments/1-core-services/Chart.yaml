@@ -26,4 +26,4 @@ dependencies:
   alias: traefik
   condition: traefik.enabled
   repository: https://traefik.github.io/charts
-  version: 34.1.0
+  version: 34.3.0

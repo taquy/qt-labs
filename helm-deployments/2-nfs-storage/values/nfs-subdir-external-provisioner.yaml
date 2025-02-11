@@ -1,8 +1,8 @@
 nfs:
   enabled: true
   nfs:
-    server: 10.200.27.111
-    path: /nfs-storage
+    server: nfs.q.t
+    path: /nfs-storage/rke2
   storageClass:
     name: nfs
   resources:
