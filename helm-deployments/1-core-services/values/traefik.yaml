@@ -68,3 +68,15 @@ traefik:
     enabled: false
   persistence:
     enabled: false
+  providers:  # @schema additionalProperties: false
+    kubernetesCRD:
+      enabled: true
+      allowCrossNamespace: true
+      allowExternalNameServices: true
+      allowEmptyServices: true
+    kubernetesIngress:
+      enabled: true
+      allowExternalNameServices: true
+      allowEmptyServices: true
+    kubernetesGateway:
+      enabled: true
