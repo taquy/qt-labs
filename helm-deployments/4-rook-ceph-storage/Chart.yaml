@@ -10,3 +10,9 @@ dependencies:
   condition: rook-ceph.enabled
   repository: https://charts.rook.io/release
   version: v1.16.3
+- name: rook-ceph-cluster
+  alias: rook-ceph-cluster
+  condition: rook-ceph-cluster.enabled
+  repository: https://charts.rook.io/release
+  version: v1.16.3
+  
