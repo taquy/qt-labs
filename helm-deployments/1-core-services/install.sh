@@ -18,4 +18,4 @@ helm install \
   -f values/traefik.yaml \
   --namespace $ns $chart_name .
 
-# kubectl apply -f manifests
+kubectl apply -f manifests

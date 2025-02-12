@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nettool
+  labels:
+    app: nettool
+  namespace: core-services
+spec:
+  containers:
+    - name: nettool
+      image: nicolaka/netshoot
+      command: ["sleep", "3600"]
+      securityContext:
+        privileged: true  # Allows access to network tools
+  restartPolicy: Always
