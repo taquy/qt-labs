@@ -60,14 +60,6 @@ traefik:
       expose:
         default: true
       exposedPort: 443
-  service:
-    enabled: true
-    single: false
-    type: LoadBalancer
-  autoscaling:
-    enabled: false
-  persistence:
-    enabled: false
   providers:  # @schema additionalProperties: false
     kubernetesCRD:
       enabled: true
