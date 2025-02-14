@@ -24,7 +24,6 @@ dependencies:
   condition: jaeger.enabled
   repository: https://jaegertracing.github.io/helm-charts
   version: 3.4.0
-  version: 2.57.0
 - name: zipkin
   alias: zipkin
   condition: zipkin.enabled

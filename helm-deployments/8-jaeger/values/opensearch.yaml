@@ -18,12 +18,10 @@ opensearch:
       enabled: true
       size: 20Gi
   coordinating:
-    replicaCount: 2
-    resourcesPreset: "small"
+    replicaCount: 0
   ingest:
-    replicaCount: 2
-    enabled: true
-    resourcesPreset: small
+    replicaCount: 0
+    enabled: false
   ingress:
     enabled: true
     hostname: opensearch.q.t
