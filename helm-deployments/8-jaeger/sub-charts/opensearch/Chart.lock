@@ -1,9 +1,0 @@
-dependencies:
-- name: opensearch
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 1.5.1
-- name: opensearch-dashboards
-  repository: https://opensearch-project.github.io/helm-charts/
-  version: 2.25.0
-digest: sha256:6757fd3f42e176b5ec6027c21ebffe4878440d6fbb7db6f6a91f1016fb0a0610
-generated: "2024-12-21T09:35:46.163285-05:00"
