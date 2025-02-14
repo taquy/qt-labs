@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ns="longhorn-storage"
-chart_name="longhorn-storage"
+ns="longhorn"
+chart_name="longhorn"
 kubectl get namespace | grep -q "^$ns " || kubectl create namespace $ns
 
 # install or upgrade the helm charts

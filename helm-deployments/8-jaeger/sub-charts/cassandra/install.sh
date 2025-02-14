@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ns="jaeger-cassandra"
+ns="jaeger"
 chart_name="jaeger-cassandra"
 kubectl get namespace | grep -q "^$ns " || kubectl create namespace $ns
 

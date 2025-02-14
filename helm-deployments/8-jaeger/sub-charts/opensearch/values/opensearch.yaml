@@ -1,44 +1,41 @@
 opensearch:
   enabled: true
   global:
-    defaultStorageClass: "nfs"
-  fullnameOverride: "jaeger-opensearch"
-  clusterName: open
-  useIstioLabels: false
-  security:
-    enabled: false
+    defaultStorageClass: "longhorn-static"
+  fullnameOverride: "opensearch"
   master:
     masterOnly: true
     resourcesPreset: "small"
     replicaCount: 2
     persistence:
-      enabled: false
+      enabled: true
+      size: 8Gi
   data:
     replicaCount: 2
     resourcesPreset: "medium"
     javaOpts: "-Xmx1g -Xms1g"
     persistence:
-      enabled: false
+      enabled: true
+      size: 20Gi
   coordinating:
     replicaCount: 2
     resourcesPreset: "small"
   ingest:
-    enabled: false
-    resourcesPreset: small
-    replicaCount: 1
-    service:
-      enabled: false
-  dashboards:
+    replicaCount: 2
     enabled: true
-    service:
-      type: ClusterIP
-    password: ""
+    resourcesPreset: small
+  ingress:
+    enabled: true
+    hostname: opensearch.q.t
+  dashboards:
+    enabled: false
     replicaCount: 1
     resourcesPreset: "small"
-    tls:
-      enabled: false
+    ingress:
+      enabled: true
+      hostname: opensearch-dashboards.q.t
     persistence:
-      enabled: false
+      enabled: true
   snapshots:
     enabled: false
     persistence:

@@ -6,12 +6,12 @@ longhorn:
     manager:
       type: ClusterIP
   persistence:
-    defaultClass: false
+    defaultClass: true
     defaultFsType: ext4
-    defaultClassReplicaCount: 1
+    defaultClassReplicaCount: 0
     defaultDataLocality: best-effort
     reclaimPolicy: Delete
-    migratable: true
+    migratable: false
     backingImage:
       enable: false
 
@@ -20,38 +20,38 @@ longhorn:
     upgradeVersionCheck: true
 
   csi:
-    attacherReplicaCount: 1
-    provisionerReplicaCount: 1
-    resizerReplicaCount: 1
-    snapshotterReplicaCount: 1
+    attacherReplicaCount: 0
+    provisionerReplicaCount: 0
+    resizerReplicaCount: 0
+    snapshotterReplicaCount: 0
 
   defaultSettings:
     # -- Endpoint used to access the backupstore. (Options: "NFS", "CIFS", "AWS", "GCP", "AZURE")
-    backupTarget: ~
+    backupTarget: ""
     # -- Name of the Kubernetes secret associated with the backup target.
     backupTargetCredentialSecret: ~
     # -- Setting that allows Longhorn to automatically attach a volume and create snapshots or backups when recurring jobs are run.
-    allowRecurringJobWhileVolumeDetached: ~
+    allowRecurringJobWhileVolumeDetached: false
     # -- Setting that allows Longhorn to automatically create a default disk only on nodes with the label "node.longhorn.io/create-default-disk=true" (if no other disks exist). When this setting is disabled, Longhorn creates a default disk on each node that is added to the cluster.
     createDefaultDiskLabeledNodes: ~
     # -- Default path for storing data on a host. The default value is "/var/lib/longhorn/".
     defaultDataPath: ~
     # -- Default data locality. A Longhorn volume has data locality if a local replica of the volume exists on the same node as the pod that is using the volume.
-    defaultDataLocality: ~
+    defaultDataLocality: "best-effort"
     # -- Setting that allows scheduling on nodes with healthy replicas of the same volume. This setting is disabled by default.
     replicaSoftAntiAffinity: ~
     # -- Setting that automatically rebalances replicas when an available node is discovered.
-    replicaAutoBalance: ~
+    replicaAutoBalance: "disabled"
     # -- Percentage of storage that can be allocated relative to hard drive capacity. The default value is "100".
     storageOverProvisioningPercentage: ~
     # -- Percentage of minimum available disk capacity. When the minimum available capacity exceeds the total available capacity, the disk becomes unschedulable until more space is made available for use. The default value is "25".
-    storageMinimalAvailablePercentage: ~
+    storageMinimalAvailablePercentage: 5
     # -- Percentage of disk space that is not allocated to the default disk on each new Longhorn node.
     storageReservedPercentageForDefaultDisk: ~
     # -- Upgrade Checker that periodically checks for new Longhorn versions. When a new version is available, a notification appears on the Longhorn UI. This setting is enabled by default
     upgradeChecker: ~
     # -- Default number of replicas for volumes created using the Longhorn UI. For Kubernetes configuration, modify the `numberOfReplicas` field in the StorageClass. The default value is "3".
-    defaultReplicaCount: 3
+    defaultReplicaCount: 1
     # -- Default Longhorn StorageClass. "storageClassName" is assigned to PVs and PVCs that are created for an existing Longhorn volume. "storageClassName" can also be used as a label, so it is possible to use a Longhorn StorageClass to bind a workload to an existing PV without creating a Kubernetes StorageClass object. The default value is "longhorn-static".
     defaultLonghornStaticStorageClass: ~
     # -- Number of seconds that Longhorn waits before checking the backupstore for new backups. The default value is "300". When the value is "0", polling is disabled.
@@ -61,11 +61,11 @@ longhorn:
     # -- Setting that restores recurring jobs from a backup volume on a backup target and creates recurring jobs if none exist during backup restoration.
     restoreVolumeRecurringJobs: ~
     # -- Maximum number of successful recurring backup and snapshot jobs to be retained. When the value is "0", a history of successful recurring jobs is not retained.
-    recurringSuccessfulJobsHistoryLimit: ~
+    recurringSuccessfulJobsHistoryLimit: 0
     # -- Maximum number of failed recurring backup and snapshot jobs to be retained. When the value is "0", a history of failed recurring jobs is not retained.
-    recurringFailedJobsHistoryLimit: ~
+    recurringFailedJobsHistoryLimit: 0
     # -- Maximum number of snapshots or backups to be retained.
-    recurringJobMaxRetention: ~
+    recurringJobMaxRetention: 0
     # -- Maximum number of failed support bundles that can exist in the cluster. When the value is "0", Longhorn automatically purges all failed support bundles.
     supportBundleFailedHistoryLimit: ~
     # -- Taint or toleration for system-managed Longhorn components.
@@ -73,11 +73,6 @@ longhorn:
     taintToleration: ~
     # -- Node selector for system-managed Longhorn components.
     systemManagedComponentsNodeSelector: ~
-    # -- PriorityClass for system-managed Longhorn components.
-    # This setting can help prevent Longhorn components from being evicted under Node Pressure.
-    # Notice that this will be applied to Longhorn user-deployed components by default if there are no priority class values set yet, such as `longhornManager.priorityClass`.
-    priorityClass: &defaultPriorityClassNameRef "longhorn-critical"
-    # -- Setting that allows Longhorn to automatically salvage volumes when all replicas become faulty (for example, when the network connection is interrupted). Longhorn determines which replicas are usable and then uses these replicas for the volume. This setting is enabled by default.
     autoSalvage: ~
     # -- Setting that allows Longhorn to automatically delete a workload pod that is managed by a controller (for example, daemonset) whenever a Longhorn volume is detached unexpectedly (for example, during Kubernetes upgrades). After deletion, the controller restarts the pod and then Kubernetes handles volume reattachment and remounting.
     autoDeletePodWhenVolumeDetachedUnexpectedly: ~
@@ -108,7 +103,7 @@ longhorn:
     # -- Setting that allows Longhorn to automatically clean up the system-generated snapshot after replica rebuilding is completed.
     autoCleanupSystemGeneratedSnapshot: ~
     # -- Setting that allows Longhorn to automatically clean up the snapshot generated by a recurring backup job.
-    autoCleanupRecurringJobBackupSnapshot: ~
+    autoCleanupRecurringJobBackupSnapshot: false
     # -- Maximum number of engines that are allowed to concurrently upgrade on each node after Longhorn Manager is upgraded. When the value is "0", Longhorn does not automatically upgrade volume engines to the new default engine image version.
     concurrentAutomaticEngineUpgradePerNodeLimit: ~
     # -- Number of minutes that Longhorn waits before cleaning up the backing image file when no replicas in the disk are using it.
@@ -128,7 +123,7 @@ longhorn:
     # -- Timeout between the Longhorn Engine and replicas. Specify a value between "8" and "30" seconds. The default value is "8".
     engineReplicaTimeout: ~
     # -- Setting that allows you to enable and disable snapshot hashing and data integrity checks.
-    snapshotDataIntegrity: ~
+    snapshotDataIntegrity: ~  
     # -- Setting that allows disabling of snapshot hashing after snapshot creation to minimize impact on system performance.
     snapshotDataIntegrityImmediateCheckAfterSnapshotCreation: ~
     # -- Setting that defines when Longhorn checks the integrity of data in snapshot disk files. You must use the Unix cron expression format.
@@ -181,6 +176,6 @@ longhorn:
   longhornUI:
     replicas: 1
 
-  metrics:
-    serviceMonitor:
-      enabled: false
+  ingress:
+    enabled: true
+    host: longhorn.q.t

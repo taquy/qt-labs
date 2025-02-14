@@ -1,67 +1,40 @@
 kafka:
   enabled: true
   global:
-    defaultStorageClass: "nfs"
-  fullnameOverride: ""
+    defaultStorageClass: "longhorn-static"
+  fullnameOverride: "kafka"
   listeners:
     client:
-      containerPort: 9092
       protocol: PLAINTEXT
-      name: CLIENT
     controller:
-      name: CONTROLLER
-      containerPort: 9093
       protocol: PLAINTEXT
     interbroker:
-      containerPort: 9094
       protocol: PLAINTEXT
-      name: INTERNAL
     external:
-      containerPort: 9095
       protocol: PLAINTEXT
-      name: EXTERNAL
-    extraListeners: []
   sasl:
     enabled: false
-    enabledMechanisms: ""
-    interBrokerMechanism: ""
-    controllerMechanism: ""
-    client:
-      users: []
-      passwords: ""
   controller:
     replicaCount: 3
-    controllerOnly: false
+    controllerOnly: true
     extraConfig: |
       auto.create.topics.enable=true
     minId: 0
-    zookeeperMigrationMode: false
     heapOpts: -Xmx1024m -Xms1024m
-    livenessProbe:
-      enabled: true
-    readinessProbe:
-      enabled: true
     resourcesPreset: "small"
     persistence:
-      enabled: false
+      enabled: true
     logPersistence:
       enabled: false
   broker:
-    replicaCount: 3
+    replicaCount: 4
     minId: 100
-    zookeeperMigrationMode: false
-    heapOpts: -Xmx1024m -Xms1024m
-    resourcesPreset: "small"
+    heapOpts: -Xmx2024m -Xms2024m
+    resourcesPreset: "medium"
     persistence:
-      enabled: false
+      enabled: true
   provisioning:
     enabled: true
-    numPartitions: 1
-    replicationFactor: 1
-    parallel: 1
-    resourcesPreset: "micro"
-    waitForKafka: true
-    useHelmHooks: true
     topics:
     - name: jaeger
       partitions: 1

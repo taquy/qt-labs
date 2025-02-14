@@ -4,20 +4,19 @@ traefik:
     enabled: true
     kind: Deployment
     replicas: 1
-  ingressClass:  # @schema additionalProperties: false
+  ingressClass:
     enabled: true
     isDefaultClass: true
   experimental:
     kubernetesGateway:
       enabled: true
   gateway:
-    # -- When providers.kubernetesGateway.enabled, deploy a default gateway
     enabled: true
     listeners:
       web:
         port: 8000
         hostname: "traefik.q.t"
-  gatewayClass:  # @schema additionalProperties: false
+  gatewayClass:
     enabled: true
   ingressRoute:
     dashboard:
@@ -60,7 +59,7 @@ traefik:
       expose:
         default: true
       exposedPort: 443
-  providers:  # @schema additionalProperties: false
+  providers:
     kubernetesCRD:
       enabled: true
       allowCrossNamespace: true
