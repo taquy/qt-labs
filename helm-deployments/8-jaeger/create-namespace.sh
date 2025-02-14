@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -a namespaces=("jaeger" "jaeger-opensearch" "jaeger-cassandra")
+declare -a namespaces=("jaeger")
 for (( i=0; i<${#namespaces[@]}; i++ ));
 do
   ns="${namespaces[$i]}"

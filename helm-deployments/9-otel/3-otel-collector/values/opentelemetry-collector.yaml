@@ -24,6 +24,9 @@ opentelemetry-collector:
       enabled: true
     clusterMetrics:
       enabled: false
+  clusterRole:
+    create: true
+    name: "otel-collector-primary"
   configMap:
     create: true
   config:

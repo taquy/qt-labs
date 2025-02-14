@@ -1,0 +1,12 @@
+zipkin:
+  enabled: true
+  replicaCount: 1
+  zipkin:
+    selfTracing:
+      enabled: true
+    storage:
+      type: elasticsearch
+      elasticsearch:
+        hosts: "opensearch"
+        index: zipkin
+        sslNoVerify: true

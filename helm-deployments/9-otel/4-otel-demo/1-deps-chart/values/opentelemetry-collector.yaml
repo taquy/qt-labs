@@ -11,8 +11,6 @@ opentelemetry-collector:
     repository: "otel/opentelemetry-collector-contrib"
     # repository: otel/opentelemetry-collector-k8s
   replicaCount: 1
-  service:
-    type: ClusterIP
   config:
     receivers:
       otlp:
@@ -84,3 +82,8 @@ opentelemetry-collector:
     prometheus.io/scrape: "true"
     prometheus.io/port: "9464"
     opentelemetry_community_demo: "true"
+  clusterRole:
+    create: true
+    name: "otel-collector-demo"
+    clusterRoleBinding:
+      name: "otel-collector-demo"

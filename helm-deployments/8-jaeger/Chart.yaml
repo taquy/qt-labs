@@ -13,11 +13,7 @@ dependencies:
   alias: jaeger
   condition: jaeger.enabled
   repository: https://jaegertracing.github.io/helm-charts
-  version: 3.3.3
-- name: jaeger-operator
-  alias: jaeger-operator
-  condition: jaeger-operator.enabled
-  repository: https://jaegertracing.github.io/helm-charts
+  version: 3.4.0
   version: 2.57.0
 - name: zipkin
   alias: zipkin
@@ -25,10 +21,6 @@ dependencies:
   repository: https://zipkin.io/zipkin-helm
   version: 0.3.4
 - name: opentelemetry-collector
+  alias: opentelemetry-collector
   version: 0.111.2
   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
-# - name: zipkin
-#   alias: zipkin
-#   condition: zipkin.enabled
-#   repository: oci://registry-1.docker.io/bitnamicharts
-#   version: 1.1.0

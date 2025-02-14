@@ -1,12 +1,9 @@
 minio: 
   enabled: true
-  image:
-    debug: true
   mode: distributed
   auth:
     rootUser: admin
     rootPassword: "root1234"
-  # defaultBuckets: "loki-chunks, loki-admin, loki-ruler"
   statefulset:
     replicaCount: 2
     zones: 2
@@ -16,37 +13,18 @@ minio:
     resourcesPreset: "nano"
     buckets:
       - name: loki-chunks
-        region: earth
+        region: vn
       - name: loki-admin
-        region: earth
+        region: vn
       - name: loki-ruler
-        region: earth
+        region: vn
     config:
       - name: region
         options:
-          name: earth
-  containerPorts:
-    api: 9000
-    console: 9001
-  podAnnotations: {}
-  livenessProbe:
-    enabled: false
-  readinessProbe:
-    enabled: false
-  startupProbe:
-    enabled: false
-  service:
-    type: ClusterIP
-    ports:
-      api: 9000
-      console: 9001
+          name: vn
   ingress:
-    enabled: false
     ingressClassName: "network-system-traefik"
     hostname: minio.q.t
-    servicePort: minio-console
-    tls: false
-    selfSigned: false
   apiIngress:
     enabled: false
     ingressClassName: "network-system-traefik"
@@ -54,9 +32,5 @@ minio:
     servicePort: minio-api
     tls: false
     selfSigned: false
-  networkPolicy:
-    enabled: false
   persistence:
     enabled: false
-    storageClass: "nfs"
-    size: 10Gi

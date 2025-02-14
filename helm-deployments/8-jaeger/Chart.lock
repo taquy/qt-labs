@@ -4,7 +4,7 @@ dependencies:
   version: 0.1.0
 - name: jaeger
   repository: https://jaegertracing.github.io/helm-charts
-  version: 3.3.3
+  version: 3.4.0
 - name: jaeger-operator
   repository: https://jaegertracing.github.io/helm-charts
   version: 2.57.0
@@ -14,5 +14,5 @@ dependencies:
 - name: opentelemetry-collector
   repository: https://open-telemetry.github.io/opentelemetry-helm-charts
   version: 0.111.2
-digest: sha256:135f669d59257bd5fd15e8dae3fbcdfef33c217ffdd3935a6c1d66eca4dd6efe
-generated: "2025-02-03T23:26:32.864985-05:00"
+digest: sha256:5c64bccbfcbe28b5da1a8a81ccca2c6f962f6a94fd2d4228a2e12499c83f786d
+generated: "2025-02-14T02:28:03.416783-05:00"

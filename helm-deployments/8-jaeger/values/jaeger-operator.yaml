@@ -1,14 +1,5 @@
 jaeger-operator:
   enabled: true
-  image:
-    repository: jaegertracing/jaeger-operator
-    tag: 1.61.0
-  certs:
-    issuer:
-      create: true
-    certificate:
-      create: true
-      namespace: "jaeger"
   webhooks:
     mutatingWebhook:
       create: true
@@ -19,6 +10,4 @@ jaeger-operator:
       create: true
   jaeger:
     create: false
-  service:
-    type: ClusterIP
   replicaCount: 1

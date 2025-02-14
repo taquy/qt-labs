@@ -3,7 +3,7 @@ certs:
   cn: q.t
   issuers:
   - name: opensearch
-    namespace: jaeger-opensearch
+    namespace: jaeger
     certs:
     - admin
     - master
@@ -16,7 +16,7 @@ certs:
     existingSecret: opensearch-secrets
     keystoreSecretKey: storepass
   - name: cassandra
-    namespace: jaeger-cassandra
+    namespace: jaeger
     certs:
     - master
     subdomain:
