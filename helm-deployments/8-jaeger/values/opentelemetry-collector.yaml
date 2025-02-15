@@ -130,7 +130,7 @@ opentelemetry-collector:
   ingress:
     enabled: true
     hosts:
-      - host: collector.q.t
+      - host: otel-collector.q.t
         paths:
           - path: /
             pathType: Prefix
