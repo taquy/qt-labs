@@ -1,8 +1,7 @@
 coroot-operator:
-  enabled: false
+  enabled: true
   image:
     repository: ghcr.io/coroot/coroot-operator
-
   resources:
     requests:
       cpu: 100m
