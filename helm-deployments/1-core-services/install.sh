@@ -10,12 +10,16 @@ helm install \
   -f values/metallb.yaml \
   -f values/cert-manager.yaml \
   -f values/traefik.yaml \
+  -f values/external-secrets.yaml \
   --namespace $ns $chart_name . ||
   helm upgrade --namespace $ns \
   -f values/reflector.yaml \
   -f values/metallb.yaml \
   -f values/cert-manager.yaml \
   -f values/traefik.yaml \
+  -f values/external-secrets.yaml \
   --namespace $ns $chart_name .
+
+sleep 5
 
 kubectl apply -f manifests
