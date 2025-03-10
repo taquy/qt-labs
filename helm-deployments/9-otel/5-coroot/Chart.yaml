@@ -9,9 +9,9 @@ dependencies:
   alias: coroot
   condition: coroot.enabled
   repository: https://coroot.github.io/helm-charts
-  version: 0.16.13
-- name: coroot-operator
-  alias: coroot-operator
-  condition: coroot-operator.enabled
-  repository: https://coroot.github.io/helm-charts
-  version: 0.2.0
+  version: 0.18.8
+# - name: coroot-operator
+#   alias: coroot-operator
+#   condition: coroot-operator.enabled
+#   repository: https://coroot.github.io/helm-charts
+#   version: 0.2.0

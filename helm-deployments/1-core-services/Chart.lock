@@ -11,5 +11,8 @@ dependencies:
 - name: traefik
   repository: https://traefik.github.io/charts
   version: 34.3.0
-digest: sha256:22c38040fddaa0594d3f5e841fb851a4db67f8702913c3bd0bc334d0fa42f7c6
-generated: "2025-02-10T23:44:38.765533-05:00"
+- name: external-secrets
+  repository: https://charts.external-secrets.io
+  version: 0.14.3
+digest: sha256:def81a5cabde1bb000903d36d3a2bbbb67a75ce2f4716da1668fc78098e081a9
+generated: "2025-03-02T20:07:00.553409+07:00"

@@ -1,9 +1,6 @@
 dependencies:
 - name: coroot
   repository: https://coroot.github.io/helm-charts
-  version: 0.16.13
-- name: coroot-operator
-  repository: https://coroot.github.io/helm-charts
-  version: 0.2.0
-digest: sha256:2be7c9bf61a89099cb4d412b4de56f1354e89045ea601eee32909eb91a0e4481
-generated: "2025-01-16T02:03:50.426928-05:00"
+  version: 0.18.8
+digest: sha256:538d118e3ab980914428d7f0801bf283882de8a914f41b4668219a8f6ae56d97
+generated: "2025-03-02T17:57:02.811316+07:00"
