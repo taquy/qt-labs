@@ -8,6 +8,8 @@ import threading
 import queue
 from datetime import datetime
 import io
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 app = Flask(__name__)
 
@@ -319,51 +321,80 @@ def export_pdf():
         # Create a list of all metrics
         metrics = ['Price', 'MarketCap', 'EPS', 'P/E', 'P/B']
         
-        # Generate plots for each metric
-        figures = []
-        for metric in metrics:
+        # Create subplots
+        fig = make_subplots(
+            rows=len(metrics),
+            cols=1,
+            subplot_titles=[f'Comparison of {metric} across Selected Stocks' for metric in metrics],
+            vertical_spacing=0.1
+        )
+        
+        # Add each metric as a subplot
+        for idx, metric in enumerate(metrics, 1):
             # Sort by metric value
             metric_df = filtered_df.sort_values(by=metric, ascending=True)
             
-            # Create bar chart
-            fig = px.bar(
-                metric_df,
-                x='Symbol',
-                y=metric,
-                title=f'Comparison of {metric} across Selected Stocks',
-                labels={'Symbol': 'Stock Symbol', metric: metric},
-                template='plotly_white',
-                color='Symbol',
-                color_discrete_sequence=px.colors.qualitative.Set3
-            )
+            # Format values for display
+            if metric in ['Price', 'MarketCap']:
+                text_values = metric_df[metric].apply(lambda x: f'{x:,.0f}')
+            else:
+                text_values = metric_df[metric].apply(lambda x: f'{x:.2f}')
             
-            # Update layout
-            fig.update_layout(
-                showlegend=True,
-                plot_bgcolor='white',
-                height=500,
-                title_x=0.5,
-                title_font_size=20,
-                bargap=0.2,
-                xaxis=dict(
-                    title_font=dict(size=14),
-                    tickfont=dict(size=12),
-                    gridcolor='lightgray'
+            # Add bar trace
+            fig.add_trace(
+                go.Bar(
+                    x=metric_df['Symbol'],
+                    y=metric_df[metric],
+                    name=metric,
+                    text=text_values,  # Show formatted values on bars
+                    textposition='auto',
+                    marker_color=px.colors.qualitative.Set3[idx % len(px.colors.qualitative.Set3)],
+                    showlegend=False,
+                    hovertemplate="<b>%{x}</b><br>" +
+                                f"{metric}: %{{y:,.2f}}<br>" +
+                                "<extra></extra>"
                 ),
-                yaxis=dict(
-                    title_font=dict(size=14),
-                    tickfont=dict(size=12),
-                    gridcolor='lightgray'
-                )
+                row=idx,
+                col=1
             )
             
-            figures.append(fig)
+            # Update axes labels
+            fig.update_xaxes(title_text="Stock Symbol", row=idx, col=1, gridcolor='lightgray')
+            fig.update_yaxes(title_text=metric, row=idx, col=1, gridcolor='lightgray')
         
-        # Convert plots to JSON
-        graphsJSON = json.dumps(figures, cls=plotly.utils.PlotlyJSONEncoder)
-        return jsonify(graphsJSON)
+        # Update layout
+        fig.update_layout(
+            height=300 * len(metrics),  # Adjust height based on number of metrics
+            width=1000,
+            showlegend=False,
+            plot_bgcolor='white',
+            title={
+                'text': 'Stock Comparison Analysis',
+                'x': 0.5,
+                'xanchor': 'center',
+                'font': {'size': 24}
+            },
+            margin=dict(t=100, b=50),  # Adjust margins
+            bargap=0.2,
+            paper_bgcolor='white'  # Set paper background color
+        )
+        
+        # Generate PDF bytes
+        img_bytes = fig.to_image(format="pdf")
+        
+        # Generate filename with current date
+        filename = f"stock_charts_{datetime.now().strftime('%Y%m%d')}.pdf"
+        
+        # Send the file
+        return send_file(
+            io.BytesIO(img_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
     except Exception as e:
-        return jsonify({'error': str(e)})
+        print(f"Error in export_pdf: {str(e)}")  # Add detailed error logging
+        return jsonify({'error': str(e)}), 500  # Return 500 status code for server errors
 
 if __name__ == '__main__':
     app.run(debug=True) 

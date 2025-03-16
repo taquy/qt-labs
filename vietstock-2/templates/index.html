@@ -412,11 +412,17 @@ VCB"></textarea>
                 return;
             }
 
-            // Get current date for filename
-            const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
-            const filename = `stock_charts_${date}.pdf`;
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'alert alert-info';
+            loadingDiv.innerHTML = '<div class="loading"></div><span>Generating PDF...</span>';
+            loadingDiv.style.position = 'fixed';
+            loadingDiv.style.top = '20px';
+            loadingDiv.style.right = '20px';
+            loadingDiv.style.zIndex = '1000';
+            document.body.appendChild(loadingDiv);
 
-            // Request plots for all metrics
+            // Request PDF export
             fetch('/export_pdf', {
                 method: 'POST',
                 headers: {
@@ -426,47 +432,33 @@ VCB"></textarea>
                     stocks: selectedStocks
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                    return;
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
-
-                const figures = JSON.parse(data);
+                return response.blob();
+            })
+            .then(blob => {
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `stock_charts_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.pdf`;
                 
-                // Create a div to hold all plots
-                const tempDiv = document.createElement('div');
-                tempDiv.style.display = 'none';
-                document.body.appendChild(tempDiv);
-
-                // Create all plots
-                const promises = figures.map((figure, index) => {
-                    const plotDiv = document.createElement('div');
-                    plotDiv.id = `temp-plot-${index}`;
-                    tempDiv.appendChild(plotDiv);
-                    return Plotly.newPlot(plotDiv, figure.data, figure.layout);
-                });
-
-                // When all plots are created, export to PDF
-                Promise.all(promises).then(() => {
-                    const options = {
-                        filename: filename,
-                        format: 'pdf',
-                        height: figures.length * 550,  // Adjust height based on number of plots
-                        width: 800
-                    };
-
-                    // Export all plots
-                    Plotly.downloadImage('temp-plot-0', options).then(() => {
-                        // Clean up temporary divs
-                        document.body.removeChild(tempDiv);
-                    });
-                });
+                // Trigger download
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                document.body.removeChild(loadingDiv);
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while exporting the PDF');
+                document.body.removeChild(loadingDiv);
+                alert('An error occurred while generating the PDF');
             });
         }
     </script>
