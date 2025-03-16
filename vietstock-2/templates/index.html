@@ -17,6 +17,7 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
         .form-group {
             margin-bottom: 20px;
@@ -35,9 +36,45 @@
         .form-check:hover {
             background-color: #f8f9fa;
         }
+        #scrapeStatus {
+            display: none;
+            margin-top: 10px;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #3498db;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1 class="mb-4">Stock Data Collection</h1>
+        <form id="scrapeForm" class="mb-4">
+            <div class="form-group">
+                <label for="stockSymbols" class="form-label">Enter Stock Symbols (one per line):</label>
+                <textarea class="form-control" id="stockSymbols" rows="5" placeholder="Example:
+VNM
+VIC
+VCB"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Scrape Data</button>
+            <div id="scrapeStatus" class="alert" role="alert">
+                <div class="loading"></div>
+                <span id="scrapeMessage"></span>
+            </div>
+        </form>
+    </div>
+
     <div class="container">
         <h1 class="mb-4">Stock Comparison Tool</h1>
         
@@ -56,7 +93,7 @@
             <div class="col-md-8">
                 <div class="form-group">
                     <label class="form-label">Select Stocks to Compare:</label>
-                    <div class="d-flex flex-wrap gap-2">
+                    <div class="d-flex flex-wrap gap-2" id="stockCheckboxes">
                         {% for stock in stocks %}
                         <div class="form-check">
                             <input class="form-check-input stock-checkbox" type="checkbox" value="{{ stock }}" id="stock_{{ stock }}" onchange="updateGraph()">
@@ -75,6 +112,70 @@
 
     <script>
         let currentGraph = null;  // Keep track of current graph
+        let eventSource = null;  // EventSource for SSE
+
+        // Function to prefill the textarea with existing stocks
+        function prefillStockSymbols() {
+            fetch('/get_stocks')
+            .then(response => response.json())
+            .then(data => {
+                if (data.stocks && data.stocks.length > 0) {
+                    const textarea = $('#stockSymbols');
+                    textarea.val(data.stocks.join('\n'));
+                }
+            })
+            .catch(error => {
+                console.error('Error prefilling stock symbols:', error);
+            });
+        }
+
+        function startEventStream() {
+            // Close existing connection if any
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            // Create new EventSource connection
+            eventSource = new EventSource('/stream');
+            
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.status === 'completed') {
+                    // Update status
+                    $('#scrapeStatus').removeClass('alert-info').addClass('alert-success');
+                    $('.loading').hide();  // Hide loading spinner
+                    $('#scrapeMessage').text('Data collected successfully!');
+                    
+                    // Hide the status message after 1 second
+                    setTimeout(function() {
+                        $('#scrapeStatus').fadeOut('slow');
+                    }, 1000);
+                    
+                    // Update stock list and graph
+                    updateStockList();
+                    
+                    // Close the connection
+                    eventSource.close();
+                    eventSource = null;
+                } else if (data.status === 'error') {
+                    // Show error
+                    $('#scrapeStatus').removeClass('alert-info').addClass('alert-danger');
+                    $('.loading').hide();  // Hide loading spinner
+                    $('#scrapeMessage').text('Error: ' + data.message);
+                    
+                    // Close the connection
+                    eventSource.close();
+                    eventSource = null;
+                }
+            };
+            
+            eventSource.onerror = function(error) {
+                console.error('EventSource failed:', error);
+                eventSource.close();
+                eventSource = null;
+            };
+        }
 
         function updateGraph() {
             // Get selected stocks
@@ -132,8 +233,83 @@
             });
         }
 
+        // Handle form submission
+        $('#scrapeForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Get stock symbols from textarea
+            const symbols = $('#stockSymbols').val().trim().split('\n').map(s => s.trim()).filter(s => s);
+            
+            if (symbols.length === 0) {
+                alert('Please enter at least one stock symbol');
+                return;
+            }
+
+            // Show status
+            $('#scrapeStatus').show().removeClass('alert-success alert-danger').addClass('alert-info');
+            $('#scrapeMessage').text('Scraping data...');
+
+            // Start event stream for real-time updates
+            startEventStream();
+
+            // Send request to scrape data
+            fetch('/scrape_stocks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    symbols: symbols
+                })
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                $('#scrapeStatus').removeClass('alert-info').addClass('alert-danger');
+                $('#scrapeMessage').text('An error occurred while starting the scraping process');
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+            });
+        });
+
+        function updateStockList() {
+            fetch('/get_stocks')
+            .then(response => response.json())
+            .then(data => {
+                // Update checkboxes
+                const checkboxesDiv = $('#stockCheckboxes');
+                checkboxesDiv.empty();
+                
+                data.stocks.forEach(stock => {
+                    const checkbox = `
+                        <div class="form-check">
+                            <input class="form-check-input stock-checkbox" type="checkbox" value="${stock}" id="stock_${stock}" onchange="updateGraph()">
+                            <label class="form-check-label" for="stock_${stock}">
+                                ${stock}
+                            </label>
+                        </div>
+                    `;
+                    checkboxesDiv.append(checkbox);
+                });
+
+                // Check all new stocks and update graph
+                $('.stock-checkbox').prop('checked', true);
+                updateGraph();
+
+                // Also update the textarea with the new stocks
+                prefillStockSymbols();
+            })
+            .catch(error => {
+                console.error('Error updating stock list:', error);
+            });
+        }
+
         // Update graph on page load
         $(document).ready(function() {
+            // Prefill the textarea with existing stocks
+            prefillStockSymbols();
+            
             // Select first 5 stocks by default
             $('.stock-checkbox').slice(0, 5).prop('checked', true);
             updateGraph();

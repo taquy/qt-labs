@@ -48,3 +48,5 @@ vagrant-virtualbox-automation/.vagrant
 helm-deployments/9-otel/5-coroot/demo/vendor/brick/math/src/
 
 *.ods#
+
+*.pyc

@@ -1,10 +1,16 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, Response
 import pandas as pd
 import plotly
 import plotly.express as px
 import json
+from scrape import process_stock_list
+import threading
+import queue
 
 app = Flask(__name__)
+
+# Queue for SSE messages
+message_queue = queue.Queue()
 
 def load_stock_data():
     try:
@@ -26,6 +32,41 @@ def load_stock_data():
         print(f"Error loading data: {str(e)}")
         return None
 
+def scrape_stocks_async(symbols):
+    try:
+        # Create initial DataFrame with symbols
+        df = pd.DataFrame({'Symbol': symbols})
+        df.to_excel('stocks.ods', engine='odf', index=False)
+        
+        # Process stocks
+        results = process_stock_list(symbols)
+        
+        # Convert results to DataFrame and save
+        df_results = pd.DataFrame(results)
+        df_results.to_excel('stocks.ods', engine='odf', index=False)
+        
+        print("Scraping completed successfully")
+        # Send completion message to queue
+        message_queue.put(json.dumps({'status': 'completed'}))
+    except Exception as e:
+        print(f"Error during scraping: {str(e)}")
+        # Send error message to queue
+        message_queue.put(json.dumps({'status': 'error', 'message': str(e)}))
+
+@app.route('/stream')
+def stream():
+    def event_stream():
+        while True:
+            try:
+                # Get message from queue with timeout
+                message = message_queue.get(timeout=1)
+                yield f"data: {message}\n\n"
+            except queue.Empty:
+                # Send keepalive message
+                yield f"data: {json.dumps({'status': 'keepalive'})}\n\n"
+    
+    return Response(event_stream(), mimetype='text/event-stream')
+
 @app.route('/')
 def index():
     df = load_stock_data()
@@ -36,6 +77,35 @@ def index():
     stocks = df['Symbol'].tolist()
     
     return render_template('index.html', metrics=metrics, stocks=stocks)
+
+@app.route('/scrape_stocks', methods=['POST'])
+def scrape_stocks():
+    try:
+        data = request.json
+        symbols = data.get('symbols', [])
+        
+        if not symbols:
+            return jsonify({'error': 'No stock symbols provided'})
+        
+        # Start scraping in a background thread
+        thread = threading.Thread(target=scrape_stocks_async, args=(symbols,))
+        thread.start()
+        
+        return jsonify({'message': 'Scraping started'})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/get_stocks')
+def get_stocks():
+    try:
+        df = load_stock_data()
+        if df is None:
+            return jsonify({'error': 'Error loading stock data'})
+        
+        stocks = df['Symbol'].tolist()
+        return jsonify({'stocks': stocks})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/update_graph', methods=['POST'])
 def update_graph():
