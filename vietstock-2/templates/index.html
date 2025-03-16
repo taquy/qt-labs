@@ -67,7 +67,10 @@ VNM
 VIC
 VCB"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Scrape Data</button>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Scrape Data</button>
+                <button type="button" id="updateLatest" class="btn btn-secondary">Update Latest</button>
+            </div>
             <div id="scrapeStatus" class="alert" role="alert">
                 <div class="loading"></div>
                 <span id="scrapeMessage"></span>
@@ -105,6 +108,11 @@ VCB"></textarea>
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <div class="d-flex gap-2 mb-3">
+            <button type="button" class="btn btn-success" onclick="exportCSV()">Export CSV</button>
+            <button type="button" class="btn btn-danger" onclick="exportPDF()">Export PDF</button>
         </div>
         
         <div id="graph"></div>
@@ -290,13 +298,8 @@ VCB"></textarea>
                 return;
             }
 
-            // Show status
-            $('#scrapeStatus').show().removeClass('alert-success alert-danger').addClass('alert-info');
-            $('#scrapeMessage').text('Scraping data...');
-
-            // Start event stream for real-time updates
-            startEventStream();
-
+            startScraping();
+            
             // Send request to scrape data
             fetch('/scrape_stocks', {
                 method: 'POST',
@@ -317,6 +320,39 @@ VCB"></textarea>
                 }
             });
         });
+
+        // Handle Update Latest button click
+        $('#updateLatest').on('click', function() {
+            startScraping();
+            
+            // Send request to update all stocks
+            fetch('/update_all_stocks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                $('#scrapeStatus').removeClass('alert-info').addClass('alert-danger');
+                $('#scrapeMessage').text('An error occurred while starting the update process');
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+            });
+        });
+
+        // Function to start scraping process
+        function startScraping() {
+            // Show status
+            $('#scrapeStatus').show().removeClass('alert-success alert-danger').addClass('alert-info');
+            $('#scrapeMessage').text('Preparing...');
+            $('.loading').show();  // Show loading spinner
+
+            // Start event stream for real-time updates
+            startEventStream();
+        }
 
         function updateStockList() {
             fetch('/get_stocks')
@@ -359,6 +395,80 @@ VCB"></textarea>
             $('.stock-checkbox').slice(0, 5).prop('checked', true);
             updateGraph();
         });
+
+        function exportCSV() {
+            window.location.href = '/export_csv';
+        }
+
+        function exportPDF() {
+            // Get selected stocks
+            const selectedStocks = [];
+            $('.stock-checkbox:checked').each(function() {
+                selectedStocks.push($(this).val());
+            });
+
+            if (selectedStocks.length === 0) {
+                alert('Please select at least one stock to export');
+                return;
+            }
+
+            // Get current date for filename
+            const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            const filename = `stock_charts_${date}.pdf`;
+
+            // Request plots for all metrics
+            fetch('/export_pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    stocks: selectedStocks
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                const figures = JSON.parse(data);
+                
+                // Create a div to hold all plots
+                const tempDiv = document.createElement('div');
+                tempDiv.style.display = 'none';
+                document.body.appendChild(tempDiv);
+
+                // Create all plots
+                const promises = figures.map((figure, index) => {
+                    const plotDiv = document.createElement('div');
+                    plotDiv.id = `temp-plot-${index}`;
+                    tempDiv.appendChild(plotDiv);
+                    return Plotly.newPlot(plotDiv, figure.data, figure.layout);
+                });
+
+                // When all plots are created, export to PDF
+                Promise.all(promises).then(() => {
+                    const options = {
+                        filename: filename,
+                        format: 'pdf',
+                        height: figures.length * 550,  // Adjust height based on number of plots
+                        width: 800
+                    };
+
+                    // Export all plots
+                    Plotly.downloadImage('temp-plot-0', options).then(() => {
+                        // Clean up temporary divs
+                        document.body.removeChild(tempDiv);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while exporting the PDF');
+            });
+        }
     </script>
 </body>
 </html> 
