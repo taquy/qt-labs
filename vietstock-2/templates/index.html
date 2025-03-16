@@ -141,11 +141,56 @@ VCB"></textarea>
             eventSource.onmessage = function(event) {
                 const data = JSON.parse(event.data);
                 
-                if (data.status === 'completed') {
+                // Show status div if not visible
+                if (!$('#scrapeStatus').is(':visible')) {
+                    $('#scrapeStatus').show().removeClass('alert-success alert-danger').addClass('alert-info');
+                }
+                
+                if (data.status === 'info') {
+                    // Show info message
+                    $('#scrapeMessage').html(`
+                        <div>
+                            <div>${data.message}</div>
+                        </div>
+                    `);
+                } else if (data.status === 'progress') {
+                    // Update progress message
+                    $('#scrapeMessage').html(`
+                        <div>
+                            <div>${data.message}</div>
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: ${(data.current/data.total)*100}%;" 
+                                     aria-valuenow="${data.current}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="${data.total}">
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                } else if (data.status === 'completed') {
                     // Update status
                     $('#scrapeStatus').removeClass('alert-info').addClass('alert-success');
                     $('.loading').hide();  // Hide loading spinner
-                    $('#scrapeMessage').text('Data collected successfully!');
+                    
+                    if (data.total_processed === 0) {
+                        // All stocks already have data
+                        $('#scrapeMessage').html(`
+                            <div>
+                                <div>${data.message}</div>
+                            </div>
+                        `);
+                    } else {
+                        // Show completion message with progress bar
+                        $('#scrapeMessage').html(`
+                            <div>
+                                <div>Data collection completed!</div>
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        `);
+                    }
                     
                     // Hide the status message after 1 second
                     setTimeout(function() {
