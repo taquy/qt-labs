@@ -13,10 +13,11 @@ import json
 import csv
 import pandas as pd
 from datetime import datetime
+import odf  # Required for reading ODS files
 
 def create_driver():
     chrome_options = Options()
-    # chrome_options.add_argument('--headless=new')
+    chrome_options.add_argument('--headless=new')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
@@ -185,14 +186,23 @@ def scrape_stock_data_with_driver(driver, stock_symbol):
 if __name__ == "__main__":
     print(f"Running on: {platform.system()} {platform.release()}")
     
-    # Read stock symbols from CSV file
+    # Read stock symbols from ODS file
     try:
-        # Read existing CSV file
-        df = pd.read_csv('stocks.csv', header=None)
+        # Read existing ODS file
+        df = pd.read_excel('stocks.ods', engine='odf', header=None)
+        
+        # Ensure we have enough columns (at least 6 columns: Symbol, EPS, P/E, P/B, Timestamp, Error)
+        required_columns = 6
+        current_columns = len(df.columns)
+        if current_columns < required_columns:
+            # Add missing columns
+            for i in range(current_columns, required_columns):
+                df[i] = ''
+        
         stock_symbols = df.iloc[1:, 0].dropna().tolist()  # Get first column starting from second row, remove empty values
         
         if not stock_symbols:
-            print("No stock symbols found in the CSV file.")
+            print("No stock symbols found in the ODS file.")
             sys.exit(1)
             
         print(f"Found {len(stock_symbols)} stock symbols to process")
@@ -203,29 +213,32 @@ if __name__ == "__main__":
         # Convert results to DataFrame
         df_results = pd.DataFrame(results)
         
-        # Update the original CSV file
+        # Update the original ODS file
         # Set headers for the metrics columns
-        df.iloc[0, 1] = 'EPS'  # Column B
-        df.iloc[0, 2] = 'P/E'  # Column C
-        df.iloc[0, 3] = 'P/B'  # Column D
+        df.iloc[0, 0] = 'Symbol'  # Column A
+        df.iloc[0, 1] = 'EPS'    # Column B
+        df.iloc[0, 2] = 'P/E'    # Column C
+        df.iloc[0, 3] = 'P/B'    # Column D
         df.iloc[0, 4] = 'Timestamp'  # Column E
-        df.iloc[0, 5] = 'Error'  # Column F
+        df.iloc[0, 5] = 'Error'      # Column F
         
         # Update data for each stock
         for index, row in df_results.iterrows():
-            # Find the corresponding row in original DataFrame (add 1 because we start from second row)
-            df_index = df[df.iloc[:, 0] == row['Symbol']].index[0]
-            
-            # Update the metrics
-            df.iloc[df_index, 1] = row.get('EPS', '')
-            df.iloc[df_index, 2] = row.get('P/E', '')
-            df.iloc[df_index, 3] = row.get('P/B', '')
-            df.iloc[df_index, 4] = row.get('Timestamp', '')
-            df.iloc[df_index, 5] = row.get('Error', '')
+            # Find the corresponding row in original DataFrame
+            matching_rows = df[df.iloc[:, 0] == row['Symbol']].index
+            if len(matching_rows) > 0:
+                df_index = matching_rows[0]
+                
+                # Update the metrics
+                df.iloc[df_index, 1] = row.get('EPS', '')
+                df.iloc[df_index, 2] = row.get('P/E', '')
+                df.iloc[df_index, 3] = row.get('P/B', '')
+                df.iloc[df_index, 4] = row.get('Timestamp', '')
+                df.iloc[df_index, 5] = row.get('Error', '')
         
-        # Save back to the same CSV file
-        df.to_csv('stocks.csv', index=False, header=False)
-        print("\nUpdated stocks.csv with the new metrics")
+        # Save back to the ODS file
+        df.to_excel('stocks.ods', engine='odf', index=False, header=False)
+        print("\nUpdated stocks.ods with the new metrics")
         
     except Exception as e:
         print(f"Error: {str(e)}")
