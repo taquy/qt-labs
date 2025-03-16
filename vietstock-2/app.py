@@ -53,6 +53,9 @@ def update_graph():
     # Filter data for selected stocks
     filtered_df = df[df['Symbol'].isin(selected_stocks)]
     
+    # Sort by metric value for better visualization
+    filtered_df = filtered_df.sort_values(by=selected_metric, ascending=True)
+    
     # Create bar chart
     fig = px.bar(
         filtered_df,
@@ -60,14 +63,52 @@ def update_graph():
         y=selected_metric,
         title=f'Comparison of {selected_metric} across Selected Stocks',
         labels={'Symbol': 'Stock Symbol', selected_metric: selected_metric},
-        template='plotly_white'
+        template='plotly_white',
+        color='Symbol',  # Add colors for each stock
+        color_discrete_sequence=px.colors.qualitative.Set3  # Use a nice color palette
     )
     
     # Update layout
     fig.update_layout(
-        showlegend=False,
+        showlegend=True,
         plot_bgcolor='white',
-        height=500
+        height=500,
+        title_x=0.5,  # Center the title
+        title_font_size=20,
+        bargap=0.2,  # Adjust space between bars
+        # Configure animations
+        transition_duration=800,
+        transition={
+            'duration': 800,
+            'easing': 'cubic-in-out'
+        },
+        # Update axes
+        xaxis=dict(
+            title_font=dict(size=14),
+            tickfont=dict(size=12),
+            gridcolor='lightgray'
+        ),
+        yaxis=dict(
+            title_font=dict(size=14),
+            tickfont=dict(size=12),
+            gridcolor='lightgray',
+            # Add animation for axis range
+            autorange=True,
+            rangemode='normal'
+        )
+    )
+    
+    # Add hover template with formatted values
+    if selected_metric in ['Price', 'MarketCap']:
+        value_format = ",.0f"  # No decimals for these metrics
+    else:
+        value_format = ",.2f"  # 2 decimals for other metrics
+    
+    fig.update_traces(
+        hovertemplate="<b>%{x}</b><br>" +
+                     f"{selected_metric}: %{{y:{value_format}}}<br>" +
+                     "<extra></extra>",  # Remove secondary box
+        textposition='auto',  # Show values on bars
     )
     
     # Convert plot to JSON

@@ -172,7 +172,6 @@ def scrape_stock_data_with_driver(driver, stock_symbol):
             if len(dltl_other_elements) >= 3:  # Make sure we have at least 3 elements
                 market_cap_element = dltl_other_elements[2]  # Get the 3rd element (index 2)
                 clearfix_elements = market_cap_element.find_elements(By.CLASS_NAME, 'clearfix')
-                print(clearfix_elements)
                 if len(clearfix_elements) >= 4:  # Make sure we have at least 4 clearfix elements
                     clearfix_element = clearfix_elements[3]  # Get the 4th element (index 3)
                     value_element = clearfix_element.find_element(By.CLASS_NAME, 'r')

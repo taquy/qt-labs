@@ -24,6 +24,17 @@
         #graph {
             margin-top: 20px;
         }
+        .stock-checkbox:hover {
+            cursor: pointer;
+        }
+        .form-check {
+            transition: background-color 0.2s;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .form-check:hover {
+            background-color: #f8f9fa;
+        }
     </style>
 </head>
 <body>
@@ -34,7 +45,7 @@
             <div class="col-md-4">
                 <div class="form-group">
                     <label for="metricSelect" class="form-label">Select Metric:</label>
-                    <select class="form-select" id="metricSelect">
+                    <select class="form-select" id="metricSelect" onchange="updateGraph()">
                         {% for metric in metrics %}
                         <option value="{{ metric }}">{{ metric }}</option>
                         {% endfor %}
@@ -48,7 +59,7 @@
                     <div class="d-flex flex-wrap gap-2">
                         {% for stock in stocks %}
                         <div class="form-check">
-                            <input class="form-check-input stock-checkbox" type="checkbox" value="{{ stock }}" id="stock_{{ stock }}">
+                            <input class="form-check-input stock-checkbox" type="checkbox" value="{{ stock }}" id="stock_{{ stock }}" onchange="updateGraph()">
                             <label class="form-check-label" for="stock_{{ stock }}">
                                 {{ stock }}
                             </label>
@@ -58,13 +69,13 @@
                 </div>
             </div>
         </div>
-
-        <button class="btn btn-primary" onclick="updateGraph()">Update Graph</button>
         
         <div id="graph"></div>
     </div>
 
     <script>
+        let currentGraph = null;  // Keep track of current graph
+
         function updateGraph() {
             // Get selected stocks
             const selectedStocks = [];
@@ -92,7 +103,28 @@
                     alert(data.error);
                     return;
                 }
-                Plotly.newPlot('graph', JSON.parse(data));
+                const parsedData = JSON.parse(data);
+                
+                // Configure animation
+                const layout = parsedData.layout || {};
+                layout.transition = {
+                    duration: 800,
+                    easing: 'cubic-in-out'
+                };
+                layout.frame = {
+                    duration: 800,
+                    redraw: true
+                };
+
+                // Use Plotly.react for smooth transitions if graph exists
+                if (currentGraph) {
+                    Plotly.react('graph', parsedData.data, layout, {responsive: true});
+                } else {
+                    // First time plotting
+                    Plotly.newPlot('graph', parsedData.data, layout, {responsive: true}).then(function(gd) {
+                        currentGraph = gd;
+                    });
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
