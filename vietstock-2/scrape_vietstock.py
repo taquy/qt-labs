@@ -157,6 +157,31 @@ def scrape_stock_data_with_driver(driver, stock_symbol):
         # Give the page a moment to load dynamic content
         time.sleep(2)
         
+        # Get the stock price
+        try:
+            price_element = driver.find_element(By.ID, 'price__0')
+            if price_element:
+                metrics_map['Price'] = price_element.text.strip()
+        except NoSuchElementException:
+            print(f"Could not find price element for {stock_symbol}")
+            metrics_map['Price'] = ''
+            
+        # Get the market cap
+        try:
+            dltl_other_elements = driver.find_elements(By.CLASS_NAME, 'dltl-other')
+            if len(dltl_other_elements) >= 3:  # Make sure we have at least 3 elements
+                market_cap_element = dltl_other_elements[2]  # Get the 3rd element (index 2)
+                clearfix_elements = market_cap_element.find_elements(By.CLASS_NAME, 'clearfix')
+                print(clearfix_elements)
+                if len(clearfix_elements) >= 4:  # Make sure we have at least 4 clearfix elements
+                    clearfix_element = clearfix_elements[3]  # Get the 4th element (index 3)
+                    value_element = clearfix_element.find_element(By.CLASS_NAME, 'r')
+                    if value_element:
+                        metrics_map['MarketCap'] = value_element.text.strip()
+        except NoSuchElementException:
+            print(f"Could not find market cap element for {stock_symbol}")
+            metrics_map['MarketCap'] = ''
+        
         # Find all elements with class dlt-left-half
         metrics_elements = driver.find_elements(By.CLASS_NAME, "dlt-left-half")
         
@@ -191,8 +216,8 @@ if __name__ == "__main__":
         # Read existing ODS file
         df = pd.read_excel('stocks.ods', engine='odf', header=None)
         
-        # Ensure we have enough columns (at least 6 columns: Symbol, EPS, P/E, P/B, Timestamp, Error)
-        required_columns = 6
+        # Ensure we have enough columns (at least 8 columns: Symbol, Price, MarketCap, EPS, P/E, P/B, Timestamp, Error)
+        required_columns = 8
         current_columns = len(df.columns)
         if current_columns < required_columns:
             # Add missing columns
@@ -215,12 +240,14 @@ if __name__ == "__main__":
         
         # Update the original ODS file
         # Set headers for the metrics columns
-        df.iloc[0, 0] = 'Symbol'  # Column A
-        df.iloc[0, 1] = 'EPS'    # Column B
-        df.iloc[0, 2] = 'P/E'    # Column C
-        df.iloc[0, 3] = 'P/B'    # Column D
-        df.iloc[0, 4] = 'Timestamp'  # Column E
-        df.iloc[0, 5] = 'Error'      # Column F
+        df.iloc[0, 0] = 'Symbol'     # Column A
+        df.iloc[0, 1] = 'Price'      # Column B
+        df.iloc[0, 2] = 'MarketCap'  # Column C
+        df.iloc[0, 3] = 'EPS'        # Column D
+        df.iloc[0, 4] = 'P/E'        # Column E
+        df.iloc[0, 5] = 'P/B'        # Column F
+        df.iloc[0, 6] = 'Timestamp'  # Column G
+        df.iloc[0, 7] = 'Error'      # Column H
         
         # Update data for each stock
         for index, row in df_results.iterrows():
@@ -230,11 +257,13 @@ if __name__ == "__main__":
                 df_index = matching_rows[0]
                 
                 # Update the metrics
-                df.iloc[df_index, 1] = row.get('EPS', '')
-                df.iloc[df_index, 2] = row.get('P/E', '')
-                df.iloc[df_index, 3] = row.get('P/B', '')
-                df.iloc[df_index, 4] = row.get('Timestamp', '')
-                df.iloc[df_index, 5] = row.get('Error', '')
+                df.iloc[df_index, 1] = row.get('Price', '')
+                df.iloc[df_index, 2] = row.get('MarketCap', '')
+                df.iloc[df_index, 3] = row.get('EPS', '')
+                df.iloc[df_index, 4] = row.get('P/E', '')
+                df.iloc[df_index, 5] = row.get('P/B', '')
+                df.iloc[df_index, 6] = row.get('Timestamp', '')
+                df.iloc[df_index, 7] = row.get('Error', '')
         
         # Save back to the ODS file
         df.to_excel('stocks.ods', engine='odf', index=False, header=False)
