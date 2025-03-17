@@ -221,18 +221,21 @@ const Dashboard = () => {
                     placeholder={selectedStocks.length === 0 ? "Type to search..." : ""}
                   />
                 )}
-                renderOption={(props, option) => (
-                  <Box component="li" {...props}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                      <Typography variant="body1">
-                        {highlightMatch(option.symbol, inputValue)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {highlightMatch(option.name, inputValue)}
-                      </Typography>
+                renderOption={(props, option) => {
+                  const { key, ...boxProps } = props;
+                  return (
+                    <Box component="li" key={key} {...boxProps}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="body1">
+                          {highlightMatch(option.symbol, inputValue)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {highlightMatch(option.name, inputValue)}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                )}
+                  );
+                }}
                 renderTags={(tagValue, getTagProps) =>
                   tagValue.map((option, index) => {
                     const { key, ...chipProps } = getTagProps({ index });
