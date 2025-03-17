@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, Response, send_file, redirect, url_for, flash
+from flask import Flask, render_template, jsonify, request, Response, send_file, redirect, url_for, flash, session
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
@@ -10,7 +10,7 @@ import json
 from scrape import process_stock_list
 import threading
 import queue
-from datetime import datetime
+from datetime import datetime, timedelta
 import io
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
