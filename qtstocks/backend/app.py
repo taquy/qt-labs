@@ -49,7 +49,7 @@ def create_app(config_class=Config):
     
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
     
     def token_required(f):
         @wraps(f)
@@ -63,7 +63,9 @@ def create_app(config_class=Config):
             
             try:
                 data = PyJWT.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-                current_user = User.query.get(data['user_id'])
+                current_user = db.session.get(User, data['user_id'])
+                if not current_user:
+                    return jsonify({'message': 'User not found'}), 401
             except:
                 return jsonify({'message': 'Token is invalid'}), 401
             
@@ -236,20 +238,29 @@ def create_app(config_class=Config):
     @token_required
     def fetch_stock_data(current_user):
         try:
-            stocks = Stock.query.all()
-            stock_symbols = [stock.symbol for stock in stocks]
-            
-            if not stock_symbols:
-                return jsonify({'error': 'No stocks found in database'}), 404
+            data = request.get_json()
+            if not data or 'symbols' not in data:
+                return jsonify({'error': 'No stock symbols provided'}), 400
                 
-            process_stock_list(stock_symbols, current_app.app_context)
+            symbols = data['symbols']
+            if not symbols:
+                return jsonify({'error': 'Empty stock symbols list'}), 400
+            
+            # Verify all symbols exist in database
+            for symbol in symbols:
+                stock = Stock.query.filter_by(symbol=symbol).first()
+                if not stock:
+                    return jsonify({'error': f'Stock {symbol} not found in database'}), 404
+            
+            process_stock_list(symbols)
             
             return jsonify({
                 'success': True,
-                'message': f'Successfully fetched data for {len(stock_symbols)} stocks'
+                'message': f'Successfully fetched data for {len(symbols)} stocks'
             })
             
         except Exception as e:
+            print(f"Error in fetch_stock_data: {str(e)}")
             return jsonify({'error': str(e)}), 500
     
     # Serve React app

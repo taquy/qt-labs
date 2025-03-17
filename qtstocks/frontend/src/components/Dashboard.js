@@ -126,11 +126,21 @@ const Dashboard = () => {
   };
 
   const handleFetchStockData = async () => {
+    if (selectedStocks.length === 0) {
+      setError('Please select at least one stock to fetch data');
+      return;
+    }
+    
+    setLoading(true);
     try {
-      await axios.post(API_ENDPOINTS.fetchStockData, {}, {
+      await axios.post(API_ENDPOINTS.fetchStockData, {
+        symbols: selectedStocks
+      }, {
         withCredentials: true
       });
-      fetchStocks();
+      setError('');
+      // After fetching data, update the graph
+      await updateGraph();
     } catch (err) {
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
@@ -139,6 +149,8 @@ const Dashboard = () => {
       } else {
         setError('Failed to fetch stock data');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -273,33 +285,23 @@ const Dashboard = () => {
               </Select>
             </FormControl>
 
-            <Button
-              variant="contained"
-              onClick={updateGraph}
-              disabled={selectedStocks.length === 0 || loading}
-            >
-              Update Graph
-            </Button>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                <CircularProgress />
-              </Box>
-            ) : graphData ? (
-              <Plot
-                data={graphData.data}
-                layout={graphData.layout}
-                config={{ responsive: true }}
-              />
-            ) : (
-              <Typography variant="body1" color="text.secondary" align="center">
-                Select stocks and a metric to display the graph
-              </Typography>
-            )}
+            <Paper sx={{ p: 2 }}>
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                  <CircularProgress />
+                </Box>
+              ) : graphData ? (
+                <Plot
+                  data={graphData.data}
+                  layout={graphData.layout}
+                  config={{ responsive: true }}
+                />
+              ) : (
+                <Typography variant="body1" color="text.secondary" align="center">
+                  Select stocks and a metric to display the graph
+                </Typography>
+              )}
+            </Paper>
           </Paper>
         </Grid>
       </Grid>
