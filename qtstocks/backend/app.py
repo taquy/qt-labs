@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, Response, send_file, redirect, url_for, flash, session
+from flask import Flask, current_app, render_template, jsonify, request, Response, send_file, redirect, url_for, flash, session
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
@@ -242,7 +242,7 @@ def create_app(config_class=Config):
             if not stock_symbols:
                 return jsonify({'error': 'No stocks found in database'}), 404
                 
-            process_stock_list(stock_symbols)
+            process_stock_list(stock_symbols, current_app.app_context)
             
             return jsonify({
                 'success': True,

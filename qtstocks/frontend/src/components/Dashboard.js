@@ -234,13 +234,17 @@ const Dashboard = () => {
                   </Box>
                 )}
                 renderTags={(tagValue, getTagProps) =>
-                  tagValue.map((option, index) => (
-                    <Chip
-                      label={option.symbol}
-                      {...getTagProps({ index })}
-                      size="small"
-                    />
-                  ))
+                  tagValue.map((option, index) => {
+                    const { key, ...chipProps } = getTagProps({ index });
+                    return (
+                      <Chip
+                        key={key}
+                        label={option.symbol}
+                        {...chipProps}
+                        size="small"
+                      />
+                    );
+                  })
                 }
                 sx={{ width: 300 }}
                 ListboxProps={{
