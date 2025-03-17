@@ -230,12 +230,12 @@
             const selectedMetric = $('#metricSelect').val();
             
             if (selectedStocks.length === 0) {
-                alert('Please select at least one stock');
+                $('#graph').html('<div class="alert alert-warning">Please select at least one stock to display the graph.</div>');
                 return;
             }
             
             // Show loading state
-            $('#graph').html('<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            $('#graph').html('<div class="text-center mt-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
             
             // Get CSRF token from meta tag
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -268,6 +268,8 @@
                         return;
                     }
                     
+                    // Clear any existing content first
+                    $('#graph').empty();
                     Plotly.newPlot('graph', response.data, response.layout);
                 },
                 error: function(xhr, status, error) {
@@ -384,9 +386,24 @@
             // Prefill the textarea with existing stocks
             prefillStockSymbols();
             
-            // Select first 5 stocks by default
-            $('.stock-checkbox').slice(0, 5).prop('checked', true);
-            updateGraph();
+            // Check if we have any stocks
+            const stockCheckboxes = $('.stock-checkbox');
+            if (stockCheckboxes.length > 0) {
+                // Select first 5 stocks by default (or all if less than 5)
+                const numStocksToSelect = Math.min(5, stockCheckboxes.length);
+                stockCheckboxes.slice(0, numStocksToSelect).prop('checked', true);
+                
+                // Only update graph if we have stocks selected
+                const selectedStocks = getSelectedStocks();
+                if (selectedStocks.length > 0) {
+                    updateGraph();
+                } else {
+                    $('#graph').html('<div class="alert alert-info">Please select stocks to display the graph.</div>');
+                }
+            } else {
+                // No stocks available
+                $('#graph').html('<div class="alert alert-info">No stocks available. Please add stocks to view the graph.</div>');
+            }
         });
 
         function exportCSV() {
