@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Paper,
   Typography,
@@ -24,11 +25,20 @@ import {
   Tooltip as ChartTooltip,
   Legend
 } from 'chart.js';
-import axios from 'axios';
-import { API_ENDPOINTS } from '../config';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { useNavigate } from 'react-router-dom';
+import {
+  fetchAvailableStocks,
+  fetchSettings,
+  updateGraph,
+  saveSettings
+} from '../store/sagas/stockGraphSaga';
+import {
+  setSelectedStocks,
+  clearChartData,
+  clearError
+} from '../store/slices/stockGraphSlice';
 
 // Register Chart.js components
 ChartJS.register(
@@ -47,253 +57,52 @@ const StockGraph = ({
   loading, 
   setGraphData 
 }) => {
-  const [availableStocks, setAvailableStocks] = useState([]);
-  const [selectedStocks, setSelectedStocks] = useState([]);
-  const [error, setError] = useState('');
-  const [chartData, setChartData] = useState(null);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  
+  // Select state from Redux store
+  const {
+    availableStocks,
+    selectedStocks,
+    chartData,
+    error
+  } = useSelector(state => state.stockGraph);
 
-  const updateGraph = useCallback(async (symbols, metric) => {
-    if (symbols.length === 0) {
-      setChartData(null);
-      setGraphData(null);
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      const response = await axios.post(API_ENDPOINTS.updateGraph, {
-        stocks: symbols,
-        metric: metric
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const { data, metric: responseMetric } = response.data;
-
-      // Generate colors for each bar
-      const colors = data.map((_, index) => `hsl(${(index * 360/data.length)}, 70%, 50%)`);
-
-      const chartConfig = {
-        labels: data.map(item => item.symbol),
-        datasets: [
-          {
-            label: responseMetric,
-            data: data.map(item => item.value),
-            backgroundColor: colors,
-            borderColor: colors.map(color => color.replace('50%', '40%')),
-            borderWidth: 1,
-            borderRadius: 5,
-            hoverBackgroundColor: colors.map(color => color.replace('50%', '60%')),
-          }
-        ]
-      };
-
-      const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: {
-          duration: 750,
-          easing: 'easeInOutQuart'
-        },
-        plugins: {
-          legend: {
-            display: false
-          },
-          title: {
-            display: true,
-            text: `Comparison of ${responseMetric} across Selected Stocks`,
-            font: {
-              size: 16
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: (context) => {
-                const value = context.parsed.y;
-                return `${responseMetric}: ${value.toFixed(2)}`;
-              }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: responseMetric,
-              font: {
-                size: 14
-              }
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)'
-            }
-          },
-          x: {
-            title: {
-              display: true,
-              text: 'Stock Symbol',
-              font: {
-                size: 14
-              }
-            },
-            grid: {
-              display: false
-            }
-          }
-        }
-      };
-
-      setChartData({ data: chartConfig, options });
-      setGraphData({ data: chartConfig, options });
-    } catch (err) {
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('isLoggedIn');
-        navigate('/login');
-      } else {
-        setError('Failed to update graph');
-        setChartData(null);
-        setGraphData(null);
-      }
-    }
-  }, [navigate, setGraphData]);
-
+  // Initial data loading
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/login');
-          return;
-        }
+    dispatch(fetchAvailableStocks());
+    dispatch(fetchSettings());
+  }, [dispatch]);
 
-        // Fetch available stocks first
-        const stocksResponse = await axios.get(API_ENDPOINTS.stocksWithStats, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        setAvailableStocks(stocksResponse.data.stocks);
-
-        // Then load settings
-        const settingsResponse = await axios.get(API_ENDPOINTS.settings, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        const settings = settingsResponse.data.settings;
-        if (settings?.stockGraph) {
-          const { selectedSymbols, selectedMetric: savedMetric } = settings.stockGraph;
-          if (selectedSymbols) {
-            // Convert symbols back to full stock objects
-            const savedStocks = selectedSymbols
-              .map(symbol => stocksResponse.data.stocks.find(stock => stock.symbol === symbol))
-              .filter(stock => stock !== undefined); // Filter out any symbols that don't exist anymore
-            setSelectedStocks(savedStocks);
-
-            // Update graph with saved settings
-            if (savedStocks.length > 0) {
-              updateGraph(savedStocks.map(stock => stock.symbol), savedMetric || selectedMetric);
-            }
-          }
-          if (savedMetric && metrics.includes(savedMetric)) {
-            handleMetricChange({ target: { value: savedMetric } });
-          }
-        }
-      } catch (err) {
-        if (err.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('isLoggedIn');
-          navigate('/login');
-        } else {
-          setError('Failed to initialize graph data');
-          console.error('Failed to initialize:', err);
-        }
-      }
-    };
-
-    fetchInitialData();
-  }, [navigate, metrics, selectedMetric, handleMetricChange, updateGraph]);
-
-  const saveSettings = useCallback(async (stocks, metric) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      await axios.put(
-        API_ENDPOINTS.updateSetting('stockGraph'),
-        {
-          value: {
-            selectedSymbols: stocks.map(stock => stock.symbol),
-            selectedMetric: metric
-          }
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-    } catch (err) {
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('isLoggedIn');
-        navigate('/login');
-      } else {
-        console.error('Failed to save settings:', err);
-      }
+  // Update parent's graph data when chartData changes
+  useEffect(() => {
+    if (chartData) {
+      setGraphData(chartData);
     }
-  }, [navigate]);
+  }, [chartData, setGraphData]);
 
-  const handleStockChange = useCallback((event, newValue) => {
-    setSelectedStocks(newValue);
-    updateGraph(newValue.map(stock => stock.symbol), selectedMetric);
-    saveSettings(newValue, selectedMetric);
-  }, [updateGraph, selectedMetric, saveSettings]);
-
-  const handleMetricChangeWithSave = useCallback((e) => {
-    handleMetricChange(e);
-    if (selectedStocks.length > 0) {
-      updateGraph(selectedStocks.map(stock => stock.symbol), e.target.value);
-      saveSettings(selectedStocks, e.target.value);
-    }
-  }, [handleMetricChange, selectedStocks, updateGraph, saveSettings]);
-
-  const handleLogout = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        // Call the logout endpoint
-        await axios.post(API_ENDPOINTS.logout, {}, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      }
-
-      // Clear all component states
-      setSelectedStocks([]);
-      setChartData(null);
+  const handleStockChange = (event, newValue) => {
+    dispatch(setSelectedStocks(newValue));
+    if (newValue.length > 0) {
+      dispatch(updateGraph(newValue.map(stock => stock.symbol), selectedMetric));
+      dispatch(saveSettings(newValue, selectedMetric));
+    } else {
+      dispatch(clearChartData());
       setGraphData(null);
-      setError('');
+      dispatch(saveSettings([], selectedMetric));
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Clear all component states
+      dispatch(setSelectedStocks([]));
+      dispatch(clearChartData());
+      dispatch(clearError());
+      setGraphData(null);
       
       // Clear authentication data
       localStorage.clear();
-      delete axios.defaults.headers.common['Authorization']; // Remove auth header
       
       // Navigate to login page
       navigate('/login');
@@ -301,10 +110,9 @@ const StockGraph = ({
       console.error('Logout error:', err);
       // Even if the logout request fails, we should still clear local state and redirect
       localStorage.clear();
-      delete axios.defaults.headers.common['Authorization'];
       navigate('/login');
     }
-  }, [navigate, setGraphData]);
+  };
 
   return (
     <Paper sx={{ p: 2, mt: 3 }}>
@@ -386,7 +194,7 @@ const StockGraph = ({
           <Select
             value={selectedMetric}
             label="Metric"
-            onChange={handleMetricChangeWithSave}
+            onChange={handleMetricChange}
           >
             {metrics.map((metric) => (
               <MenuItem key={metric} value={metric}>

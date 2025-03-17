@@ -18,10 +18,20 @@ import StockGraph from './StockGraph';
 axios.defaults.withCredentials = true;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
+const METRICS = [
+  'Market Cap',
+  'Revenue',
+  'Net Income',
+  'Total Assets',
+  'Total Liabilities',
+  'Operating Cash Flow',
+  'Free Cash Flow'
+];
+
 const Dashboard = () => {
   const [stocks, setStocks] = useState([]);
   const [selectedStocks, setSelectedStocks] = useState([]);
-  const [selectedMetric, setSelectedMetric] = useState('Price');
+  const [selectedMetric, setSelectedMetric] = useState(METRICS[0]);
   const [graphData, setGraphData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,8 +43,6 @@ const Dashboard = () => {
     severity: 'success'
   });
   const navigate = useNavigate();
-
-  const metrics = ['Price', 'MarketCap', 'EPS', 'P/E', 'P/B'];
 
   const fetchStocks = useCallback(async () => {
     try {
@@ -192,7 +200,7 @@ const Dashboard = () => {
         <Grid item xs={12}>
           <StockGraph
             selectedMetric={selectedMetric}
-            metrics={metrics}
+            metrics={METRICS}
             handleMetricChange={handleMetricChange}
             loading={loading}
             graphData={graphData}

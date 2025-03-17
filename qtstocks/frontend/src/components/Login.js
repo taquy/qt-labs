@@ -7,7 +7,8 @@ import {
   Button, 
   Typography, 
   Alert,
-  Divider
+  Divider,
+  Link as RouterLink
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -23,6 +24,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const googleButtonRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = useCallback(async (response) => {
     try {
@@ -116,6 +118,8 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
+
     try {
       const response = await axios.post(API_ENDPOINTS.login, {
         username,
@@ -131,70 +135,95 @@ const Login = () => {
         setError(response.data.message || 'Login failed');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to login');
+      setError(err.response?.data?.message || 'Failed to login. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 8 }}>
-        <Paper sx={{ p: 4 }}>
-          <Typography variant="h5" component="h1" gutterBottom align="center">
-            Login
-          </Typography>
-          
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '80vh'
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          width: '100%',
+          maxWidth: 400,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2
+        }}
+      >
+        <Typography variant="h5" component="h1" gutterBottom align="center">
+          Login
+        </Typography>
+        
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-          <form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              margin="normal"
-              required
-            />
-            <TextField
-              fullWidth
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              margin="normal"
-              required
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              color="primary"
-              sx={{ mt: 3, mb: 2 }}
-            >
-              Login
-            </Button>
-          </form>
-
-          <Divider sx={{ my: 2 }}>OR</Divider>
-
-          <Box 
-            ref={googleButtonRef}
-            sx={{
-              mt: 2,
-              mb: 2,
-              display: 'flex',
-              justifyContent: 'center',
-              '& > div': {
-                width: '100% !important'
-              }
-            }}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <TextField
+            label="Username"
+            name="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            fullWidth
           />
-        </Paper>
-      </Box>
-    </Container>
+          <TextField
+            label="Password"
+            name="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            fullWidth
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            size="large"
+            disabled={loading}
+            fullWidth
+          >
+            {loading ? 'Logging in...' : 'Login'}
+          </Button>
+        </form>
+
+        <Divider sx={{ my: 2 }}>OR</Divider>
+
+        <Box 
+          ref={googleButtonRef}
+          sx={{
+            mt: 2,
+            mb: 2,
+            display: 'flex',
+            justifyContent: 'center',
+            '& > div': {
+              width: '100% !important'
+            }
+          }}
+        />
+
+        <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+          Don't have an account?{' '}
+          <RouterLink to="/register">
+            Register here
+          </RouterLink>
+        </Typography>
+      </Paper>
+    </Box>
   );
 };
 
