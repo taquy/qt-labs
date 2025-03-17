@@ -244,14 +244,20 @@ def scrape_stocks():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+def get_stocks_list():
+    """Helper function to get list of stocks from the ODS file."""
+    try:
+        df = pd.read_excel('stocks.ods', engine='odf')
+        return df['Symbol'].unique().tolist()
+    except Exception as e:
+        print(f"Error getting stocks: {e}")
+        return []
+
 @app.route('/get_stocks')
+@login_required
 def get_stocks():
     try:
-        df = load_stock_data()
-        if df is None:
-            return jsonify({'error': 'Error loading stock data'})
-        
-        stocks = df['Symbol'].tolist()
+        stocks = get_stocks_list()
         return jsonify({'stocks': stocks})
     except Exception as e:
         return jsonify({'error': str(e)})
@@ -469,6 +475,88 @@ def export_pdf():
     except Exception as e:
         print(f"Error in export_pdf: {str(e)}")  # Add detailed error logging
         return jsonify({'error': str(e)}), 500  # Return 500 status code for server errors
+
+@app.route('/save_stocks', methods=['POST'])
+@login_required
+def save_stocks():
+    try:
+        data = request.get_json()
+        new_symbols = data.get('symbols', [])
+        
+        # Get current stocks from the ODS file
+        current_stocks = get_stocks_list()
+        
+        # Find stocks to remove (stocks that are in current_stocks but not in new_symbols)
+        stocks_to_remove = set(current_stocks) - set(new_symbols)
+        
+        if stocks_to_remove:
+            # Remove the stocks from the ODS file
+            remove_stocks_from_ods(list(stocks_to_remove))
+            
+            # Send message through queue
+            message_queue.put(json.dumps({
+                'status': 'info',
+                'message': f'Removed {len(stocks_to_remove)} stocks: {", ".join(stocks_to_remove)}'
+            }))
+        
+        # Find new stocks to add (stocks that are in new_symbols but not in current_stocks)
+        stocks_to_add = set(new_symbols) - set(current_stocks)
+        
+        if stocks_to_add:
+            # Start scraping process for new stocks
+            thread = threading.Thread(target=scrape_stocks_async, args=(list(stocks_to_add),))
+            thread.daemon = True
+            thread.start()
+        else:
+            # If no new stocks to add, send completion message
+            message_queue.put(json.dumps({
+                'status': 'completed',
+                'message': 'Stock list updated successfully',
+                'total_processed': 0
+            }))
+        
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def remove_stocks_from_ods(stocks_to_remove):
+    """Remove specified stocks from the ODS file."""
+    try:
+        # Read the current ODS file
+        df = pd.read_excel('stocks.ods', engine='odf')
+        
+        # Remove rows for the specified stocks
+        df = df[~df['Symbol'].isin(stocks_to_remove)]
+        
+        # Save back to ODS file
+        df.to_excel('stocks.ods', index=False)
+        
+        # Update the stocks list in memory
+        global stocks
+        stocks = df['Symbol'].unique().tolist()
+        
+    except Exception as e:
+        print(f"Error removing stocks from ODS file: {e}")
+        raise
+
+@app.route('/get_available_stocks')
+@login_required
+def get_available_stocks():
+    try:
+        # Read the Available Stocks sheet
+        df = pd.read_excel('stocks.ods', sheet_name='Available Stocks', engine='odf')
+        
+        # Create a list of dictionaries with symbol and name
+        stocks = []
+        for _, row in df.iterrows():
+            stocks.append({
+                'symbol': row['Symbol'],
+                'name': row['Name']
+            })
+        
+        return jsonify({'stocks': stocks})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 

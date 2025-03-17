@@ -134,18 +134,19 @@
         <div class="collapse mb-4" id="scrapeFormSection">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">Add New Stocks to Track</h5>
+                    <h5 class="card-title mb-3">Manage Stock Symbols</h5>
                     <form id="scrapeForm" class="mb-3">
                         <div class="form-group mb-3">
-                            <label for="stockSymbols" class="form-label">Enter Stock Symbols (one per line):</label>
+                            <label for="stockSymbols" class="form-label">Manage Stock Symbols (one per line):</label>
                             <textarea class="form-control" id="stockSymbols" rows="5" placeholder="Example:
 VNM
 VIC
 VCB"></textarea>
+                            <small class="text-muted">Remove symbols from this list and click Save to delete them from the database.</small>
                         </div>
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-download me-2"></i>Crawl Data
+                                <i class="fas fa-save me-2"></i>Save
                             </button>
                             <button type="button" id="updateLatest" class="btn btn-outline-primary">
                                 <i class="fas fa-sync-alt me-2"></i>Update Latest
@@ -161,6 +162,23 @@ VCB"></textarea>
         </div>
         
         <div id="graph"></div>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Select Stocks to Display</h5>
+                <div class="mb-3">
+                    <label for="stockSelect" class="form-label">Search and Select Stocks:</label>
+                    <select class="form-select" id="stockSelect" multiple size="10">
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                    <div class="form-text">Hold Ctrl/Cmd to select multiple stocks</div>
+                </div>
+                <div class="mb-3">
+                    <label for="stockSearch" class="form-label">Search:</label>
+                    <input type="text" class="form-control" id="stockSearch" placeholder="Search by symbol or company name...">
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap JS -->
@@ -334,21 +352,38 @@ VCB"></textarea>
                             throw new Error(data.error);
                         }
 
+                        // Base layout configuration
                         const layout = {
                             ...data.layout,
-                            transition: {
-                                duration: 500,
-                                easing: 'cubic-in-out'
-                            }
+                            showlegend: true,
+                            barmode: 'group',
+                            bargap: 0.15,
+                            bargroupgap: 0.1
                         };
 
                         if (currentGraph) {
-                            // Update existing graph
-                            Plotly.react('graph', data.data, layout).then(function(gd) {
-                                currentGraph = gd;
+                            // First update without animation to maintain stability
+                            layout.transition = {
+                                duration: 0
+                            };
+                            
+                            Plotly.react('graph', data.data, layout).then(function() {
+                                // Then apply the animation after a short delay
+                                setTimeout(() => {
+                                    const animatedLayout = {
+                                        ...layout,
+                                        transition: {
+                                            duration: 750,
+                                            easing: 'cubic-in-out'
+                                        }
+                                    };
+                                    Plotly.react('graph', data.data, animatedLayout).then(function(gd) {
+                                        currentGraph = gd;
+                                    });
+                                }, 50);
                             });
                         } else {
-                            // Create new graph
+                            // First time plot - no animation needed
                             $('#graph').empty();
                             Plotly.newPlot('graph', data.data, layout).then(function(gd) {
                                 currentGraph = gd;
@@ -375,19 +410,14 @@ VCB"></textarea>
             // Get stock symbols from textarea
             const symbols = $('#stockSymbols').val().trim().split('\n').map(s => s.trim()).filter(s => s);
             
-            if (symbols.length === 0) {
-                alert('Please enter at least one stock symbol');
-                return;
-            }
-
             // Get CSRF token
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             // Start the scraping process UI updates
             startScraping();
             
-            // Send request to scrape data
-            fetch('/scrape_stocks', {
+            // Send request to save/update stocks
+            fetch('/save_stocks', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -412,7 +442,7 @@ VCB"></textarea>
             .catch(error => {
                 console.error('Error:', error);
                 $('#scrapeStatus').removeClass('alert-info').addClass('alert-danger');
-                $('#scrapeMessage').text('Error: ' + (error.message || 'An error occurred while starting the scraping process'));
+                $('#scrapeMessage').text('Error: ' + (error.message || 'An error occurred while saving the stocks'));
                 $('.loading').hide();
                 if (eventSource) {
                     eventSource.close();
@@ -596,6 +626,68 @@ VCB"></textarea>
                 alert('An error occurred while generating the PDF');
             });
         }
+
+        // Function to load available stocks
+        function loadAvailableStocks() {
+            fetch('/get_available_stocks')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error:', data.error);
+                        return;
+                    }
+                    
+                    const stockSelect = document.getElementById('stockSelect');
+                    stockSelect.innerHTML = ''; // Clear existing options
+                    
+                    data.stocks.forEach(stock => {
+                        const option = document.createElement('option');
+                        option.value = stock.symbol;
+                        option.textContent = `${stock.symbol} - ${stock.name}`;
+                        stockSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Function to filter stocks based on search
+        function filterStocks(searchText) {
+            const stockSelect = document.getElementById('stockSelect');
+            const options = stockSelect.options;
+            
+            for (let option of options) {
+                const text = option.text.toLowerCase();
+                const searchLower = searchText.toLowerCase();
+                
+                if (text.includes(searchLower)) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            }
+        }
+
+        // Event listener for stock search
+        document.getElementById('stockSearch').addEventListener('input', function(e) {
+            filterStocks(e.target.value);
+        });
+
+        // Event listener for stock selection
+        document.getElementById('stockSelect').addEventListener('change', function(e) {
+            const selectedOptions = Array.from(e.target.selectedOptions);
+            const selectedStocks = selectedOptions.map(option => option.value);
+            
+            // Update the textarea with selected stocks
+            document.getElementById('stockSymbols').value = selectedStocks.join('\n');
+            
+            // Update the graph
+            updateGraph();
+        });
+
+        // Load available stocks when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAvailableStocks();
+        });
     </script>
 </body>
 </html> 
