@@ -3,6 +3,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
+from flask_cors import CORS
 import pandas as pd
 import plotly
 import plotly.express as px
@@ -20,6 +21,7 @@ import requests
 from bs4 import BeautifulSoup
 from get_stock_lists import get_stock_list
 from get_stock_data import process_stock_list
+import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -30,6 +32,9 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
+
+# Initialize CORS
+CORS(app, supports_credentials=True)
 
 csrf = CSRFProtect(app)
 
@@ -44,44 +49,169 @@ message_queue = queue.Queue()
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     try:
-        # Redirect if user is already logged in
-        if current_user.is_authenticated:
-            return redirect(url_for('index'))
-            
-        if request.method == 'POST':
-            username = request.form.get('username')
-            password = request.form.get('password')
-            
-            if not username or not password:
-                flash('Please enter both username and password.', 'error')
-                return render_template('login.html')
-            
-            user = User.query.filter_by(username=username).first()
-            if user and check_password_hash(user.password_hash, password):
-                login_user(user)
-                next_page = request.args.get('next')
-                if not next_page or not next_page.startswith('/'):
-                    next_page = url_for('index')
-                flash('Logged in successfully.', 'success')
-                return redirect(next_page)
-            
-            flash('Invalid username or password.', 'error')
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
         
-        return render_template('login.html')
+        if not username or not password:
+            return jsonify({'success': False, 'message': 'Please enter both username and password.'}), 400
+        
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            session.permanent = True
+            login_user(user)
+            return jsonify({'success': True, 'message': 'Logged in successfully.'})
+        
+        return jsonify({'success': False, 'message': 'Invalid username or password.'}), 401
+        
     except Exception as e:
         print(f"Login error: {str(e)}")
-        flash('An error occurred during login. Please try again.', 'error')
-        return render_template('login.html')
+        return jsonify({'success': False, 'message': 'An error occurred during login.'}), 500
 
-@app.route('/logout')
+@app.route('/api/logout')
 @login_required
 def logout():
     logout_user()
-    flash('Logged out successfully.', 'success')
-    return redirect(url_for('login'))
+    return jsonify({'success': True, 'message': 'Logged out successfully.'})
+
+@app.route('/api/stocks')
+@login_required
+def get_stocks():
+    try:
+        stocks = Stock.query.all()
+        return jsonify({
+            'stocks': [
+                {
+                    'symbol': stock.symbol,
+                    'name': stock.name
+                }
+                for stock in stocks
+            ]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/update_graph', methods=['POST'])
+@login_required
+def update_graph():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data received'}), 400
+            
+        selected_stocks = data.get('stocks', [])
+        selected_metric = data.get('metric', 'Price')
+        
+        if not selected_stocks:
+            return jsonify({'error': 'No stocks selected'}), 400
+            
+        if not selected_metric:
+            return jsonify({'error': 'No metric selected'}), 400
+        
+        df = load_stock_data()
+        if df is None:
+            return jsonify({'error': 'Error loading stock data'}), 500
+        
+        filtered_df = df[df['Symbol'].isin(selected_stocks)]
+        
+        if filtered_df.empty:
+            return jsonify({'error': 'No data found for selected stocks'}), 404
+        
+        filtered_df = filtered_df.sort_values(by=selected_metric, ascending=True)
+        
+        fig = px.bar(
+            filtered_df,
+            x='Symbol',
+            y=selected_metric,
+            title=f'Comparison of {selected_metric} across Selected Stocks',
+            labels={'Symbol': 'Stock Symbol', selected_metric: selected_metric},
+            template='plotly_white',
+            color='Symbol',
+            color_discrete_sequence=px.colors.qualitative.Set3
+        )
+        
+        fig.update_layout(
+            showlegend=True,
+            plot_bgcolor='white',
+            height=500,
+            title_x=0.5,
+            title_font_size=20,
+            bargap=0.2,
+            xaxis=dict(
+                title_font=dict(size=14),
+                tickfont=dict(size=12),
+                gridcolor='lightgray'
+            ),
+            yaxis=dict(
+                title_font=dict(size=14),
+                tickfont=dict(size=12),
+                gridcolor='lightgray'
+            )
+        )
+        
+        return jsonify(json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
+    except Exception as e:
+        print(f"Error in update_graph: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/download_stock_list', methods=['POST'])
+@login_required
+def download_stock_list():
+    try:
+        stocks = get_stock_list()
+        
+        for stock_data in stocks:
+            existing_stock = Stock.query.filter_by(symbol=stock_data['Symbol']).first()
+            if not existing_stock:
+                stock = Stock(
+                    symbol=stock_data['Symbol'],
+                    name=stock_data['Name'],
+                    last_updated=datetime.utcnow()
+                )
+                db.session.add(stock)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully downloaded {len(stocks)} stocks'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/fetch_stock_data', methods=['POST'])
+@login_required
+def fetch_stock_data():
+    try:
+        stocks = Stock.query.all()
+        stock_symbols = [stock.symbol for stock in stocks]
+        
+        if not stock_symbols:
+            return jsonify({'error': 'No stocks found in database'}), 404
+            
+        process_stock_list(stock_symbols)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully fetched data for {len(stock_symbols)} stocks'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Serve React app
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 def load_stock_data():
     try:
@@ -237,83 +367,12 @@ def get_stocks_list():
 
 @app.route('/get_stocks')
 @login_required
-def get_stocks():
+def get_stocks_old():
     try:
         stocks = get_stocks_list()
         return jsonify({'stocks': stocks})
     except Exception as e:
         return jsonify({'error': str(e)})
-
-@app.route('/update_graph', methods=['POST'])
-@login_required
-def update_graph():
-    try:
-        data = request.json
-        if not data:
-            return jsonify({'error': 'No data received'}), 400
-            
-        selected_stocks = data.get('stocks', [])
-        selected_metric = data.get('metric', 'Price')
-        
-        if not selected_stocks:
-            return jsonify({'error': 'No stocks selected'}), 400
-            
-        if not selected_metric:
-            return jsonify({'error': 'No metric selected'}), 400
-        
-        print(f"Updating graph for stocks: {selected_stocks}, metric: {selected_metric}")
-        
-        df = load_stock_data()
-        if df is None:
-            return jsonify({'error': 'Error loading stock data'}), 500
-        
-        # Filter data for selected stocks
-        filtered_df = df[df['Symbol'].isin(selected_stocks)]
-        
-        if filtered_df.empty:
-            return jsonify({'error': 'No data found for selected stocks'}), 404
-        
-        # Sort by selected metric
-        filtered_df = filtered_df.sort_values(by=selected_metric, ascending=True)
-        
-        # Create bar chart
-        fig = px.bar(
-            filtered_df,
-            x='Symbol',
-            y=selected_metric,
-            title=f'Comparison of {selected_metric} across Selected Stocks',
-            labels={'Symbol': 'Stock Symbol', selected_metric: selected_metric},
-            template='plotly_white',
-            color='Symbol',
-            color_discrete_sequence=px.colors.qualitative.Set3
-        )
-        
-        # Update layout
-        fig.update_layout(
-            showlegend=True,
-            plot_bgcolor='white',
-            height=500,
-            title_x=0.5,
-            title_font_size=20,
-            bargap=0.2,
-            xaxis=dict(
-                title_font=dict(size=14),
-                tickfont=dict(size=12),
-                gridcolor='lightgray'
-            ),
-            yaxis=dict(
-                title_font=dict(size=14),
-                tickfont=dict(size=12),
-                gridcolor='lightgray'
-            )
-        )
-        
-        # Convert plot to JSON
-        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        return jsonify(graphJSON)
-    except Exception as e:
-        print(f"Error in update_graph: {str(e)}")
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/update_all_stocks', methods=['POST'])
 def update_all_stocks():
@@ -518,70 +577,6 @@ def get_available_stocks():
             ]
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/download_stock_list')
-@login_required
-def download_stock_list():
-    try:
-        # Call get_stock_list function from get_stock_lists.py
-        stocks = get_stock_list()
-        
-        # Store in database
-        for stock_data in stocks:
-            existing_stock = Stock.query.filter_by(symbol=stock_data['Symbol']).first()
-            if not existing_stock:
-                stock = Stock(
-                    symbol=stock_data['Symbol'],
-                    name=stock_data['Name'],
-                    last_updated=datetime.utcnow()
-                )
-                db.session.add(stock)
-        
-        db.session.commit()
-        
-        # Convert to lowercase keys for frontend consistency
-        stocks_for_frontend = [
-            {
-                'symbol': stock['Symbol'],
-                'name': stock['Name']
-            }
-            for stock in stocks
-        ]
-        
-        # Return the stock list as JSON
-        return jsonify({
-            'success': True,
-            'stocks': stocks_for_frontend,
-            'message': f'Successfully downloaded {len(stocks)} stocks'
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error in download_stock_list: {str(e)}")  # Add logging
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/fetch_stock_data', methods=['POST'])
-@login_required
-def fetch_stock_data():
-    try:
-        # Get all stocks from the database
-        stocks = Stock.query.all()
-        stock_symbols = [stock.symbol for stock in stocks]
-        
-        if not stock_symbols:
-            return jsonify({'error': 'No stocks found in database'}), 404
-            
-        # Process the stock list
-        process_stock_list(stock_symbols)
-        
-        return jsonify({
-            'success': True,
-            'message': f'Successfully fetched data for {len(stock_symbols)} stocks'
-        })
-        
-    except Exception as e:
-        print(f"Error in fetch_stock_data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 def init_db():
