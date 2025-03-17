@@ -70,4 +70,36 @@ class StockStats(db.Model):
             pe=data['pe'],
             pb=data['pb'],
             last_updated=datetime.strptime(data['last_updated'], '%Y-%m-%d %H:%M:%S')
+        )
+
+class UserSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    setting_key = db.Column(db.String(50), nullable=False)
+    setting_value = db.Column(db.JSON, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship with User model
+    user = db.relationship('User', backref=db.backref('settings', lazy=True))
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'setting_key', name='unique_user_setting'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'setting_key': self.setting_key,
+            'setting_value': self.setting_value,
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+    @staticmethod
+    def from_dict(data):
+        return UserSettings(
+            user_id=data['user_id'],
+            setting_key=data['setting_key'],
+            setting_value=data['setting_value']
         ) 

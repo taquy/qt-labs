@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import io
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from models import User, Stock, StockStats
+from models import User, Stock, StockStats, UserSettings
 from config import Config
 import requests
 from bs4 import BeautifulSoup
@@ -169,6 +169,67 @@ def create_app(config_class=Config):
         except Exception as e:
             return jsonify({'error': str(e)}), 500
     
+    @app.route('/api/settings', methods=['GET'])
+    @token_required
+    def get_settings(current_user):
+        try:
+            # Get all settings for the current user
+            settings = UserSettings.query.filter_by(user_id=current_user.id).all()
+            return jsonify({
+                'settings': {setting.setting_key: setting.setting_value for setting in settings}
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/settings/<setting_key>', methods=['PUT'])
+    @token_required
+    def update_setting(current_user, setting_key):
+        try:
+            data = request.get_json()
+            if not data or 'value' not in data:
+                return jsonify({'error': 'No data received'}), 400
+
+            # Find existing setting or create new one
+            setting = UserSettings.query.filter_by(
+                user_id=current_user.id,
+                setting_key=setting_key
+            ).first()
+
+            if setting:
+                setting.setting_value = data['value']
+                setting.updated_at = datetime.utcnow()
+            else:
+                setting = UserSettings(
+                    user_id=current_user.id,
+                    setting_key=setting_key,
+                    setting_value=data['value']
+                )
+                db.session.add(setting)
+
+            db.session.commit()
+            return jsonify(setting.to_dict())
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/settings/<setting_key>', methods=['DELETE'])
+    @token_required
+    def delete_setting(current_user, setting_key):
+        try:
+            setting = UserSettings.query.filter_by(
+                user_id=current_user.id,
+                setting_key=setting_key
+            ).first()
+
+            if setting:
+                db.session.delete(setting)
+                db.session.commit()
+                return jsonify({'message': 'Setting deleted successfully'})
+            return jsonify({'message': 'Setting not found'}), 404
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+    
     @app.route('/api/update_graph', methods=['POST'])
     @token_required
     def update_graph(current_user):
@@ -186,48 +247,40 @@ def create_app(config_class=Config):
             if not selected_metric:
                 return jsonify({'error': 'No metric selected'}), 400
             
-            df = load_stock_data()
-            if df is None:
-                return jsonify({'error': 'Error loading stock data'}), 500
+            # Query stocks with stats from database
+            stocks_with_stats = db.session.query(Stock).join(StockStats).filter(Stock.symbol.in_(selected_stocks)).all()
             
-            filtered_df = df[df['Symbol'].isin(selected_stocks)]
-            
-            if filtered_df.empty:
+            if not stocks_with_stats:
                 return jsonify({'error': 'No data found for selected stocks'}), 404
             
-            filtered_df = filtered_df.sort_values(by=selected_metric, ascending=True)
+            # Create data structure for frontend
+            metric_mapping = {
+                'Price': 'price',
+                'MarketCap': 'market_cap',
+                'EPS': 'eps',
+                'P/E': 'pe',
+                'P/B': 'pb'
+            }
             
-            fig = px.bar(
-                filtered_df,
-                x='Symbol',
-                y=selected_metric,
-                title=f'Comparison of {selected_metric} across Selected Stocks',
-                labels={'Symbol': 'Stock Symbol', selected_metric: selected_metric},
-                template='plotly_white',
-                color='Symbol',
-                color_discrete_sequence=px.colors.qualitative.Set3
-            )
+            # Return data in a format suitable for frontend plotting
+            plot_data = [
+                {
+                    'symbol': stock.symbol,
+                    'value': getattr(stock.stats, metric_mapping[selected_metric]),
+                    'name': stock.name,
+                    'last_updated': stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')
+                }
+                for stock in stocks_with_stats
+            ]
             
-            fig.update_layout(
-                showlegend=True,
-                plot_bgcolor='white',
-                height=500,
-                title_x=0.5,
-                title_font_size=20,
-                bargap=0.2,
-                xaxis=dict(
-                    title_font=dict(size=14),
-                    tickfont=dict(size=12),
-                    gridcolor='lightgray'
-                ),
-                yaxis=dict(
-                    title_font=dict(size=14),
-                    tickfont=dict(size=12),
-                    gridcolor='lightgray'
-                )
-            )
+            # Sort data by the selected metric
+            plot_data.sort(key=lambda x: x['value'])
             
-            return jsonify(json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
+            return jsonify({
+                'data': plot_data,
+                'metric': selected_metric
+            })
+            
         except Exception as e:
             print(f"Error in update_graph: {str(e)}")
             return jsonify({'error': str(e)}), 500

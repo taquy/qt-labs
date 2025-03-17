@@ -6,5 +6,8 @@ export const API_ENDPOINTS = {
     stocksWithStats: `${API_BASE_URL}/api/stocks_with_stats`,
     updateGraph: `${API_BASE_URL}/api/update_graph`,
     downloadStockList: `${API_BASE_URL}/api/download_stock_list`,
-    fetchStockData: `${API_BASE_URL}/api/fetch_stock_data`
+    fetchStockData: `${API_BASE_URL}/api/fetch_stock_data`,
+    settings: `${API_BASE_URL}/api/settings`,
+    updateSetting: (key) => `${API_BASE_URL}/api/settings/${key}`,
+    deleteSetting: (key) => `${API_BASE_URL}/api/settings/${key}`
 }; 

@@ -10,8 +10,6 @@ import {
   Chip,
   CircularProgress
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import { format } from 'date-fns';
 
 const StockSelector = ({
   stocks,
@@ -39,16 +37,15 @@ const StockSelector = ({
         >
           Download Stock List
         </Button>
-        <LoadingButton
+        <Button
           variant="contained"
           color="success"
           onClick={handleFetchStockData}
-          disabled={selectedStocks.length === 0}
-          loading={loading}
-          loadingPosition="center"
+          disabled={selectedStocks.length === 0 || loading}
+          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
         >
           {loading ? 'Fetching Data...' : 'Fetch Stock Data'}
-        </LoadingButton>
+        </Button>
       </Box>
 
       <Typography variant="subtitle1" gutterBottom>
@@ -88,9 +85,9 @@ const StockSelector = ({
             />
           )}
           renderOption={(props, option) => {
-            const { key, ...boxProps } = props;
+            const { key, ...otherProps } = props;
             return (
-              <Box component="li" key={key} {...boxProps}>
+              <Box component="li" key={key} {...otherProps}>
                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                   <Typography variant="body1">
                     {highlightMatch(option.symbol, inputValue)}
