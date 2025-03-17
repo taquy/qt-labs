@@ -76,6 +76,14 @@ const StockGraph = ({
     }
   }, [chartData, setGraphData]);
 
+  // Update chart when metric changes
+  useEffect(() => {
+    if (selectedStocks.length > 0) {
+      dispatch(updateGraph(selectedStocks.map(stock => stock.symbol), selectedMetric));
+      dispatch(saveSettings(selectedStocks, selectedMetric));
+    }
+  }, [selectedMetric, selectedStocks, dispatch]);
+
   const handleStockChange = (event, newValue) => {
     dispatch(setSelectedStocks(newValue));
     if (newValue.length > 0) {
