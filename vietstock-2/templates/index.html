@@ -180,9 +180,9 @@ VCB"></textarea>
                         <div class="form-text">Hold Ctrl/Cmd to select multiple stocks</div>
                     </div>
                     <div>
-                        <a href="{{ url_for('download_stock_list') }}" class="btn btn-primary">
+                        <button type="button" class="btn btn-primary" onclick="downloadStockList()">
                             <i class="fas fa-download me-2"></i>Download Stock List
-                        </a>
+                        </button>
                     </div>
                 </div>
                 <div class="mb-3">
@@ -699,6 +699,21 @@ VCB"></textarea>
             const selectedOptions = Array.from(e.target.selectedOptions);
             const selectedStocks = selectedOptions.map(option => option.value);
             
+            // Create a paragraph element to display selected stocks
+            const selectedStocksDisplay = document.createElement('p');
+            selectedStocksDisplay.className = 'mt-2';
+            selectedStocksDisplay.textContent = `Selected stocks are: ${selectedStocks.join(', ')}`;
+            
+            // Remove any existing selected stocks display
+            const existingDisplay = this.parentElement.querySelector('.selected-stocks-display');
+            if (existingDisplay) {
+                existingDisplay.remove();
+            }
+            
+            // Add the new display after the select element
+            selectedStocksDisplay.className = 'selected-stocks-display mt-2';
+            this.parentElement.appendChild(selectedStocksDisplay);
+            
             // Update the textarea with selected stocks
             document.getElementById('stockSymbols').value = selectedStocks.join('\n');
             
@@ -717,6 +732,70 @@ VCB"></textarea>
                 }
             }
         });
+
+        // Function to show messages
+        function showMessage(type, message) {
+            const alertDiv = $('<div>')
+                .addClass(`alert alert-${type} alert-dismissible fade show`)
+                .html(`
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `);
+            
+            // Remove any existing alerts
+            $('.alert').remove();
+            
+            // Add new alert at the top of the container
+            $('.container').prepend(alertDiv);
+            
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                alertDiv.alert('close');
+            }, 5000);
+        }
+
+        // Function to handle stock list download
+        function downloadStockList() {
+            const downloadBtn = $('button[onclick="downloadStockList()"]');
+            const originalText = downloadBtn.html();
+            
+            // Disable button and show loading state
+            downloadBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Downloading...');
+            
+            // Make AJAX request
+            $.ajax({
+                url: '/download_stock_list',
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        // Clear existing options
+                        $('#stockSelect').empty();
+                        
+                        // Add new options
+                        response.stocks.forEach(stock => {
+                            $('#stockSelect').append(
+                                $('<option>', {
+                                    value: stock.symbol,
+                                    text: `${stock.symbol} - ${stock.name}`
+                                })
+                            );
+                        });
+                        
+                        // Show success message
+                        showMessage('success', response.message);
+                    } else {
+                        showMessage('error', response.error || 'Failed to download stock list');
+                    }
+                },
+                error: function(xhr) {
+                    showMessage('error', xhr.responseJSON?.error || 'Failed to download stock list');
+                },
+                complete: function() {
+                    // Restore button state
+                    downloadBtn.prop('disabled', false).html(originalText);
+                }
+            });
+        }
     </script>
 </body>
 </html> 

@@ -46,18 +46,6 @@ def get_stock_list():
                     stock_info = {
                         'Symbol': d[0],
                         'Name': d[1],
-                        'Type': d[4],
-                        'Market Cap (USD)': d[6],
-                        'Last Price': d[8],
-                        'Currency': d[13],
-                        'Change %': d[14] * 100 if d[14] is not None else None,
-                        'Volume': d[15],
-                        'P/E Ratio': d[17],
-                        'EPS': d[18],
-                        'EPS Growth %': d[19] * 100 if d[19] is not None else None,
-                        'Dividend Yield %': d[20] * 100 if d[20] is not None else None,
-                        'Sector': d[21],
-                        'Last Updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     }
                     stocks_data.append(stock_info)
             return stocks_data
