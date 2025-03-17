@@ -1,9 +1,6 @@
 from flask import Flask, render_template, jsonify, request, Response, send_file, redirect, url_for, flash, session
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_wtf.csrf import CSRFProtect
-from flask_migrate import Migrate
-from flask_cors import CORS
 import pandas as pd
 import plotly
 import plotly.express as px
@@ -14,11 +11,12 @@ from datetime import datetime, timedelta
 import io
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from models import db, User, Stock, StockStats
+from models import User, Stock, StockStats
 from config import Config
 import requests
 from bs4 import BeautifulSoup
 from get_stock_lists import get_stock_list
+from extensions import db, login_manager, csrf, cors, migrate
 import os
 
 # Import process_stock_list after app initialization to avoid circular import
@@ -27,21 +25,16 @@ from get_stock_data import process_stock_list
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Initialize Flask-Login and CSRF protection
-login_manager = LoginManager()
+# Initialize extensions
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
 
-# Initialize CORS
-CORS(app, supports_credentials=True)
-
-csrf = CSRFProtect(app)
-
-# Initialize database and migrations
+cors.init_app(app, supports_credentials=True)
+csrf.init_app(app)
 db.init_app(app)
-migrate = Migrate(app, db)
+migrate.init_app(app, db)
 
 # Queue for SSE messages
 message_queue = queue.Queue()
