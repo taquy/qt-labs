@@ -11,17 +11,17 @@ from datetime import datetime, timedelta
 import io
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from .models import User, Stock, StockStats, UserSettings
-from .config import Config
+from models import User, Stock, StockStats, UserSettings
+from config import Config
 import requests
 from bs4 import BeautifulSoup
-from .get_stock_lists import get_stock_list
-from .extensions import db, login_manager, cors, init_extensions
+from get_stock_lists import get_stock_list
+from extensions import db, login_manager, cors, init_extensions
 import os
 import jwt as PyJWT
 from functools import wraps
 from oauthlib.oauth2 import WebApplicationClient
-from .get_stock_data import process_stock_list
+from get_stock_data import process_stock_list
 
 def create_app(config_class=Config):
     app = Flask(__name__)
