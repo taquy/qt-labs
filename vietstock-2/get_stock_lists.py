@@ -72,35 +72,40 @@ def get_stock_list():
         print(f"Error parsing JSON response: {e}")
         return []
 
-def save_to_ods(stocks_data):
+def save_to_database(stocks_data):
     try:
-        # Create DataFrame from stocks data
-        new_df = pd.DataFrame(stocks_data)
+        from app import app, db
+        from models import Stock
+        from datetime import datetime
         
-        try:
-            # Try to read existing file
-            with pd.ExcelFile('stocks.ods', engine='odf') as xls:
-                # Read all existing sheets
-                sheets = {}
-                for sheet_name in xls.sheet_names:
-                    if sheet_name != 'Available Stocks':  # Skip the sheet we're going to update
-                        sheets[sheet_name] = pd.read_excel(xls, sheet_name=sheet_name, engine='odf')
-        except FileNotFoundError:
-            sheets = {}
-        
-        # Create a new Excel writer
-        with pd.ExcelWriter('stocks.ods', engine='odf') as writer:
-            # Write all existing sheets except 'Available Stocks'
-            for sheet_name, df in sheets.items():
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
+        with app.app_context():
+            # Process each stock
+            for stock_info in stocks_data:
+                # Check if stock already exists
+                stock = Stock.query.filter_by(symbol=stock_info['Symbol']).first()
+                
+                if stock:
+                    # Update existing stock
+                    stock.name = stock_info['Name']
+                    stock.last_updated = datetime.strptime(stock_info['Last Updated'], '%Y-%m-%d %H:%M:%S')
+                else:
+                    # Create new stock
+                    stock = Stock(
+                        symbol=stock_info['Symbol'],
+                        name=stock_info['Name'],
+                        last_updated=datetime.strptime(stock_info['Last Updated'], '%Y-%m-%d %H:%M:%S')
+                    )
+                    db.session.add(stock)
             
-            # Write the new 'Available Stocks' sheet
-            new_df.to_excel(writer, sheet_name='Available Stocks', index=False)
-        
-        print(f"Successfully saved {len(stocks_data)} stocks to stocks.ods")
-        return True
+            # Commit all changes
+            db.session.commit()
+            print(f"Successfully saved {len(stocks_data)} stocks to database")
+            return True
+            
     except Exception as e:
-        print(f"Error saving to ODS file: {e}")
+        print(f"Error saving to database: {e}")
+        if 'db' in locals():
+            db.session.rollback()
         return False
 
 if __name__ == "__main__":
@@ -109,7 +114,7 @@ if __name__ == "__main__":
     
     if stocks_data:
         print(f"Found {len(stocks_data)} stocks")
-        # Save to ODS file
-        save_to_ods(stocks_data)
+        # Save to database
+        save_to_database(stocks_data)
     else:
         print("No stocks data to save")

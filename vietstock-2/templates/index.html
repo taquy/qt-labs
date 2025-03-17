@@ -166,12 +166,19 @@ VCB"></textarea>
         <div class="card mb-3">
             <div class="card-body">
                 <h5 class="card-title mb-3">Select Stocks to Display</h5>
-                <div class="mb-3">
-                    <label for="stockSelect" class="form-label">Search and Select Stocks:</label>
-                    <select class="form-select" id="stockSelect" multiple size="10">
-                        <!-- Options will be populated dynamically -->
-                    </select>
-                    <div class="form-text">Hold Ctrl/Cmd to select multiple stocks</div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="flex-grow-1 me-3">
+                        <label for="stockSelect" class="form-label">Search and Select Stocks:</label>
+                        <select class="form-select" id="stockSelect" multiple size="10">
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                        <div class="form-text">Hold Ctrl/Cmd to select multiple stocks</div>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('download_stock_list') }}" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>Download Stock List
+                        </a>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label for="stockSearch" class="form-label">Search:</label>

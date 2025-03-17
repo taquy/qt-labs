@@ -15,6 +15,8 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from models import db, User, Stock
 from config import Config
+import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -512,6 +514,72 @@ def get_available_stocks():
             ]
         })
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/download_stock_list')
+@login_required
+def download_stock_list():
+    try:
+        # Get stock list from Vietstock
+        url = "https://www.vietstock.vn/stock-screener"
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            table = soup.find('table', {'class': 'table table-striped'})
+            
+            if table:
+                stocks = []
+                rows = table.find_all('tr')[1:]  # Skip header row
+                
+                for row in rows:
+                    cols = row.find_all('td')
+                    if len(cols) >= 2:
+                        symbol = cols[0].text.strip()
+                        name = cols[1].text.strip()
+                        stocks.append({
+                            'Symbol': symbol,
+                            'Name': name
+                        })
+                
+                # Store stocks in database
+                for stock_data in stocks:
+                    stock = Stock.query.filter_by(symbol=stock_data['Symbol']).first()
+                    if not stock:
+                        stock = Stock(
+                            symbol=stock_data['Symbol'],
+                            name=stock_data['Name'],
+                            last_updated=datetime.utcnow()
+                        )
+                        db.session.add(stock)
+                
+                db.session.commit()
+                
+                # Create DataFrame for CSV export
+                df = pd.DataFrame(stocks)
+                
+                # Create a buffer to store the CSV
+                buffer = io.StringIO()
+                df.to_csv(buffer, index=False)
+                buffer.seek(0)
+                
+                # Generate filename with current date
+                filename = f"stock_list_{datetime.now().strftime('%Y%m%d')}.csv"
+                
+                # Send the file
+                return send_file(
+                    io.BytesIO(buffer.getvalue().encode('utf-8')),
+                    mimetype='text/csv',
+                    as_attachment=True,
+                    download_name=filename
+                )
+            else:
+                return jsonify({'error': 'Stock list table not found'}), 404
+        else:
+            return jsonify({'error': 'Failed to retrieve stock list'}), 500
+            
+    except Exception as e:
+        print(f"Error downloading stock list: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 def init_db():
