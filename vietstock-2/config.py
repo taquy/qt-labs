@@ -7,7 +7,7 @@ class Config:
     WTF_CSRF_SECRET_KEY = 'csrf-secret-key'
 
     # Database configuration
-    SQLALCHEMY_DATABASE_URI = 'postgresql://vietstock:vietstock123@localhost:5432/vietstock'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://qtstock:qtstock123@localhost:5432/qtstock'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # User configuration

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login - Stock Analysis</title>
+    <title>Qt Stock Analysis - Login</title>
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- Material Design Web Components -->
@@ -206,76 +206,89 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-form-section">
-            <div class="brand">
-                <div class="brand-icon">
-                    <i class="material-icons">trending_up</i>
-                </div>
-                <div class="brand-name">Stock Analysis</div>
-            </div>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-center">Qt Stock Analysis</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="login-container">
+                            <div class="login-form-section">
+                                <div class="brand">
+                                    <div class="brand-icon">
+                                        <i class="material-icons">trending_up</i>
+                                    </div>
+                                    <div class="brand-name">Stock Analysis</div>
+                                </div>
 
-            <h1 class="login-title">Welcome back</h1>
-            <p class="login-subtitle">Please enter your details</p>
+                                <h1 class="login-title">Welcome back</h1>
+                                <p class="login-subtitle">Please enter your details</p>
 
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+                                {% with messages = get_flashed_messages(with_categories=true) %}
+                                    {% if messages %}
+                                        {% for category, message in messages %}
+                                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endwith %}
 
-            <form method="POST" action="{{ url_for('login') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="mdc-text-field mdc-text-field--outlined">
-                    <input type="text" id="username" name="username" class="mdc-text-field__input" required>
-                    <div class="mdc-notched-outline">
-                        <div class="mdc-notched-outline__leading"></div>
-                        <div class="mdc-notched-outline__notch">
-                            <label for="username" class="mdc-floating-label">Username</label>
+                                <form method="POST" action="{{ url_for('login') }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="mdc-text-field mdc-text-field--outlined">
+                                        <input type="text" id="username" name="username" class="mdc-text-field__input" required>
+                                        <div class="mdc-notched-outline">
+                                            <div class="mdc-notched-outline__leading"></div>
+                                            <div class="mdc-notched-outline__notch">
+                                                <label for="username" class="mdc-floating-label">Username</label>
+                                            </div>
+                                            <div class="mdc-notched-outline__trailing"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mdc-text-field mdc-text-field--outlined">
+                                        <input type="password" id="password" name="password" class="mdc-text-field__input" required>
+                                        <div class="mdc-notched-outline">
+                                            <div class="mdc-notched-outline__leading"></div>
+                                            <div class="mdc-notched-outline__notch">
+                                                <label for="password" class="mdc-floating-label">Password</label>
+                                            </div>
+                                            <div class="mdc-notched-outline__trailing"></div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="mdc-button mdc-button--raised">
+                                        <span class="mdc-button__ripple"></span>
+                                        <span class="mdc-button__label">Sign in</span>
+                                    </button>
+                                </form>
+
+                                <div class="social-login">
+                                    <div class="social-login-text">or continue with</div>
+                                    <div class="social-buttons">
+                                        <a href="#" class="social-button facebook">
+                                            <i class="fab fa-facebook-f"></i>
+                                        </a>
+                                        <a href="#" class="social-button google">
+                                            <i class="fab fa-google"></i>
+                                        </a>
+                                        <a href="#" class="social-button apple">
+                                            <i class="fab fa-apple"></i>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="signup-link">
+                                    Don't have an account? <a href="#">Sign up</a>
+                                </div>
+                            </div>
+                            <div class="login-image-section"></div>
                         </div>
-                        <div class="mdc-notched-outline__trailing"></div>
                     </div>
                 </div>
-
-                <div class="mdc-text-field mdc-text-field--outlined">
-                    <input type="password" id="password" name="password" class="mdc-text-field__input" required>
-                    <div class="mdc-notched-outline">
-                        <div class="mdc-notched-outline__leading"></div>
-                        <div class="mdc-notched-outline__notch">
-                            <label for="password" class="mdc-floating-label">Password</label>
-                        </div>
-                        <div class="mdc-notched-outline__trailing"></div>
-                    </div>
-                </div>
-
-                <button type="submit" class="mdc-button mdc-button--raised">
-                    <span class="mdc-button__ripple"></span>
-                    <span class="mdc-button__label">Sign in</span>
-                </button>
-            </form>
-
-            <div class="social-login">
-                <div class="social-login-text">or continue with</div>
-                <div class="social-buttons">
-                    <a href="#" class="social-button facebook">
-                        <i class="fab fa-facebook-f"></i>
-                    </a>
-                    <a href="#" class="social-button google">
-                        <i class="fab fa-google"></i>
-                    </a>
-                    <a href="#" class="social-button apple">
-                        <i class="fab fa-apple"></i>
-                    </a>
-                </div>
-            </div>
-
-            <div class="signup-link">
-                Don't have an account? <a href="#">Sign up</a>
             </div>
         </div>
-        <div class="login-image-section"></div>
     </div>
 
     <script>

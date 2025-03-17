@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, request, Response, send_file,
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
+from flask_migrate import Migrate
 import pandas as pd
 import plotly
 import plotly.express as px
@@ -30,8 +31,9 @@ login_manager.login_message_category = 'info'
 
 csrf = CSRFProtect(app)
 
-# Initialize database
+# Initialize database and migrations
 db.init_app(app)
+migrate = Migrate(app, db)
 
 # Queue for SSE messages
 message_queue = queue.Queue()
