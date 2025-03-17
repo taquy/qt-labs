@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -32,34 +32,12 @@ const Dashboard = () => {
   const [graphData, setGraphData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue] = useState('');
   const navigate = useNavigate();
 
   const metrics = ['Price', 'MarketCap', 'EPS', 'P/E', 'P/B'];
 
-  // Function to highlight matching text
-  const highlightMatch = (text, search) => {
-    if (!search) return text;
-    const parts = text.split(new RegExp(`(${search})`, 'gi'));
-    return parts.map((part, index) => 
-      part.toLowerCase() === search.toLowerCase() ? 
-        <span key={index} style={{ backgroundColor: '#fff59d' }}>{part}</span> : part
-    );
-  };
-
-  useEffect(() => {
-    // Check if user is logged in and has token
-    const token = localStorage.getItem('token');
-    if (!token || !localStorage.getItem('isLoggedIn')) {
-      navigate('/login');
-      return;
-    }
-    // Set authorization header
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    fetchStocks();
-  }, [navigate]);
-
-  const fetchStocks = async () => {
+  const fetchStocks = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(API_ENDPOINTS.stocks, {
@@ -78,14 +56,28 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
-  const handleStockSelect = (stock) => {
-    if (selectedStocks.includes(stock)) {
-      setSelectedStocks(selectedStocks.filter(s => s !== stock));
-    } else {
-      setSelectedStocks([...selectedStocks, stock]);
+  useEffect(() => {
+    // Check if user is logged in and has token
+    const token = localStorage.getItem('token');
+    if (!token || !localStorage.getItem('isLoggedIn')) {
+      navigate('/login');
+      return;
     }
+    // Set authorization header
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    fetchStocks();
+  }, [navigate, fetchStocks]);
+
+  // Function to highlight matching text
+  const highlightMatch = (text, search) => {
+    if (!search) return text;
+    const parts = text.split(new RegExp(`(${search})`, 'gi'));
+    return parts.map((part, index) => 
+      part.toLowerCase() === search.toLowerCase() ? 
+        <span key={index} style={{ backgroundColor: '#fff59d' }}>{part}</span> : part
+    );
   };
 
   const handleMetricChange = (event) => {
