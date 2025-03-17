@@ -152,8 +152,9 @@ VCB"></textarea>
                             </button>
                         </div>
                     </form>
-                    <div id="scrapeStatus" class="alert d-none">
-                        <div id="scrapeMessage"></div>
+                    <div id="scrapeStatus" class="alert" style="display: none;">
+                        <span class="loading" style="display: none;"></span>
+                        <span id="scrapeMessage"></span>
                     </div>
                 </div>
             </div>
@@ -234,6 +235,11 @@ VCB"></textarea>
                             </div>
                         </div>
                     `);
+                    
+                    // Update graph with new data
+                    if (data.current > 0) {
+                        updateGraph();
+                    }
                 } else if (data.status === 'completed') {
                     // Update status
                     $('#scrapeStatus').removeClass('alert-info').addClass('alert-success');
@@ -256,6 +262,9 @@ VCB"></textarea>
                                 </div>
                             </div>
                         `);
+                        
+                        // Final graph update
+                        updateGraph();
                     }
                     
                     // Hide the status message after 1 second
@@ -263,7 +272,7 @@ VCB"></textarea>
                         $('#scrapeStatus').fadeOut('slow');
                     }, 1000);
                     
-                    // Update stock list and graph
+                    // Update stock list
                     updateStockList();
                     
                     // Close the connection
@@ -294,11 +303,14 @@ VCB"></textarea>
             
             if (selectedStocks.length === 0) {
                 $('#graph').html('<div class="alert alert-warning">Please select at least one stock to display the graph.</div>');
+                currentGraph = null;
                 return;
             }
             
-            // Show loading state
-            $('#graph').html('<div class="text-center mt-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            // Don't show loading state if we already have a graph
+            if (!currentGraph) {
+                $('#graph').html('<div class="text-center mt-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            }
             
             // Get CSRF token from meta tag
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -315,31 +327,43 @@ VCB"></textarea>
                     'X-CSRFToken': csrfToken
                 },
                 success: function(response) {
-                    if (typeof response === 'string') {
-                        try {
-                            response = JSON.parse(response);
-                        } catch (e) {
-                            console.error('Error parsing response:', e);
-                            $('#graph').html('<div class="alert alert-danger">Error parsing graph data</div>');
-                            return;
+                    try {
+                        const data = typeof response === 'string' ? JSON.parse(response) : response;
+                        
+                        if (data.error) {
+                            throw new Error(data.error);
                         }
+
+                        const layout = {
+                            ...data.layout,
+                            transition: {
+                                duration: 500,
+                                easing: 'cubic-in-out'
+                            }
+                        };
+
+                        if (currentGraph) {
+                            // Update existing graph
+                            Plotly.react('graph', data.data, layout).then(function(gd) {
+                                currentGraph = gd;
+                            });
+                        } else {
+                            // Create new graph
+                            $('#graph').empty();
+                            Plotly.newPlot('graph', data.data, layout).then(function(gd) {
+                                currentGraph = gd;
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        $('#graph').html(`<div class="alert alert-danger">Error: ${error.message}</div>`);
+                        currentGraph = null;
                     }
-                    
-                    if (response.error) {
-                        console.error('Graph update error:', response.error);
-                        $('#graph').html(`<div class="alert alert-danger">Error: ${response.error}</div>`);
-                        return;
-                    }
-                    
-                    // Clear any existing content first
-                    $('#graph').empty();
-                    Plotly.newPlot('graph', response.data, response.layout);
                 },
                 error: function(xhr, status, error) {
                     console.error('Graph update error:', error);
-                    console.error('Status:', status);
-                    console.error('Response:', xhr.responseText);
                     $('#graph').html(`<div class="alert alert-danger">Error updating graph: ${error}</div>`);
+                    currentGraph = null;
                 }
             });
         }
@@ -438,10 +462,13 @@ VCB"></textarea>
 
         // Function to start scraping process
         function startScraping() {
-            // Show status
-            $('#scrapeStatus').show().removeClass('alert-success alert-danger').addClass('alert-info');
-            $('#scrapeMessage').text('Preparing...');
-            $('.loading').show();  // Show loading spinner
+            // Show status and loading spinner
+            $('#scrapeStatus')
+                .show()
+                .removeClass('alert-success alert-danger')
+                .addClass('alert-info');
+            $('.loading').show();
+            $('#scrapeMessage').text('Preparing to crawl data...');
 
             // Start event stream for real-time updates
             startEventStream();
