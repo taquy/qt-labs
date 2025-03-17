@@ -1,6 +1,10 @@
 # Environment variables
 .env
 
+# Credentials
+backend/credentials.json
+frontend/.env
+
 # Python
 __pycache__/
 *.py[cod]
@@ -39,4 +43,14 @@ ENV/
 *.sqlite3
 
 # Logs
-*.log 
+*.log
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db 

@@ -1,9 +1,30 @@
 import os
+import json
 from datetime import timedelta
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+def load_google_credentials():
+    try:
+        credentials_path = os.path.join(os.path.dirname(__file__), 'credentials.json')
+        if os.path.exists(credentials_path):
+            with open(credentials_path, 'r') as f:
+                credentials = json.load(f)
+                return credentials['web']
+        else:
+            print("Warning: credentials.json not found")
+            return {
+                'client_id': os.getenv('GOOGLE_CLIENT_ID'),
+                'client_secret': os.getenv('GOOGLE_CLIENT_SECRET')
+            }
+    except Exception as e:
+        print(f"Error loading Google credentials: {e}")
+        return {
+            'client_id': os.getenv('GOOGLE_CLIENT_ID'),
+            'client_secret': os.getenv('GOOGLE_CLIENT_SECRET')
+        }
 
 class Config:
     # Flask configuration
@@ -24,4 +45,10 @@ class Config:
     
     # Admin user configuration
     ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
-    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123') 
+    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
+    
+    # Google OAuth2 settings
+    google_creds = load_google_credentials()
+    GOOGLE_CLIENT_ID = google_creds['client_id']
+    GOOGLE_CLIENT_SECRET = google_creds['client_secret']
+    GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration" 

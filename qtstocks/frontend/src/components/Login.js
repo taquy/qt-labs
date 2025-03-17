@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Container, 
@@ -6,11 +6,14 @@ import {
   TextField, 
   Button, 
   Typography, 
-  Alert 
+  Alert,
+  Divider
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 
 // Configure axios to include credentials
 axios.defaults.withCredentials = true;
@@ -22,114 +25,150 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const handleGoogleLogin = useCallback(async (response) => {
+    try {
+      const googleResponse = await axios.post(API_ENDPOINTS.googleLogin, {
+        token: response.credential
+      });
+
+      if (googleResponse.data.success) {
+        localStorage.setItem('token', googleResponse.data.token);
+        localStorage.setItem('isLoggedIn', 'true');
+        axios.defaults.headers.common['Authorization'] = `Bearer ${googleResponse.data.token}`;
+        navigate('/');
+      } else {
+        setError(googleResponse.data.message || 'Google login failed');
+      }
+    } catch (err) {
+      console.error('Google login error:', err);
+      setError('Failed to login with Google');
+    }
+  }, [navigate]);
+
+  const initializeGoogleAuth = useCallback(() => {
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+        callback: handleGoogleLogin
+      });
+    }
+  }, [handleGoogleLogin]);
+
+  useEffect(() => {
+    // Load Google API
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    
+    const handleLoad = () => {
+      initializeGoogleAuth();
+    };
+
+    script.addEventListener('load', handleLoad);
+    document.head.appendChild(script);
+
+    return () => {
+      script.removeEventListener('load', handleLoad);
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, [initializeGoogleAuth]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      console.log('Attempting login with username:', username);
       const response = await axios.post(API_ENDPOINTS.login, {
         username,
         password
-      }, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
       });
       
-      console.log('Login response:', response.data);
-      
       if (response.data.success) {
-        // Store token and login state
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('isLoggedIn', 'true');
-        // Set default authorization header for future requests
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-        console.log('Login successful, navigating to dashboard');
         navigate('/');
       } else {
         setError(response.data.message || 'Login failed');
       }
     } catch (err) {
-      console.error('Login error:', err);
-      if (err.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('Error response:', err.response.data);
-        console.error('Error status:', err.response.status);
-        console.error('Error headers:', err.response.headers);
-        setError(err.response.data.message || 'Login failed');
-      } else if (err.request) {
-        // The request was made but no response was received
-        console.error('No response received:', err.request);
-        setError('No response from server. Please check if the backend is running.');
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('Error setting up request:', err.message);
-        setError('An error occurred while trying to log in.');
-      }
+      setError(err.response?.data?.message || 'Failed to login');
     }
   };
 
-  return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-          <Typography component="h1" variant="h5" align="center" gutterBottom>
-            Qt Stock Analysis
-          </Typography>
-          <Typography variant="body2" color="text.secondary" align="center" gutterBottom>
-            Please sign in to continue
-          </Typography>
+  const initiateGoogleLogin = useCallback(() => {
+    if (window.google) {
+      window.google.accounts.id.prompt();
+    }
+  }, []);
 
+  return (
+    <Container maxWidth="sm">
+      <Box sx={{ mt: 8 }}>
+        <Paper sx={{ p: 4 }}>
+          <Typography variant="h5" component="h1" gutterBottom align="center">
+            Login
+          </Typography>
+          
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+          <form onSubmit={handleSubmit}>
             <TextField
-              margin="normal"
-              required
               fullWidth
-              id="username"
               label="Username"
-              name="username"
-              autoComplete="username"
-              autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-            />
-            <TextField
               margin="normal"
               required
+            />
+            <TextField
               fullWidth
-              name="password"
               label="Password"
               type="password"
-              id="password"
-              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              margin="normal"
+              required
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              color="primary"
               sx={{ mt: 3, mb: 2 }}
             >
-              Sign In
+              Login
             </Button>
-          </Box>
+          </form>
+
+          <Divider sx={{ my: 2 }}>OR</Divider>
+
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={initiateGoogleLogin}
+            sx={{
+              mt: 2,
+              mb: 2,
+              color: '#757575',
+              borderColor: '#757575',
+              '&:hover': {
+                borderColor: '#616161',
+                backgroundColor: 'rgba(0, 0, 0, 0.04)'
+              },
+              textTransform: 'none',
+              fontSize: '1rem'
+            }}
+            startIcon={<FontAwesomeIcon icon={faGoogle} style={{ color: '#4285F4' }} />}
+          >
+            Continue with Google
+          </Button>
         </Paper>
       </Box>
     </Container>

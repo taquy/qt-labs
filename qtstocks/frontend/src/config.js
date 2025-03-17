@@ -1,6 +1,7 @@
 export const API_BASE_URL = 'http://localhost:5555';
 export const API_ENDPOINTS = {
     login: `${API_BASE_URL}/api/login`,
+    googleLogin: `${API_BASE_URL}/api/login/google`,
     logout: `${API_BASE_URL}/api/logout`,
     stocks: `${API_BASE_URL}/api/stocks`,
     stocksWithStats: `${API_BASE_URL}/api/stocks_with_stats`,

@@ -11,7 +11,8 @@ import {
   Autocomplete,
   TextField,
   Chip,
-  Tooltip
+  Tooltip,
+  Button
 } from '@mui/material';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -27,6 +28,7 @@ import axios from 'axios';
 import { API_ENDPOINTS } from '../config';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 // Register Chart.js components
 ChartJS.register(
@@ -271,11 +273,56 @@ const StockGraph = ({
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Call the logout endpoint
+        await axios.post(API_ENDPOINTS.logout, {}, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+
+      // Clear all component states
+      setSelectedStocks([]);
+      setChartData(null);
+      setGraphData(null);
+      setError('');
+      
+      // Clear authentication data
+      localStorage.clear();
+      delete axios.defaults.headers.common['Authorization']; // Remove auth header
+      
+      // Navigate to login page
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+      // Even if the logout request fails, we should still clear local state and redirect
+      localStorage.clear();
+      delete axios.defaults.headers.common['Authorization'];
+      navigate('/login');
+    }
+  };
+
   return (
     <Paper sx={{ p: 2, mt: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Stock Comparison Graph
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">
+          Stock Comparison Graph
+        </Typography>
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<LogoutIcon />}
+          onClick={handleLogout}
+          disabled={loading}
+        >
+          Logout
+        </Button>
+      </Box>
       
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
         <FormControl sx={{ minWidth: 300 }}>

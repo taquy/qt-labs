@@ -20,6 +20,7 @@ from extensions import db, login_manager, cors, init_extensions
 import os
 import jwt as PyJWT
 from functools import wraps
+from oauthlib.oauth2 import WebApplicationClient
 
 # Import process_stock_list after app initialization to avoid circular import
 from get_stock_data import process_stock_list
@@ -46,6 +47,9 @@ def create_app(config_class=Config):
     
     # Queue for SSE messages
     message_queue = queue.Queue()
+    
+    # OAuth 2 client setup
+    client = WebApplicationClient(app.config['GOOGLE_CLIENT_ID'])
     
     @login_manager.user_loader
     def load_user(user_id):
@@ -122,7 +126,7 @@ def create_app(config_class=Config):
             print(f"Login error: {str(e)}")
             return jsonify({'success': False, 'message': 'An error occurred during login.'}), 500
     
-    @app.route('/api/logout')
+    @app.route('/api/logout', methods=['POST'])
     @token_required
     def logout(current_user):
         return jsonify({'success': True, 'message': 'Logged out successfully.'})
@@ -340,6 +344,51 @@ def create_app(config_class=Config):
         except Exception as e:
             print(f"Error in fetch_stock_data: {str(e)}")
             return jsonify({'error': str(e)}), 500
+    
+    @app.route('/api/login/google', methods=['POST'])
+    def google_login():
+        try:
+            # Get token info from frontend
+            data = request.get_json()
+            if not data or 'token' not in data:
+                return jsonify({'success': False, 'message': 'No token provided'}), 400
+
+            token = data['token']
+
+            # Verify the token with Google
+            google_response = requests.get(
+                'https://www.googleapis.com/oauth2/v3/userinfo',
+                headers={'Authorization': f'Bearer {token}'}
+            )
+
+            if not google_response.ok:
+                return jsonify({'success': False, 'message': 'Failed to verify Google token'}), 401
+
+            google_data = google_response.json()
+
+            # Get user info from Google response
+            google_id = google_data['sub']
+            email = google_data['email']
+            username = email.split('@')[0]  # Use email prefix as username
+
+            # Get or create user
+            user = User.get_or_create_google_user(google_id, email, username)
+
+            # Create JWT token
+            token = PyJWT.encode({
+                'user_id': user.id,
+                'exp': datetime.utcnow() + timedelta(days=1)
+            }, app.config['SECRET_KEY'], algorithm="HS256")
+
+            return jsonify({
+                'success': True,
+                'message': 'Logged in with Google successfully',
+                'token': token
+            })
+
+        except Exception as e:
+            print(f"Google login error: {str(e)}")
+            return jsonify({'success': False, 'message': 'An error occurred during Google login'}), 500
     
     # Serve React app
     @app.route('/', defaults={'path': ''})
