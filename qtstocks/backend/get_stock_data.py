@@ -63,15 +63,23 @@ class StockDataScraper:
         try:
             # Get the stock details URL
             stock_url = self.get_stock_url(stock_symbol)
+            print(stock_url)
             if not stock_url:
                 raise Exception(f"Could not find URL for stock symbol {stock_symbol}")
-                
+            
+            # Create a new local Chrome session
+            driver = self.create_driver()
+            
+            # Visit the stock URL using the new Selenium WebDriver session
+            driver.get(stock_url)
+            
             # Give the page a moment to load dynamic content
             time.sleep(2)
             
             # Get the stock price
             try:
-                price_element = self.driver.find_element(By.ID, 'price__0')
+                price_element = driver.find_element(By.ID, 'price__0')
+                print(price_element)
                 if price_element:
                     metrics_map['Price'] = price_element.text.strip()
             except NoSuchElementException:
@@ -80,7 +88,7 @@ class StockDataScraper:
                 
             # Get the market cap
             try:
-                dltl_other_elements = self.driver.find_elements(By.CLASS_NAME, 'dltl-other')
+                dltl_other_elements = driver.find_elements(By.CLASS_NAME, 'dltl-other')
                 if len(dltl_other_elements) >= 3:  # Make sure we have at least 3 elements
                     market_cap_element = dltl_other_elements[2]  # Get the 3rd element (index 2)
                     clearfix_elements = market_cap_element.find_elements(By.CLASS_NAME, 'clearfix')
@@ -94,7 +102,7 @@ class StockDataScraper:
                 metrics_map['MarketCap'] = ''
             
             # Find all elements with class dlt-left-half
-            metrics_elements = self.driver.find_elements(By.CLASS_NAME, "dlt-left-half")
+            metrics_elements = driver.find_elements(By.CLASS_NAME, "dlt-left-half")
             
             # Process each element to find metrics
             for element in metrics_elements:
@@ -117,6 +125,8 @@ class StockDataScraper:
             print(f"An error occurred while scraping {stock_symbol}: {str(e)}")
             raise
             
+        metrics_map['id'] = stock_symbol
+        print(metrics_map)
         return metrics_map
     
 
@@ -153,9 +163,9 @@ class StockDataScraper:
                         continue
 
                     # Find or create StockStats for this stock
-                    stats = StockStats.query.filter_by(stock_id=stock.id).first()
+                    stats = StockStats.query.filter_by(symbol=symbol).first()
                     if not stats:
-                        stats = StockStats(stock_id=stock.id)
+                        stats = StockStats(symbol=symbol)
                         db.session.add(stats)
 
                     # Convert and update metrics

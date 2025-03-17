@@ -18,8 +18,7 @@ class User(UserMixin, db.Model):
         return str(self.id)
 
 class Stock(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    symbol = db.Column(db.String(10), unique=True, nullable=False)
+    symbol = db.Column(db.String(10), primary_key=True)
     name = db.Column(db.String(100))
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -39,17 +38,16 @@ class Stock(db.Model):
         )
 
 class StockStats(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    symbol = db.Column(db.String(10), db.ForeignKey('stock.symbol'), nullable=False)
+    symbol = db.Column(db.String(10), db.ForeignKey('stock.symbol'), primary_key=True)
     price = db.Column(db.Float)
     market_cap = db.Column(db.Float)
     eps = db.Column(db.Float)
-    pe_ratio = db.Column(db.Float)
-    pb_ratio = db.Column(db.Float)
+    pe = db.Column(db.Float)
+    pb = db.Column(db.Float)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationship with Stock model
-    stock = db.relationship('Stock', backref=db.backref('stats', lazy=True))
+    stock = db.relationship('Stock', backref=db.backref('stats', lazy=True, uselist=False))
     
     def to_dict(self):
         return {
@@ -57,8 +55,8 @@ class StockStats(db.Model):
             'price': self.price,
             'market_cap': self.market_cap,
             'eps': self.eps,
-            'pe_ratio': self.pe_ratio,
-            'pb_ratio': self.pb_ratio,
+            'pe': self.pe,
+            'pb': self.pb,
             'last_updated': self.last_updated.strftime('%Y-%m-%d %H:%M:%S')
         }
     
@@ -69,7 +67,7 @@ class StockStats(db.Model):
             price=data['price'],
             market_cap=data['market_cap'],
             eps=data['eps'],
-            pe_ratio=data['pe_ratio'],
-            pb_ratio=data['pb_ratio'],
+            pe=data['pe'],
+            pb=data['pb'],
             last_updated=datetime.strptime(data['last_updated'], '%Y-%m-%d %H:%M:%S')
         ) 
