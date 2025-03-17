@@ -1,22 +1,26 @@
-"""Create tables with correct column names
+"""Update schema with correct column names
 
-Revision ID: create_tables_v1
+Revision ID: schema_update_v1
 Revises: 
 Create Date: 2024-03-19 11:00:00.000000
 
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'create_tables_v1'
+revision = 'schema_update_v1'
 down_revision = None
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
+    # Drop existing tables if they exist
+    op.execute('DROP TABLE IF EXISTS stock_stats CASCADE')
+    op.execute('DROP TABLE IF EXISTS stock CASCADE')
+    
     # Create stock table
     op.create_table('stock',
         sa.Column('symbol', sa.String(10), primary_key=True),
