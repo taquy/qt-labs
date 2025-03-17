@@ -14,11 +14,12 @@ from datetime import datetime, timedelta
 import io
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from models import db, User, Stock
+from models import db, User, Stock, StockStats
 from config import Config
 import requests
 from bs4 import BeautifulSoup
 from get_stock_lists import get_stock_list
+from get_stock_data import process_stock_list
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -558,6 +559,29 @@ def download_stock_list():
     except Exception as e:
         db.session.rollback()
         print(f"Error in download_stock_list: {str(e)}")  # Add logging
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/fetch_stock_data', methods=['POST'])
+@login_required
+def fetch_stock_data():
+    try:
+        # Get all stocks from the database
+        stocks = Stock.query.all()
+        stock_symbols = [stock.symbol for stock in stocks]
+        
+        if not stock_symbols:
+            return jsonify({'error': 'No stocks found in database'}), 404
+            
+        # Process the stock list
+        process_stock_list(stock_symbols)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully fetched data for {len(stock_symbols)} stocks'
+        })
+        
+    except Exception as e:
+        print(f"Error in fetch_stock_data: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 def init_db():

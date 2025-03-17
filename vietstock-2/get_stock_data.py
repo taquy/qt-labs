@@ -10,10 +10,9 @@ import sys
 import platform
 import requests
 import json
-import csv
-import pandas as pd
 from datetime import datetime
-import odf  # Required for reading ODS files
+from models import db, Stock, StockStats
+from app import app
 
 def create_driver():
     chrome_options = Options()
@@ -62,84 +61,64 @@ def get_stock_url(driver, stock_symbol):
         print(f"Error finding stock URL: {str(e)}")
         return None
 
-def scrape_stock_data(stock_symbol):
-    driver = create_driver()
-    metrics_map = {}
-    
-    try:
-        # Get the stock details URL
-        stock_url = get_stock_url(driver, stock_symbol)
-        if not stock_url:
-            raise Exception(f"Could not find URL for stock symbol {stock_symbol}")
-            
-        # Give the page a moment to load dynamic content
-        time.sleep(2)
-        
-        # Find all elements with class dlt-left-half
-        metrics_elements = driver.find_elements(By.CLASS_NAME, "dlt-left-half")
-        if len(metrics_elements) == 0:
-            # Print all classes in the page for debugging
-            all_elements = driver.find_elements(By.CSS_SELECTOR, "*")
-            classes_found = set()
-            for elem in all_elements:
-                try:
-                    class_name = elem.get_attribute("class")
-                    if class_name:
-                        classes_found.add(class_name)
-                except:
-                    continue
-            for class_name in sorted(classes_found):
-                print(f"Class found: {class_name}")
-        
-        # Process each element to find metrics
-        for i, element in enumerate(metrics_elements):
-            text = element.text.strip()
-            lines = text.split('\n')
-            # Process pairs of lines (key, value)
-            for j in range(0, len(lines), 2):
-                if j + 1 < len(lines):  # Make sure we have both key and value
-                    key = lines[j].strip()
-                    value = lines[j + 1].strip()
-                    # Store metrics we're interested in
-                    if "EPS" in key:
-                        metrics_map['EPS'] = value
-                    elif "P/E" in key:
-                        metrics_map['P/E'] = value
-                    elif "P/B" in key:
-                        metrics_map['P/B'] = value
-            
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        
-    finally:
-        driver.quit()
-        
-    return metrics_map
-
 def process_stock_list(stock_symbols):
     results = []
     driver = create_driver()
     
     try:
-        for symbol in stock_symbols:
-            try:
-                print(f"\nProcessing stock symbol: {symbol}")
-                metrics = scrape_stock_data_with_driver(driver, symbol)
-                metrics['Symbol'] = symbol
-                metrics['Timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                results.append(metrics)
-                
-                # Add a delay between requests to be respectful to the server
-                time.sleep(2)
-                
-            except Exception as e:
-                print(f"Error processing symbol {symbol}: {str(e)}")
-                results.append({
-                    'Symbol': symbol,
-                    'Error': str(e),
-                    'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                })
-                
+        with app.app_context():
+            for symbol in stock_symbols:
+                try:
+                    print(f"\nProcessing stock symbol: {symbol}")
+                    metrics = scrape_stock_data_with_driver(driver, symbol)
+                    
+                    # Convert string values to float, handling empty strings and invalid values
+                    price = float(metrics.get('Price', '').replace(',', '')) if metrics.get('Price') else None
+                    market_cap = float(metrics.get('MarketCap', '').replace(',', '')) if metrics.get('MarketCap') else None
+                    eps = float(metrics.get('EPS', '').replace(',', '')) if metrics.get('EPS') else None
+                    pe_ratio = float(metrics.get('P/E', '').replace(',', '')) if metrics.get('P/E') else None
+                    pb_ratio = float(metrics.get('P/B', '').replace(',', '')) if metrics.get('P/B') else None
+                    
+                    # Check if stock exists in Stock table
+                    stock = Stock.query.filter_by(symbol=symbol).first()
+                    if not stock:
+                        print(f"Stock {symbol} not found in database")
+                        continue
+                    
+                    # Update or create StockStats
+                    stock_stats = StockStats.query.filter_by(symbol=symbol).first()
+                    if stock_stats:
+                        # Update existing record
+                        stock_stats.price = price
+                        stock_stats.market_cap = market_cap
+                        stock_stats.eps = eps
+                        stock_stats.pe_ratio = pe_ratio
+                        stock_stats.pb_ratio = pb_ratio
+                        stock_stats.last_updated = datetime.utcnow()
+                    else:
+                        # Create new record
+                        stock_stats = StockStats(
+                            symbol=symbol,
+                            price=price,
+                            market_cap=market_cap,
+                            eps=eps,
+                            pe_ratio=pe_ratio,
+                            pb_ratio=pb_ratio,
+                            last_updated=datetime.utcnow()
+                        )
+                        db.session.add(stock_stats)
+                    
+                    # Commit changes
+                    db.session.commit()
+                    print(f"Successfully updated stats for {symbol}")
+                    
+                    # Add a delay between requests
+                    time.sleep(2)
+                    
+                except Exception as e:
+                    print(f"Error processing symbol {symbol}: {str(e)}")
+                    db.session.rollback()
+                    
     finally:
         driver.quit()
         
@@ -210,64 +189,21 @@ def scrape_stock_data_with_driver(driver, stock_symbol):
 if __name__ == "__main__":
     print(f"Running on: {platform.system()} {platform.release()}")
     
-    # Read stock symbols from ODS file
     try:
-        # Read existing ODS file
-        df = pd.read_excel('stocks.ods', engine='odf', header=None)
-        
-        # Ensure we have enough columns (at least 8 columns: Symbol, Price, MarketCap, EPS, P/E, P/B, Timestamp, Error)
-        required_columns = 8
-        current_columns = len(df.columns)
-        if current_columns < required_columns:
-            # Add missing columns
-            for i in range(current_columns, required_columns):
-                df[i] = ''
-        
-        stock_symbols = df.iloc[1:, 0].dropna().tolist()  # Get first column starting from second row, remove empty values
-        
-        if not stock_symbols:
-            print("No stock symbols found in the ODS file.")
-            sys.exit(1)
+        # Get all stocks from the database
+        with app.app_context():
+            stocks = Stock.query.all()
+            stock_symbols = [stock.symbol for stock in stocks]
             
-        print(f"Found {len(stock_symbols)} stock symbols to process")
-        
-        # Process all stocks
-        results = process_stock_list(stock_symbols)
-        
-        # Convert results to DataFrame
-        df_results = pd.DataFrame(results)
-        
-        # Update the original ODS file
-        # Set headers for the metrics columns
-        df.iloc[0, 0] = 'Symbol'     # Column A
-        df.iloc[0, 1] = 'Price'      # Column B
-        df.iloc[0, 2] = 'MarketCap'  # Column C
-        df.iloc[0, 3] = 'EPS'        # Column D
-        df.iloc[0, 4] = 'P/E'        # Column E
-        df.iloc[0, 5] = 'P/B'        # Column F
-        df.iloc[0, 6] = 'Timestamp'  # Column G
-        df.iloc[0, 7] = 'Error'      # Column H
-        
-        # Update data for each stock
-        for index, row in df_results.iterrows():
-            # Find the corresponding row in original DataFrame
-            matching_rows = df[df.iloc[:, 0] == row['Symbol']].index
-            if len(matching_rows) > 0:
-                df_index = matching_rows[0]
+            if not stock_symbols:
+                print("No stock symbols found in the database.")
+                sys.exit(1)
                 
-                # Update the metrics
-                df.iloc[df_index, 1] = row.get('Price', '')
-                df.iloc[df_index, 2] = row.get('MarketCap', '')
-                df.iloc[df_index, 3] = row.get('EPS', '')
-                df.iloc[df_index, 4] = row.get('P/E', '')
-                df.iloc[df_index, 5] = row.get('P/B', '')
-                df.iloc[df_index, 6] = row.get('Timestamp', '')
-                df.iloc[df_index, 7] = row.get('Error', '')
-        
-        # Save back to the ODS file
-        df.to_excel('stocks.ods', engine='odf', index=False, header=False)
-        print("\nUpdated stocks.ods with the new metrics")
-        
+            print(f"Found {len(stock_symbols)} stock symbols to process")
+            
+            # Process all stocks
+            process_stock_list(stock_symbols)
+            
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"An error occurred: {str(e)}")
         sys.exit(1) 

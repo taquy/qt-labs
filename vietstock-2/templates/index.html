@@ -94,6 +94,41 @@
         </div>
     </nav>
     <div class="container mt-4">
+        <!-- Collapsible Select Stocks to Display section -->
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Select Stocks to Display</h5>
+                <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#stockSelectSection">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="collapse show" id="stockSelectSection">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="flex-grow-1 me-3">
+                            <label for="stockSelect" class="form-label">Search and Select Stocks:</label>
+                            <select class="form-select" id="stockSelect" multiple size="10">
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                            <div class="form-text">Hold Ctrl/Cmd to select multiple stocks</div>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary" onclick="downloadStockList()">
+                                <i class="fas fa-download me-2"></i>Download Stock List
+                            </button>
+                            <button type="button" class="btn btn-success ms-2" onclick="fetchStockData()">
+                                <i class="fas fa-sync me-2"></i>Fetch Stock Data
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stockSearch" class="form-label">Search:</label>
+                        <input type="text" class="form-control" id="stockSearch" placeholder="Search by symbol or company name...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Stock Analysis</h1>
         </div>
@@ -167,30 +202,6 @@ VCB"></textarea>
         </div>
         
         <div id="graph"></div>
-
-        <div class="card mb-3">
-            <div class="card-body">
-                <h5 class="card-title mb-3">Select Stocks to Display</h5>
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="flex-grow-1 me-3">
-                        <label for="stockSelect" class="form-label">Search and Select Stocks:</label>
-                        <select class="form-select" id="stockSelect" multiple size="10">
-                            <!-- Options will be populated dynamically -->
-                        </select>
-                        <div class="form-text">Hold Ctrl/Cmd to select multiple stocks</div>
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-primary" onclick="downloadStockList()">
-                            <i class="fas fa-download me-2"></i>Download Stock List
-                        </button>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="stockSearch" class="form-label">Search:</label>
-                    <input type="text" class="form-control" id="stockSearch" placeholder="Search by symbol or company name...">
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Bootstrap JS -->
@@ -793,6 +804,35 @@ VCB"></textarea>
                 complete: function() {
                     // Restore button state
                     downloadBtn.prop('disabled', false).html(originalText);
+                }
+            });
+        }
+
+        // Function to fetch stock data
+        function fetchStockData() {
+            const fetchBtn = $('button[onclick="fetchStockData()"]');
+            const originalText = fetchBtn.html();
+            
+            // Disable button and show loading state
+            fetchBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Fetching...');
+            
+            // Make AJAX request
+            $.ajax({
+                url: '/fetch_stock_data',
+                method: 'POST',
+                success: function(response) {
+                    if (response.success) {
+                        showMessage('success', response.message);
+                    } else {
+                        showMessage('error', response.error || 'Failed to fetch stock data');
+                    }
+                },
+                error: function(xhr) {
+                    showMessage('error', xhr.responseJSON?.error || 'Failed to fetch stock data');
+                },
+                complete: function() {
+                    // Restore button state
+                    fetchBtn.prop('disabled', false).html(originalText);
                 }
             });
         }
