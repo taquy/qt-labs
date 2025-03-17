@@ -1,5 +1,5 @@
 from flask import Flask, render_template, jsonify, request, Response, send_file, redirect, url_for, flash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
 import pandas as pd
@@ -13,11 +13,11 @@ from datetime import datetime
 import io
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from models import db, User, Stock
+from config import Config
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Change this to a secure secret key
-app.config['WTF_CSRF_ENABLED'] = True
-app.config['WTF_CSRF_SECRET_KEY'] = 'csrf-secret-key'  # Change this in production
+app.config.from_object(Config)
 
 # Initialize Flask-Login and CSRF protection
 login_manager = LoginManager()
@@ -28,31 +28,15 @@ login_manager.login_message_category = 'info'
 
 csrf = CSRFProtect(app)
 
-# User model
-class User(UserMixin):
-    def __init__(self, id, username):
-        self.id = id
-        self.username = username
+# Initialize database
+db.init_app(app)
 
-    def get_id(self):
-        return str(self.id)  # Convert id to string for Flask-Login
-
-# In-memory user storage (replace with database in production)
-users = {
-    'admin': {
-        'id': 1,
-        'username': 'admin',
-        'password': generate_password_hash('admin123')  # Change this password in production
-    }
-}
+# Queue for SSE messages
+message_queue = queue.Queue()
 
 @login_manager.user_loader
 def load_user(user_id):
-    # Find user by id
-    for username, user_data in users.items():
-        if str(user_data['id']) == user_id:
-            return User(user_data['id'], user_data['username'])
-    return None
+    return User.query.get(int(user_id))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -69,8 +53,8 @@ def login():
                 flash('Please enter both username and password.', 'error')
                 return render_template('login.html')
             
-            if username in users and check_password_hash(users[username]['password'], password):
-                user = User(users[username]['id'], users[username]['username'])
+            user = User.query.filter_by(username=username).first()
+            if user and check_password_hash(user.password_hash, password):
                 login_user(user)
                 next_page = request.args.get('next')
                 if not next_page or not next_page.startswith('/'):
@@ -82,7 +66,7 @@ def login():
         
         return render_template('login.html')
     except Exception as e:
-        print(f"Login error: {str(e)}")  # Log the error
+        print(f"Login error: {str(e)}")
         flash('An error occurred during login. Please try again.', 'error')
         return render_template('login.html')
 
@@ -93,24 +77,24 @@ def logout():
     flash('Logged out successfully.', 'success')
     return redirect(url_for('login'))
 
-# Queue for SSE messages
-message_queue = queue.Queue()
-
 def load_stock_data():
     try:
-        df = pd.read_excel('stocks.ods', engine='odf')
+        stocks = Stock.query.all()
+        data = [stock.to_dict() for stock in stocks]
+        df = pd.DataFrame(data)
         
-        # Convert numeric columns
-        numeric_columns = ['Price', 'MarketCap', 'EPS', 'P/E', 'P/B']
-        for col in numeric_columns:
-            if col in df.columns:
-                # Convert column to string first
-                df[col] = df[col].astype(str)
-                # Remove currency and percentage symbols, and commas
-                df[col] = df[col].str.replace(',', '').str.replace('₫', '').str.replace('%', '')
-                # Convert to numeric, invalid values become NaN
-                df[col] = pd.to_numeric(df[col], errors='coerce')
+        # Convert column names to match frontend expectations
+        column_mapping = {
+            'symbol': 'Symbol',
+            'name': 'Name',
+            'price': 'Price',
+            'market_cap': 'MarketCap',
+            'eps': 'EPS',
+            'pe_ratio': 'P/E',
+            'pb_ratio': 'P/B'
+        }
         
+        df = df.rename(columns=column_mapping)
         return df
     except Exception as e:
         print(f"Error loading data: {str(e)}")
@@ -118,20 +102,13 @@ def load_stock_data():
 
 def scrape_stocks_async(symbols, force_update=False):
     try:
-        # Load existing data
-        existing_df = None
-        try:
-            existing_df = pd.read_excel('stocks.ods', engine='odf')
-        except:
-            existing_df = pd.DataFrame(columns=['Symbol'])
-        
         # If force_update is True, scrape all symbols, otherwise only new ones
         if force_update:
             new_symbols = symbols
             message = f'Updating data for {len(symbols)} stocks'
         else:
             # Filter out symbols that already have data
-            existing_symbols = existing_df['Symbol'].tolist() if not existing_df.empty else []
+            existing_symbols = [stock.symbol for stock in Stock.query.all()]
             new_symbols = [s for s in symbols if s not in existing_symbols]
             
             if not new_symbols:
@@ -150,7 +127,6 @@ def scrape_stocks_async(symbols, force_update=False):
         }))
         
         # Process stocks one by one and send progress updates
-        results = []
         for idx, symbol in enumerate(new_symbols, 1):
             try:
                 # Send progress update
@@ -164,30 +140,28 @@ def scrape_stocks_async(symbols, force_update=False):
                 
                 # Process the stock
                 result = process_stock_list([symbol])[0]  # Get single stock result
-                results.append(result)
+                
+                # Update or create stock in database
+                stock = Stock.query.filter_by(symbol=symbol).first()
+                if stock:
+                    # Update existing stock
+                    stock.name = result.get('Name')
+                    stock.price = result.get('Price')
+                    stock.market_cap = result.get('MarketCap')
+                    stock.eps = result.get('EPS')
+                    stock.pe_ratio = result.get('P/E')
+                    stock.pb_ratio = result.get('P/B')
+                    stock.last_updated = datetime.utcnow()
+                else:
+                    # Create new stock
+                    stock = Stock.from_dict(result)
+                    db.session.add(stock)
+                
+                db.session.commit()
                 
             except Exception as e:
                 print(f"Error processing {symbol}: {str(e)}")
-                results.append({
-                    'Symbol': symbol,
-                    'Error': str(e)
-                })
-        
-        # Update or combine results
-        if results:
-            new_df = pd.DataFrame(results)
-            if force_update:
-                # For force update, replace existing data
-                final_df = new_df
-            else:
-                # For normal scrape, combine with existing data
-                if existing_df.empty:
-                    final_df = new_df
-                else:
-                    final_df = pd.concat([existing_df, new_df], ignore_index=True)
-            
-            # Save results
-            final_df.to_excel('stocks.ods', engine='odf', index=False)
+                db.session.rollback()
         
         print("Scraping completed successfully")
         # Send completion message to queue
@@ -222,7 +196,9 @@ def stream():
 @login_required
 def index():
     df = load_stock_data()
-    stocks = df['Symbol'].tolist() if df is not None else []
+    stocks = []
+    if df is not None and not df.empty and 'Symbol' in df.columns:
+        stocks = df['Symbol'].tolist()
     metrics = ['Price', 'MarketCap', 'EPS', 'P/E', 'P/B']
     return render_template('index.html', stocks=stocks, metrics=metrics)
 
@@ -245,10 +221,10 @@ def scrape_stocks():
         return jsonify({'error': str(e)})
 
 def get_stocks_list():
-    """Helper function to get list of stocks from the ODS file."""
+    """Helper function to get list of stocks from the database."""
     try:
-        df = pd.read_excel('stocks.ods', engine='odf')
-        return df['Symbol'].unique().tolist()
+        stocks = Stock.query.all()
+        return [stock.symbol for stock in stocks]
     except Exception as e:
         print(f"Error getting stocks: {e}")
         return []
@@ -337,11 +313,11 @@ def update_graph():
 def update_all_stocks():
     try:
         # Get all existing stocks
-        df = load_stock_data()
-        if df is None or df.empty:
+        stocks = Stock.query.all()
+        if not stocks:
             return jsonify({'error': 'No stocks found to update'})
         
-        symbols = df['Symbol'].tolist()
+        symbols = [stock.symbol for stock in stocks]
         
         if not symbols:
             return jsonify({'error': 'No stocks found to update'})
@@ -426,7 +402,7 @@ def export_pdf():
                     x=metric_df['Symbol'],
                     y=metric_df[metric],
                     name=metric,
-                    text=text_values,  # Show formatted values on bars
+                    text=text_values,
                     textposition='auto',
                     marker_color=px.colors.qualitative.Set3[idx % len(px.colors.qualitative.Set3)],
                     showlegend=False,
@@ -444,7 +420,7 @@ def export_pdf():
         
         # Update layout
         fig.update_layout(
-            height=300 * len(metrics),  # Adjust height based on number of metrics
+            height=300 * len(metrics),
             width=1000,
             showlegend=False,
             plot_bgcolor='white',
@@ -454,9 +430,9 @@ def export_pdf():
                 'xanchor': 'center',
                 'font': {'size': 24}
             },
-            margin=dict(t=100, b=50),  # Adjust margins
+            margin=dict(t=100, b=50),
             bargap=0.2,
-            paper_bgcolor='white'  # Set paper background color
+            paper_bgcolor='white'
         )
         
         # Generate PDF bytes
@@ -473,8 +449,8 @@ def export_pdf():
             download_name=filename
         )
     except Exception as e:
-        print(f"Error in export_pdf: {str(e)}")  # Add detailed error logging
-        return jsonify({'error': str(e)}), 500  # Return 500 status code for server errors
+        print(f"Error in export_pdf: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/save_stocks', methods=['POST'])
 @login_required
@@ -483,15 +459,16 @@ def save_stocks():
         data = request.get_json()
         new_symbols = data.get('symbols', [])
         
-        # Get current stocks from the ODS file
+        # Get current stocks from the database
         current_stocks = get_stocks_list()
         
         # Find stocks to remove (stocks that are in current_stocks but not in new_symbols)
         stocks_to_remove = set(current_stocks) - set(new_symbols)
         
         if stocks_to_remove:
-            # Remove the stocks from the ODS file
-            remove_stocks_from_ods(list(stocks_to_remove))
+            # Remove the stocks from the database
+            Stock.query.filter(Stock.symbol.in_(stocks_to_remove)).delete(synchronize_session=False)
+            db.session.commit()
             
             # Send message through queue
             message_queue.put(json.dumps({
@@ -517,46 +494,39 @@ def save_stocks():
         
         return jsonify({'status': 'success'})
     except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
-
-def remove_stocks_from_ods(stocks_to_remove):
-    """Remove specified stocks from the ODS file."""
-    try:
-        # Read the current ODS file
-        df = pd.read_excel('stocks.ods', engine='odf')
-        
-        # Remove rows for the specified stocks
-        df = df[~df['Symbol'].isin(stocks_to_remove)]
-        
-        # Save back to ODS file
-        df.to_excel('stocks.ods', index=False)
-        
-        # Update the stocks list in memory
-        global stocks
-        stocks = df['Symbol'].unique().tolist()
-        
-    except Exception as e:
-        print(f"Error removing stocks from ODS file: {e}")
-        raise
 
 @app.route('/get_available_stocks')
 @login_required
 def get_available_stocks():
     try:
-        # Read the Available Stocks sheet
-        df = pd.read_excel('stocks.ods', sheet_name='Available Stocks', engine='odf')
-        
-        # Create a list of dictionaries with symbol and name
-        stocks = []
-        for _, row in df.iterrows():
-            stocks.append({
-                'symbol': row['Symbol'],
-                'name': row['Name']
-            })
-        
-        return jsonify({'stocks': stocks})
+        stocks = Stock.query.all()
+        return jsonify({
+            'stocks': [
+                {
+                    'symbol': stock.symbol,
+                    'name': stock.name
+                }
+                for stock in stocks
+            ]
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def init_db():
+    with app.app_context():
+        db.create_all()
+        # Create admin user if it doesn't exist
+        admin = User.query.filter_by(username=Config.ADMIN_USERNAME).first()
+        if not admin:
+            admin = User(
+                username=Config.ADMIN_USERNAME,
+                password_hash=generate_password_hash(Config.ADMIN_PASSWORD)
+            )
+            db.session.add(admin)
+            db.session.commit()
+
 if __name__ == '__main__':
+    init_db()
     app.run(debug=True) 

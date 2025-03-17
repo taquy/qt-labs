@@ -190,6 +190,20 @@ VCB"></textarea>
         let currentGraph = null;  // Keep track of current graph
         let eventSource = null;  // EventSource for SSE
 
+        // Metric display names mapping
+        const metricDisplayNames = {
+            'Price': 'Price',
+            'MarketCap': 'Market Cap',
+            'EPS': 'EPS',
+            'P/E': 'P/E Ratio',
+            'P/B': 'P/B Ratio'
+        };
+
+        // Function to get display name for a metric
+        function getMetricDisplayName(metric) {
+            return metricDisplayNames[metric] || metric;
+        }
+
         // Function to get selected stocks from checkboxes
         function getSelectedStocks() {
             const selectedStocks = [];
@@ -538,27 +552,23 @@ VCB"></textarea>
 
         // Update graph on page load
         $(document).ready(function() {
-            // Prefill the textarea with existing stocks
+            // Update metric select options
+            const metricSelect = document.getElementById('metricSelect');
+            metricSelect.innerHTML = ''; // Clear existing options
+            
+            const metrics = {{ metrics | tojson | safe }};
+            metrics.forEach(metric => {
+                const option = document.createElement('option');
+                option.value = metric;
+                option.textContent = getMetricDisplayName(metric);
+                metricSelect.appendChild(option);
+            });
+
+            // Prefill stock symbols
             prefillStockSymbols();
             
-            // Check if we have any stocks
-            const stockCheckboxes = $('.stock-checkbox');
-            if (stockCheckboxes.length > 0) {
-                // Select first 5 stocks by default (or all if less than 5)
-                const numStocksToSelect = Math.min(5, stockCheckboxes.length);
-                stockCheckboxes.slice(0, numStocksToSelect).prop('checked', true);
-                
-                // Only update graph if we have stocks selected
-                const selectedStocks = getSelectedStocks();
-                if (selectedStocks.length > 0) {
-                    updateGraph();
-                } else {
-                    $('#graph').html('<div class="alert alert-info">Please select stocks to display the graph.</div>');
-                }
-            } else {
-                // No stocks available
-                $('#graph').html('<div class="alert alert-info">No stocks available. Please add stocks to view the graph.</div>');
-            }
+            // Load available stocks
+            loadAvailableStocks();
         });
 
         function exportCSV() {
@@ -682,11 +692,6 @@ VCB"></textarea>
             
             // Update the graph
             updateGraph();
-        });
-
-        // Load available stocks when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            loadAvailableStocks();
         });
     </script>
 </body>
