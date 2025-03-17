@@ -20,12 +20,10 @@ axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 const METRICS = [
   'Market Cap',
-  'Revenue',
-  'Net Income',
-  'Total Assets',
-  'Total Liabilities',
-  'Operating Cash Flow',
-  'Free Cash Flow'
+  'Price',
+  'EPS',
+  'P/E',
+  'P/B'
 ];
 
 const Dashboard = () => {
