@@ -136,9 +136,34 @@ def create_app(config_class=Config):
                 'stocks': [
                     {
                         'symbol': stock.symbol,
-                        'name': stock.name
+                        'name': stock.name,
+                        'last_updated': stock.last_updated.strftime('%Y-%m-%d %H:%M:%S')
                     }
                     for stock in stocks
+                ]
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    @app.route('/api/stocks_with_stats')
+    @token_required
+    def get_stocks_with_stats(current_user):
+        try:
+            # Query stocks that have stats
+            stocks_with_stats = db.session.query(Stock).join(StockStats).all()
+            return jsonify({
+                'stocks': [
+                    {
+                        'symbol': stock.symbol,
+                        'name': stock.name,
+                        'last_updated': stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S'),
+                        'price': stock.stats.price,
+                        'market_cap': stock.stats.market_cap,
+                        'eps': stock.stats.eps,
+                        'pe': stock.stats.pe,
+                        'pb': stock.stats.pb
+                    }
+                    for stock in stocks_with_stats
                 ]
             })
         except Exception as e:

@@ -2,24 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
-  Paper,
   Typography,
   Button,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
   Alert,
-  CircularProgress,
-  Autocomplete,
-  TextField
+  Grid,
+  Snackbar
 } from '@mui/material';
-import Plot from 'react-plotly.js';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
+import StockSelector from './StockSelector';
+import StockGraph from './StockGraph';
 
 // Configure axios to include credentials
 axios.defaults.withCredentials = true;
@@ -33,6 +26,12 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [inputValue] = useState('');
+  const [fetchingData, setFetchingData] = useState(false);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
   const navigate = useNavigate();
 
   const metrics = ['Price', 'MarketCap', 'EPS', 'P/E', 'P/B'];
@@ -84,30 +83,6 @@ const Dashboard = () => {
     setSelectedMetric(event.target.value);
   };
 
-  const updateGraph = async () => {
-    if (selectedStocks.length === 0) return;
-
-    setLoading(true);
-    try {
-      const response = await axios.post(API_ENDPOINTS.updateGraph, {
-        stocks: selectedStocks,
-        metric: selectedMetric
-      }, {
-        withCredentials: true
-      });
-      setGraphData(JSON.parse(response.data));
-    } catch (err) {
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('isLoggedIn');
-        navigate('/login');
-      } else {
-        setError('Failed to update graph');
-      }
-    }
-    setLoading(false);
-  };
-
   const handleDownloadStockList = async () => {
     try {
       await axios.post(API_ENDPOINTS.downloadStockList, {}, {
@@ -131,7 +106,7 @@ const Dashboard = () => {
       return;
     }
     
-    setLoading(true);
+    setFetchingData(true);
     try {
       await axios.post(API_ENDPOINTS.fetchStockData, {
         symbols: selectedStocks
@@ -139,7 +114,12 @@ const Dashboard = () => {
         withCredentials: true
       });
       setError('');
-      setLoading(false);
+      
+      setNotification({
+        open: true,
+        message: `Successfully fetched data for stocks:\n${selectedStocks.join(', ')}`,
+        severity: 'success'
+      });
     } catch (err) {
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
@@ -147,8 +127,14 @@ const Dashboard = () => {
         navigate('/login');
       } else {
         setError('Failed to fetch stock data');
+        setNotification({
+          open: true,
+          message: 'Failed to fetch stock data',
+          severity: 'error'
+        });
       }
-      setLoading(false);
+    } finally {
+      setFetchingData(false);
     }
   };
 
@@ -164,6 +150,13 @@ const Dashboard = () => {
     } catch (err) {
       setError('Failed to logout');
     }
+  };
+
+  const handleCloseNotification = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setNotification(prev => ({ ...prev, open: false }));
   };
 
   return (
@@ -185,124 +178,51 @@ const Dashboard = () => {
 
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ mb: 2 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleDownloadStockList}
-                sx={{ mr: 2 }}
-              >
-                Download Stock List
-              </Button>
-              <Button
-                variant="contained"
-                color="success"
-                onClick={handleFetchStockData}
-              >
-                Fetch Stock Data
-              </Button>
-            </Box>
-
-            <Typography variant="subtitle1" gutterBottom>
-              Select Stocks:
-            </Typography>
-            <FormControl sx={{ minWidth: 300, mb: 2 }}>
-              <Autocomplete
-                multiple
-                options={stocks}
-                getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
-                value={selectedStocks.map(symbol => stocks.find(s => s.symbol === symbol) || { symbol, name: '' })}
-                onChange={(event, newValue) => {
-                  setSelectedStocks(newValue.map(stock => stock.symbol));
-                }}
-                filterOptions={(options, { inputValue }) => {
-                  const input = inputValue.toLowerCase();
-                  return options.filter(option => 
-                    option.symbol.toLowerCase().includes(input) || 
-                    option.name.toLowerCase().includes(input)
-                  );
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="outlined"
-                    label="Search Stocks"
-                    placeholder={selectedStocks.length === 0 ? "Type to search..." : ""}
-                  />
-                )}
-                renderOption={(props, option) => {
-                  const { key, ...boxProps } = props;
-                  return (
-                    <Box component="li" key={key} {...boxProps}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                        <Typography variant="body1">
-                          {highlightMatch(option.symbol, inputValue)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {highlightMatch(option.name, inputValue)}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  );
-                }}
-                renderTags={(tagValue, getTagProps) =>
-                  tagValue.map((option, index) => {
-                    const { key, ...chipProps } = getTagProps({ index });
-                    return (
-                      <Chip
-                        key={key}
-                        label={option.symbol}
-                        {...chipProps}
-                        size="small"
-                      />
-                    );
-                  })
-                }
-                sx={{ width: 300 }}
-                ListboxProps={{
-                  style: {
-                    maxHeight: '250px'
-                  }
-                }}
-              />
-            </FormControl>
-
-            <FormControl sx={{ minWidth: 200, mb: 2, ml: 2 }}>
-              <InputLabel>Metric</InputLabel>
-              <Select
-                value={selectedMetric}
-                label="Metric"
-                onChange={handleMetricChange}
-              >
-                {metrics.map((metric) => (
-                  <MenuItem key={metric} value={metric}>
-                    {metric}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Paper sx={{ p: 2 }}>
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                  <CircularProgress />
-                </Box>
-              ) : graphData ? (
-                <Plot
-                  data={graphData.data}
-                  layout={graphData.layout}
-                  config={{ responsive: true }}
-                />
-              ) : (
-                <Typography variant="body1" color="text.secondary" align="center">
-                  Select stocks and a metric to display the graph
-                </Typography>
-              )}
-            </Paper>
-          </Paper>
+          <StockSelector
+            stocks={stocks}
+            selectedStocks={selectedStocks}
+            setSelectedStocks={setSelectedStocks}
+            handleDownloadStockList={handleDownloadStockList}
+            handleFetchStockData={handleFetchStockData}
+            highlightMatch={highlightMatch}
+            inputValue={inputValue}
+            loading={fetchingData}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <StockGraph
+            selectedMetric={selectedMetric}
+            metrics={metrics}
+            handleMetricChange={handleMetricChange}
+            loading={loading}
+            graphData={graphData}
+            setGraphData={setGraphData}
+          />
         </Grid>
       </Grid>
+
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseNotification} 
+          severity={notification.severity}
+          variant="filled"
+          sx={{ 
+            width: '100%',
+            whiteSpace: 'pre-wrap',
+            '& .MuiAlert-message': {
+              maxWidth: '300px',
+              overflowWrap: 'break-word'
+            }
+          }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
