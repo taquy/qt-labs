@@ -37,11 +37,11 @@ def create_app(config_class=Config):
     
     # Configure CORS to allow all
     cors.init_app(app, resources={r"/*": {
-                     "origins": "*",
-                     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                     "allow_headers": "*",
-                     "supports_credentials": True
-                 }})
+        "origins": "http://localhost:3000",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": "*",
+        "supports_credentials": True
+    }})
     
     # Queue for SSE messages
     message_queue = queue.Queue()
@@ -52,7 +52,7 @@ def create_app(config_class=Config):
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
-    
+        
     def token_required(f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -239,7 +239,7 @@ def create_app(config_class=Config):
             data = request.get_json()
             if not data:
                 return jsonify({'error': 'No data received'}), 400
-                
+            print(data);
             selected_stocks = data.get('stocks', [])
             selected_metric = data.get('metric', 'Price')
             
@@ -258,7 +258,7 @@ def create_app(config_class=Config):
             # Create data structure for frontend
             metric_mapping = {
                 'Price': 'price',
-                'MarketCap': 'market_cap',
+                'Market Cap': 'market_cap',
                 'EPS': 'eps',
                 'P/E': 'pe',
                 'P/B': 'pb'

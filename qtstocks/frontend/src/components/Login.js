@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, 
-  Container, 
   Paper, 
   TextField, 
   Button, 
@@ -125,7 +124,6 @@ const Login = () => {
         username,
         password
       });
-      
       if (response.data.success) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('isLoggedIn', 'true');
@@ -135,6 +133,7 @@ const Login = () => {
         setError(response.data.message || 'Login failed');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.response?.data?.message || 'Failed to login. Please try again.');
     } finally {
       setLoading(false);

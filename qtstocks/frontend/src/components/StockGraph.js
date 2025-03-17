@@ -13,7 +13,6 @@ import {
   TextField,
   Chip,
   Tooltip,
-  Button
 } from '@mui/material';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -26,8 +25,6 @@ import {
   Legend
 } from 'chart.js';
 import { format } from 'date-fns';
-import LogoutIcon from '@mui/icons-material/Logout';
-import { useNavigate } from 'react-router-dom';
 import {
   fetchAvailableStocks,
   fetchSettings,
@@ -37,7 +34,6 @@ import {
 import {
   setSelectedStocks,
   clearChartData,
-  clearError
 } from '../store/slices/stockGraphSlice';
 
 // Register Chart.js components
@@ -58,7 +54,6 @@ const StockGraph = ({
   setGraphData 
 }) => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   
   // Select state from Redux store
   const {
@@ -93,42 +88,12 @@ const StockGraph = ({
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      // Clear all component states
-      dispatch(setSelectedStocks([]));
-      dispatch(clearChartData());
-      dispatch(clearError());
-      setGraphData(null);
-      
-      // Clear authentication data
-      localStorage.clear();
-      
-      // Navigate to login page
-      navigate('/login');
-    } catch (err) {
-      console.error('Logout error:', err);
-      // Even if the logout request fails, we should still clear local state and redirect
-      localStorage.clear();
-      navigate('/login');
-    }
-  };
-
   return (
     <Paper sx={{ p: 2, mt: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">
           Stock Comparison Graph
         </Typography>
-        <Button
-          variant="outlined"
-          color="primary"
-          startIcon={<LogoutIcon />}
-          onClick={handleLogout}
-          disabled={loading}
-        >
-          Logout
-        </Button>
       </Box>
       
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
