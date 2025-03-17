@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, 
   Container, 
@@ -24,45 +24,84 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const googleButtonRef = useRef(null);
 
   const handleGoogleLogin = useCallback(async (response) => {
     try {
-      const googleResponse = await axios.post(API_ENDPOINTS.googleLogin, {
-        token: response.credential
+      if (!response || !response.credential) {
+        setError('Failed to get Google credentials');
+        return;
+      }
+
+      const result = await fetch(API_ENDPOINTS.googleLogin, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ token: response.credential }),
       });
 
-      if (googleResponse.data.success) {
-        localStorage.setItem('token', googleResponse.data.token);
+      if (!result.ok) {
+        const errorData = await result.json().catch(() => ({ message: 'Failed to authenticate with Google' }));
+        throw new Error(errorData.message || 'Failed to authenticate with Google');
+      }
+
+      const data = await result.json();
+      if (data.token) {
+        localStorage.setItem('token', data.token);
         localStorage.setItem('isLoggedIn', 'true');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${googleResponse.data.token}`;
+        // Set the token for future axios requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
         navigate('/');
       } else {
-        setError(googleResponse.data.message || 'Google login failed');
+        throw new Error('No token received from server');
       }
     } catch (err) {
       console.error('Google login error:', err);
-      setError('Failed to login with Google');
+      setError(err.message || 'Failed to login with Google');
     }
   }, [navigate]);
 
-  const initializeGoogleAuth = useCallback(() => {
-    if (window.google) {
-      window.google.accounts.id.initialize({
-        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-        callback: handleGoogleLogin
-      });
-    }
-  }, [handleGoogleLogin]);
-
   useEffect(() => {
-    // Load Google API
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
     
     const handleLoad = () => {
-      initializeGoogleAuth();
+      const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        console.error('Google Client ID is not configured');
+        setError('Google Sign-In is not properly configured');
+        return;
+      }
+
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleLogin,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+
+        // Render the Google Sign-In button
+        window.google.accounts.id.renderButton(
+          googleButtonRef.current,
+          {
+            type: 'standard',
+            theme: 'outline',
+            size: 'large',
+            text: 'continue_with',
+            width: '100%',
+            logo_alignment: 'left'
+          }
+        );
+      } catch (err) {
+        console.error('Error initializing Google Sign-In:', err);
+        setError('Failed to initialize Google Sign-In');
+      }
     };
 
     script.addEventListener('load', handleLoad);
@@ -74,7 +113,7 @@ const Login = () => {
         document.head.removeChild(script);
       }
     };
-  }, [initializeGoogleAuth]);
+  }, [handleGoogleLogin]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -97,12 +136,6 @@ const Login = () => {
       setError(err.response?.data?.message || 'Failed to login');
     }
   };
-
-  const initiateGoogleLogin = useCallback(() => {
-    if (window.google) {
-      window.google.accounts.id.prompt();
-    }
-  }, []);
 
   return (
     <Container maxWidth="sm">
@@ -149,26 +182,18 @@ const Login = () => {
 
           <Divider sx={{ my: 2 }}>OR</Divider>
 
-          <Button
-            fullWidth
-            variant="outlined"
-            onClick={initiateGoogleLogin}
+          <Box 
+            ref={googleButtonRef}
             sx={{
               mt: 2,
               mb: 2,
-              color: '#757575',
-              borderColor: '#757575',
-              '&:hover': {
-                borderColor: '#616161',
-                backgroundColor: 'rgba(0, 0, 0, 0.04)'
-              },
-              textTransform: 'none',
-              fontSize: '1rem'
+              display: 'flex',
+              justifyContent: 'center',
+              '& > div': {
+                width: '100% !important'
+              }
             }}
-            startIcon={<FontAwesomeIcon icon={faGoogle} style={{ color: '#4285F4' }} />}
-          >
-            Continue with Google
-          </Button>
+          />
         </Paper>
       </Box>
     </Container>

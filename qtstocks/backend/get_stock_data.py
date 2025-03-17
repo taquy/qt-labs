@@ -11,8 +11,8 @@ import platform
 import requests
 import json
 from datetime import datetime
-from models import Stock, StockStats
-from extensions import db
+from .models import Stock, StockStats
+from .extensions import db
 from bs4 import BeautifulSoup
 
 class StockDataScraper:

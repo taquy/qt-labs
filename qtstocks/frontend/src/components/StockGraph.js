@@ -223,10 +223,9 @@ const StockGraph = ({
     };
 
     fetchInitialData();
-    // Only run this effect once on mount
-  }, [navigate]); // Remove dependencies that cause loops
+  }, [navigate, metrics, selectedMetric, handleMetricChange, updateGraph]);
 
-  const saveSettings = async (stocks, metric) => {
+  const saveSettings = useCallback(async (stocks, metric) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -257,23 +256,23 @@ const StockGraph = ({
         console.error('Failed to save settings:', err);
       }
     }
-  };
+  }, [navigate]);
 
-  const handleStockChange = (event, newValue) => {
+  const handleStockChange = useCallback((event, newValue) => {
     setSelectedStocks(newValue);
     updateGraph(newValue.map(stock => stock.symbol), selectedMetric);
     saveSettings(newValue, selectedMetric);
-  };
+  }, [updateGraph, selectedMetric, saveSettings]);
 
-  const handleMetricChangeWithSave = (e) => {
+  const handleMetricChangeWithSave = useCallback((e) => {
     handleMetricChange(e);
     if (selectedStocks.length > 0) {
       updateGraph(selectedStocks.map(stock => stock.symbol), e.target.value);
       saveSettings(selectedStocks, e.target.value);
     }
-  };
+  }, [handleMetricChange, selectedStocks, updateGraph, saveSettings]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
@@ -305,7 +304,7 @@ const StockGraph = ({
       delete axios.defaults.headers.common['Authorization'];
       navigate('/login');
     }
-  };
+  }, [navigate, setGraphData]);
 
   return (
     <Paper sx={{ p: 2, mt: 3 }}>

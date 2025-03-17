@@ -11,19 +11,17 @@ from datetime import datetime, timedelta
 import io
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from models import User, Stock, StockStats, UserSettings
-from config import Config
+from .models import User, Stock, StockStats, UserSettings
+from .config import Config
 import requests
 from bs4 import BeautifulSoup
-from get_stock_lists import get_stock_list
-from extensions import db, login_manager, cors, init_extensions
+from .get_stock_lists import get_stock_list
+from .extensions import db, login_manager, cors, init_extensions
 import os
 import jwt as PyJWT
 from functools import wraps
 from oauthlib.oauth2 import WebApplicationClient
-
-# Import process_stock_list after app initialization to avoid circular import
-from get_stock_data import process_stock_list
+from .get_stock_data import process_stock_list
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -355,10 +353,9 @@ def create_app(config_class=Config):
 
             token = data['token']
 
-            # Verify the token with Google
+            # Verify the ID token with Google's OAuth2 API
             google_response = requests.get(
-                'https://www.googleapis.com/oauth2/v3/userinfo',
-                headers={'Authorization': f'Bearer {token}'}
+                f'https://oauth2.googleapis.com/tokeninfo?id_token={token}'
             )
 
             if not google_response.ok:
@@ -366,13 +363,31 @@ def create_app(config_class=Config):
 
             google_data = google_response.json()
 
-            # Get user info from Google response
+            # Verify that the token was intended for our app
+            if google_data['aud'] != app.config['GOOGLE_CLIENT_ID']:
+                return jsonify({'success': False, 'message': 'Invalid token audience'}), 401
+
+            # Get user info from verified token data
             google_id = google_data['sub']
-            email = google_data['email']
+            email = google_data.get('email')
+            
+            if not email:
+                return jsonify({'success': False, 'message': 'Email not provided'}), 400
+                
             username = email.split('@')[0]  # Use email prefix as username
 
-            # Get or create user
-            user = User.get_or_create_google_user(google_id, email, username)
+            # Find existing user or create new one
+            user = User.query.filter_by(google_id=google_id).first()
+            if not user:
+                # Create new user
+                user = User(
+                    username=username,
+                    email=email,
+                    google_id=google_id
+                )
+                user.set_password(os.urandom(24).hex())  # Set a random password
+                db.session.add(user)
+                db.session.commit()
 
             # Create JWT token
             token = PyJWT.encode({
