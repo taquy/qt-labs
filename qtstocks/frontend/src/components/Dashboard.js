@@ -209,27 +209,28 @@ const Dashboard = () => {
               <Autocomplete
                 multiple
                 options={stocks}
+                getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
                 value={selectedStocks.map(symbol => stocks.find(s => s.symbol === symbol) || { symbol, name: '' })}
                 onChange={(event, newValue) => {
                   setSelectedStocks(newValue.map(stock => stock.symbol));
                 }}
-                onInputChange={(event, newInputValue) => {
-                  setInputValue(newInputValue);
+                filterOptions={(options, { inputValue }) => {
+                  const input = inputValue.toLowerCase();
+                  return options.filter(option => 
+                    option.symbol.toLowerCase().includes(input) || 
+                    option.name.toLowerCase().includes(input)
+                  );
                 }}
-                getOptionLabel={(option) => option.symbol}
-                isOptionEqualToValue={(option, value) => option.symbol === value.symbol}
                 renderInput={(params) => (
                   <TextField
                     {...params}
+                    variant="outlined"
                     label="Search Stocks"
-                    placeholder="Type to search..."
+                    placeholder={selectedStocks.length === 0 ? "Type to search..." : ""}
                   />
                 )}
                 renderOption={(props, option) => (
-                  <MenuItem {...props} sx={{ 
-                    whiteSpace: 'normal',
-                    wordWrap: 'break-word'
-                  }}>
+                  <Box component="li" {...props}>
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                       <Typography variant="body1">
                         {highlightMatch(option.symbol, inputValue)}
@@ -238,10 +239,10 @@ const Dashboard = () => {
                         {highlightMatch(option.name, inputValue)}
                       </Typography>
                     </Box>
-                  </MenuItem>
+                  </Box>
                 )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
+                renderTags={(tagValue, getTagProps) =>
+                  tagValue.map((option, index) => (
                     <Chip
                       label={option.symbol}
                       {...getTagProps({ index })}
@@ -249,17 +250,11 @@ const Dashboard = () => {
                     />
                   ))
                 }
+                sx={{ width: 300 }}
                 ListboxProps={{
                   style: {
                     maxHeight: '250px'
                   }
-                }}
-                filterOptions={(options, { inputValue }) => {
-                  const input = inputValue.toLowerCase();
-                  return options.filter(option => 
-                    option.symbol.toLowerCase().includes(input) || 
-                    option.name.toLowerCase().includes(input)
-                  );
                 }}
               />
             </FormControl>
