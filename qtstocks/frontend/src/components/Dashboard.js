@@ -139,8 +139,7 @@ const Dashboard = () => {
         withCredentials: true
       });
       setError('');
-      // After fetching data, update the graph
-      await updateGraph();
+      setLoading(false);
     } catch (err) {
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
@@ -149,7 +148,6 @@ const Dashboard = () => {
       } else {
         setError('Failed to fetch stock data');
       }
-    } finally {
       setLoading(false);
     }
   };
