@@ -70,6 +70,23 @@ The application uses the following default configuration (can be modified in `co
   - Username: admin
   - Password: admin123
 
+## Environment Variables
+
+The application uses environment variables for configuration. A sample `.env.example` file is provided with the following sections:
+
+- **Flask Configuration**: Basic Flask app settings
+- **Database Configuration**: Database connection settings
+- **Admin User Configuration**: Default admin credentials
+- **API Configuration**: Rate limiting and timeout settings
+- **Stock Data Configuration**: Cache and request limits
+- **Logging Configuration**: Log level and file settings
+- **CORS Configuration**: Allowed origins for cross-origin requests
+
+To set up your environment:
+1. Copy `.env.example` to `.env`
+2. Update the values in `.env` with your configuration
+3. Never commit your actual `.env` file to version control
+
 ## Running the Application
 
 1. Start the Flask development server:

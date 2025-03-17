@@ -1,3 +1,0 @@
-curl 'https://finance.vietstock.vn/data/financeinfo' \
-  -b '__RequestVerificationToken=IaEETWWQbgd6Q3HWs5MlztmjfPkpNVNnhejl7oEy4ZMQKktbMVzpFTYUop7uF-GGYl76vfZEKX1QEiBZLKUoMZM2mDXXlyPdpLWuv3d7xTE1;' \
-  --data-raw 'Code=FPT&Page=1&PageSize=4&ReportTermType=1&ReportType=BCTQ&Unit=1000000&__RequestVerificationToken=lApy7ZaGHHNOxcYmKc2fHgw2kyXB4ncN0mavdCKEaHpy6fIQMBgZTOWcTr_L0ArdxWQHzfWK2UqSTkUCiea7B6_yXSDW1LNq1eF2ZioDtug1'
