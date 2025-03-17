@@ -235,7 +235,7 @@
             }
             
             // Show loading state
-            $('#graphContainer').html('<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            $('#graph').html('<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>');
             
             // Get CSRF token from meta tag
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -257,24 +257,24 @@
                             response = JSON.parse(response);
                         } catch (e) {
                             console.error('Error parsing response:', e);
-                            $('#graphContainer').html('<div class="alert alert-danger">Error parsing graph data</div>');
+                            $('#graph').html('<div class="alert alert-danger">Error parsing graph data</div>');
                             return;
                         }
                     }
                     
                     if (response.error) {
                         console.error('Graph update error:', response.error);
-                        $('#graphContainer').html(`<div class="alert alert-danger">Error: ${response.error}</div>`);
+                        $('#graph').html(`<div class="alert alert-danger">Error: ${response.error}</div>`);
                         return;
                     }
                     
-                    Plotly.newPlot('graphContainer', response.data, response.layout);
+                    Plotly.newPlot('graph', response.data, response.layout);
                 },
                 error: function(xhr, status, error) {
                     console.error('Graph update error:', error);
                     console.error('Status:', status);
                     console.error('Response:', xhr.responseText);
-                    $('#graphContainer').html(`<div class="alert alert-danger">Error updating graph: ${error}</div>`);
+                    $('#graph').html(`<div class="alert alert-danger">Error updating graph: ${error}</div>`);
                 }
             });
         }

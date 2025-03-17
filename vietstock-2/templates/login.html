@@ -280,16 +280,16 @@
 
     <script>
         // Initialize Material Components
-        mdc.autoInit();
-        
-        // Initialize text fields
-        document.querySelectorAll('.mdc-text-field').forEach(function(textField) {
-            new mdc.textField.MDCTextField(textField);
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize text fields
+            document.querySelectorAll('.mdc-text-field').forEach(function(textField) {
+                new mdc.textField.MDCTextField(textField);
+            });
 
-        // Initialize buttons
-        document.querySelectorAll('.mdc-button').forEach(function(button) {
-            new mdc.ripple.MDCRipple(button);
+            // Initialize buttons with ripple effect
+            document.querySelectorAll('.mdc-button').forEach(function(button) {
+                new mdc.ripple.MDCRipple(button);
+            });
         });
     </script>
 </body>
