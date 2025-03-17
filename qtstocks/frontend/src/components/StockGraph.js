@@ -183,7 +183,52 @@ const StockGraph = ({
           </Box>
         ) : chartData ? (
           <Box sx={{ height: 500, width: '100%' }}>
-            <Bar data={chartData.data} options={chartData.options} />
+            <Bar 
+              data={chartData.data} 
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                  duration: 750,
+                  easing: 'easeInOutQuart'
+                },
+                plugins: {
+                  legend: { display: false },
+                  title: {
+                    display: true,
+                    text: `Comparison of ${chartData.metric} across Selected Stocks`,
+                    font: { size: 16 }
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: (context) => {
+                        const value = context.parsed.y;
+                        return `${chartData.metric}: ${value.toFixed(2)}`;
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    title: {
+                      display: true,
+                      text: chartData.metric,
+                      font: { size: 14 }
+                    },
+                    grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                  },
+                  x: {
+                    title: {
+                      display: true,
+                      text: 'Stock Symbol',
+                      font: { size: 14 }
+                    },
+                    grid: { display: false }
+                  }
+                }
+              }} 
+            />
           </Box>
         ) : (
           <Typography variant="body1" color="text.secondary" align="center">

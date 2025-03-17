@@ -141,51 +141,11 @@ function* updateGraphSaga(action) {
       }]
     };
 
-    const options = {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: {
-        duration: 750,
-        easing: 'easeInOutQuart'
-      },
-      plugins: {
-        legend: { display: false },
-        title: {
-          display: true,
-          text: `Comparison of ${response.metric} across Selected Stocks`,
-          font: { size: 16 }
-        },
-        tooltip: {
-          callbacks: {
-            label: (context) => {
-              const value = context.parsed.y;
-              return `${response.metric}: ${value.toFixed(2)}`;
-            }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: response.metric,
-            font: { size: 14 }
-          },
-          grid: { color: 'rgba(0, 0, 0, 0.1)' }
-        },
-        x: {
-          title: {
-            display: true,
-            text: 'Stock Symbol',
-            font: { size: 14 }
-          },
-          grid: { display: false }
-        }
-      }
-    };
-
-    yield effects.put(setChartData({ data: chartConfig, options }));
+    // Store only serializable data in Redux
+    yield effects.put(setChartData({ 
+      data: chartConfig,
+      metric: response.metric
+    }));
   } catch (error) {
     yield effects.put(setError('Failed to update graph'));
     yield effects.put(clearChartData());
