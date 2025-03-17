@@ -1,4 +1,7 @@
-from flask import Flask, render_template, jsonify, request, Response, send_file
+from flask import Flask, render_template, jsonify, request, Response, send_file, redirect, url_for, flash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_wtf.csrf import CSRFProtect
 import pandas as pd
 import plotly
 import plotly.express as px
@@ -12,6 +15,83 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 app = Flask(__name__)
+app.secret_key = 'your-secret-key-here'  # Change this to a secure secret key
+app.config['WTF_CSRF_ENABLED'] = True
+app.config['WTF_CSRF_SECRET_KEY'] = 'csrf-secret-key'  # Change this in production
+
+# Initialize Flask-Login and CSRF protection
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Please log in to access this page.'
+login_manager.login_message_category = 'info'
+
+csrf = CSRFProtect(app)
+
+# User model
+class User(UserMixin):
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
+
+    def get_id(self):
+        return str(self.id)  # Convert id to string for Flask-Login
+
+# In-memory user storage (replace with database in production)
+users = {
+    'admin': {
+        'id': 1,
+        'username': 'admin',
+        'password': generate_password_hash('admin123')  # Change this password in production
+    }
+}
+
+@login_manager.user_loader
+def load_user(user_id):
+    # Find user by id
+    for username, user_data in users.items():
+        if str(user_data['id']) == user_id:
+            return User(user_data['id'], user_data['username'])
+    return None
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    try:
+        # Redirect if user is already logged in
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+            
+        if request.method == 'POST':
+            username = request.form.get('username')
+            password = request.form.get('password')
+            
+            if not username or not password:
+                flash('Please enter both username and password.', 'error')
+                return render_template('login.html')
+            
+            if username in users and check_password_hash(users[username]['password'], password):
+                user = User(users[username]['id'], users[username]['username'])
+                login_user(user)
+                next_page = request.args.get('next')
+                if not next_page or not next_page.startswith('/'):
+                    next_page = url_for('index')
+                flash('Logged in successfully.', 'success')
+                return redirect(next_page)
+            
+            flash('Invalid username or password.', 'error')
+        
+        return render_template('login.html')
+    except Exception as e:
+        print(f"Login error: {str(e)}")  # Log the error
+        flash('An error occurred during login. Please try again.', 'error')
+        return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Logged out successfully.', 'success')
+    return redirect(url_for('login'))
 
 # Queue for SSE messages
 message_queue = queue.Queue()
@@ -124,12 +204,13 @@ def scrape_stocks_async(symbols, force_update=False):
         }))
 
 @app.route('/stream')
+@login_required
 def stream():
     def event_stream():
         while True:
             try:
                 # Get message from queue with timeout
-                message = message_queue.get(timeout=1)
+                message = message_queue.get(timeout=30)
                 yield f"data: {message}\n\n"
             except queue.Empty:
                 # Send keepalive message
@@ -138,24 +219,22 @@ def stream():
     return Response(event_stream(), mimetype='text/event-stream')
 
 @app.route('/')
+@login_required
 def index():
     df = load_stock_data()
-    if df is None:
-        return "Error loading stock data"
-    
+    stocks = df['Symbol'].tolist() if df is not None else []
     metrics = ['Price', 'MarketCap', 'EPS', 'P/E', 'P/B']
-    stocks = df['Symbol'].tolist()
-    
-    return render_template('index.html', metrics=metrics, stocks=stocks)
+    return render_template('index.html', stocks=stocks, metrics=metrics)
 
 @app.route('/scrape_stocks', methods=['POST'])
+@login_required
 def scrape_stocks():
     try:
         data = request.json
         symbols = data.get('symbols', [])
         
         if not symbols:
-            return jsonify({'error': 'No stock symbols provided'})
+            return jsonify({'error': 'No symbols provided'})
         
         # Start scraping in a background thread
         thread = threading.Thread(target=scrape_stocks_async, args=(symbols,))
@@ -178,82 +257,75 @@ def get_stocks():
         return jsonify({'error': str(e)})
 
 @app.route('/update_graph', methods=['POST'])
+@login_required
 def update_graph():
-    df = load_stock_data()
-    if df is None:
-        return jsonify({'error': 'Error loading stock data'})
-    
-    data = request.json
-    selected_stocks = data.get('stocks', [])
-    selected_metric = data.get('metric', 'Price')
-    
-    if not selected_stocks:
-        return jsonify({'error': 'No stocks selected'})
-    
-    # Filter data for selected stocks
-    filtered_df = df[df['Symbol'].isin(selected_stocks)]
-    
-    # Sort by metric value for better visualization
-    filtered_df = filtered_df.sort_values(by=selected_metric, ascending=True)
-    
-    # Create bar chart
-    fig = px.bar(
-        filtered_df,
-        x='Symbol',
-        y=selected_metric,
-        title=f'Comparison of {selected_metric} across Selected Stocks',
-        labels={'Symbol': 'Stock Symbol', selected_metric: selected_metric},
-        template='plotly_white',
-        color='Symbol',  # Add colors for each stock
-        color_discrete_sequence=px.colors.qualitative.Set3  # Use a nice color palette
-    )
-    
-    # Update layout
-    fig.update_layout(
-        showlegend=True,
-        plot_bgcolor='white',
-        height=500,
-        title_x=0.5,  # Center the title
-        title_font_size=20,
-        bargap=0.2,  # Adjust space between bars
-        # Configure animations
-        transition_duration=800,
-        transition={
-            'duration': 800,
-            'easing': 'cubic-in-out'
-        },
-        # Update axes
-        xaxis=dict(
-            title_font=dict(size=14),
-            tickfont=dict(size=12),
-            gridcolor='lightgray'
-        ),
-        yaxis=dict(
-            title_font=dict(size=14),
-            tickfont=dict(size=12),
-            gridcolor='lightgray',
-            # Add animation for axis range
-            autorange=True,
-            rangemode='normal'
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No data received'}), 400
+            
+        selected_stocks = data.get('stocks', [])
+        selected_metric = data.get('metric', 'Price')
+        
+        if not selected_stocks:
+            return jsonify({'error': 'No stocks selected'}), 400
+            
+        if not selected_metric:
+            return jsonify({'error': 'No metric selected'}), 400
+        
+        print(f"Updating graph for stocks: {selected_stocks}, metric: {selected_metric}")
+        
+        df = load_stock_data()
+        if df is None:
+            return jsonify({'error': 'Error loading stock data'}), 500
+        
+        # Filter data for selected stocks
+        filtered_df = df[df['Symbol'].isin(selected_stocks)]
+        
+        if filtered_df.empty:
+            return jsonify({'error': 'No data found for selected stocks'}), 404
+        
+        # Sort by selected metric
+        filtered_df = filtered_df.sort_values(by=selected_metric, ascending=True)
+        
+        # Create bar chart
+        fig = px.bar(
+            filtered_df,
+            x='Symbol',
+            y=selected_metric,
+            title=f'Comparison of {selected_metric} across Selected Stocks',
+            labels={'Symbol': 'Stock Symbol', selected_metric: selected_metric},
+            template='plotly_white',
+            color='Symbol',
+            color_discrete_sequence=px.colors.qualitative.Set3
         )
-    )
-    
-    # Add hover template with formatted values
-    if selected_metric in ['Price', 'MarketCap']:
-        value_format = ",.0f"  # No decimals for these metrics
-    else:
-        value_format = ",.2f"  # 2 decimals for other metrics
-    
-    fig.update_traces(
-        hovertemplate="<b>%{x}</b><br>" +
-                     f"{selected_metric}: %{{y:{value_format}}}<br>" +
-                     "<extra></extra>",  # Remove secondary box
-        textposition='auto',  # Show values on bars
-    )
-    
-    # Convert plot to JSON
-    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-    return jsonify(graphJSON)
+        
+        # Update layout
+        fig.update_layout(
+            showlegend=True,
+            plot_bgcolor='white',
+            height=500,
+            title_x=0.5,
+            title_font_size=20,
+            bargap=0.2,
+            xaxis=dict(
+                title_font=dict(size=14),
+                tickfont=dict(size=12),
+                gridcolor='lightgray'
+            ),
+            yaxis=dict(
+                title_font=dict(size=14),
+                tickfont=dict(size=12),
+                gridcolor='lightgray'
+            )
+        )
+        
+        # Convert plot to JSON
+        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return jsonify(graphJSON)
+    except Exception as e:
+        print(f"Error in update_graph: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/update_all_stocks', methods=['POST'])
 def update_all_stocks():
@@ -277,6 +349,7 @@ def update_all_stocks():
         return jsonify({'error': str(e)})
 
 @app.route('/export_csv')
+@login_required
 def export_csv():
     try:
         # Load and prepare the data
@@ -303,6 +376,7 @@ def export_csv():
         return jsonify({'error': str(e)})
 
 @app.route('/export_pdf', methods=['POST'])
+@login_required
 def export_pdf():
     try:
         df = load_stock_data()

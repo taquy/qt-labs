@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Login - Stock Analysis</title>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Material Design Web Components -->
+    <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --mdc-theme-primary: #4285f4;
+            --mdc-theme-secondary: #018786;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            background-color: #f8f9fa;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+        }
+        .login-container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            height: 700px;
+            margin: auto;
+            background: white;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        }
+        .login-form-section {
+            flex: 1;
+            padding: 48px;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        .login-image-section {
+            flex: 1;
+            background-image: url("{{ url_for('static', filename='images/login.jpeg') }}");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            display: none;
+            position: relative;
+            min-width: 50%;
+        }
+        .login-image-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(83, 0, 130, 0.1), rgba(255, 0, 255, 0.1));
+            pointer-events: none;
+        }
+        @media (min-width: 992px) {
+            .login-image-section {
+                display: block;
+            }
+            body {
+                padding: 20px;
+            }
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 48px;
+        }
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--mdc-theme-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .brand-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        .brand-name {
+            font-size: 24px;
+            font-weight: 500;
+            color: rgba(0,0,0,0.87);
+        }
+        .login-title {
+            font-size: 34px;
+            font-weight: 400;
+            color: rgba(0,0,0,0.87);
+            margin-bottom: 8px;
+            letter-spacing: 0.25px;
+        }
+        .login-subtitle {
+            color: rgba(0,0,0,0.6);
+            margin-bottom: 32px;
+            font-size: 16px;
+        }
+        .mdc-text-field {
+            width: 100%;
+            margin-bottom: 24px;
+            height: 56px;
+            border-radius: 4px;
+        }
+        .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-floating-label {
+            color: var(--mdc-theme-primary);
+        }
+        .mdc-button {
+            width: 100%;
+            height: 48px;
+            margin-bottom: 24px;
+            text-transform: none;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 0.1px;
+            border-radius: 24px;
+        }
+        .social-login {
+            margin: 32px 24px;
+            padding: 0 16px;
+        }
+        .social-login-text {
+            color: rgba(0,0,0,0.6);
+            margin-bottom: 24px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            text-align: center;
+            font-size: 14px;
+        }
+        .social-login-text::before,
+        .social-login-text::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(0,0,0,0.12);
+            margin: 0 24px;
+        }
+        .social-buttons {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            padding: 8px 0;
+        }
+        .social-button {
+            width: 48px;
+            height: 48px;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            background: white;
+        }
+        .social-button:hover {
+            background-color: rgba(0,0,0,0.04);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+        }
+        .social-button i {
+            font-size: 20px;
+        }
+        .social-button.facebook { color: #1877f2; }
+        .social-button.google { color: #ea4335; }
+        .social-button.apple { color: #000000; }
+        .signup-link {
+            text-align: center;
+            margin-top: 32px;
+            color: rgba(0,0,0,0.6);
+            font-size: 14px;
+        }
+        .signup-link a {
+            color: var(--mdc-theme-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .alert {
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .alert-danger {
+            background-color: #fdeded;
+            color: #5f2120;
+        }
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-form-section">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="material-icons">trending_up</i>
+                </div>
+                <div class="brand-name">Stock Analysis</div>
+            </div>
+
+            <h1 class="login-title">Welcome back</h1>
+            <p class="login-subtitle">Please enter your details</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mdc-text-field mdc-text-field--outlined">
+                    <input type="text" id="username" name="username" class="mdc-text-field__input" required>
+                    <div class="mdc-notched-outline">
+                        <div class="mdc-notched-outline__leading"></div>
+                        <div class="mdc-notched-outline__notch">
+                            <label for="username" class="mdc-floating-label">Username</label>
+                        </div>
+                        <div class="mdc-notched-outline__trailing"></div>
+                    </div>
+                </div>
+
+                <div class="mdc-text-field mdc-text-field--outlined">
+                    <input type="password" id="password" name="password" class="mdc-text-field__input" required>
+                    <div class="mdc-notched-outline">
+                        <div class="mdc-notched-outline__leading"></div>
+                        <div class="mdc-notched-outline__notch">
+                            <label for="password" class="mdc-floating-label">Password</label>
+                        </div>
+                        <div class="mdc-notched-outline__trailing"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="mdc-button mdc-button--raised">
+                    <span class="mdc-button__ripple"></span>
+                    <span class="mdc-button__label">Sign in</span>
+                </button>
+            </form>
+
+            <div class="social-login">
+                <div class="social-login-text">or continue with</div>
+                <div class="social-buttons">
+                    <a href="#" class="social-button facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="social-button google">
+                        <i class="fab fa-google"></i>
+                    </a>
+                    <a href="#" class="social-button apple">
+                        <i class="fab fa-apple"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="signup-link">
+                Don't have an account? <a href="#">Sign up</a>
+            </div>
+        </div>
+        <div class="login-image-section"></div>
+    </div>
+
+    <script>
+        // Initialize Material Components
+        mdc.autoInit();
+        
+        // Initialize text fields
+        document.querySelectorAll('.mdc-text-field').forEach(function(textField) {
+            new mdc.textField.MDCTextField(textField);
+        });
+
+        // Initialize buttons
+        document.querySelectorAll('.mdc-button').forEach(function(button) {
+            new mdc.ripple.MDCRipple(button);
+        });
+    </script>
+</body>
+</html> 
