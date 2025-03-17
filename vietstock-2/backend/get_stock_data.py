@@ -184,26 +184,3 @@ def scrape_stock_data_with_driver(driver, stock_symbol):
         print(f"An error occurred while scraping {stock_symbol}: {str(e)}")
         raise
         
-    return metrics_map
-
-if __name__ == "__main__":
-    print(f"Running on: {platform.system()} {platform.release()}")
-    
-    try:
-        # Get all stocks from the database
-        with app.app_context():
-            stocks = Stock.query.all()
-            stock_symbols = [stock.symbol for stock in stocks]
-            
-            if not stock_symbols:
-                print("No stock symbols found in the database.")
-                sys.exit(1)
-                
-            print(f"Found {len(stock_symbols)} stock symbols to process")
-            
-            # Process all stocks
-            process_stock_list(stock_symbols)
-            
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        sys.exit(1) 

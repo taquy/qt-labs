@@ -8,7 +8,6 @@ import pandas as pd
 import plotly
 import plotly.express as px
 import json
-from scrape import process_stock_list
 import threading
 import queue
 from datetime import datetime, timedelta
@@ -20,8 +19,10 @@ from config import Config
 import requests
 from bs4 import BeautifulSoup
 from get_stock_lists import get_stock_list
-from get_stock_data import process_stock_list
 import os
+
+# Import process_stock_list after app initialization to avoid circular import
+from get_stock_data import process_stock_list
 
 app = Flask(__name__)
 app.config.from_object(Config)
