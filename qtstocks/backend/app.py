@@ -352,6 +352,36 @@ def create_app(config_class=Config):
             print(f"Google login error: {str(e)}")
             return jsonify({'success': False, 'message': 'An error occurred during Google login'}), 500
     
+    @app.route('/api/remove_stock_stats', methods=['POST'])
+    @token_required
+    def remove_stock_stats(current_user):
+        try:
+            data = request.get_json()
+            if not data or 'symbols' not in data:
+                return jsonify({'error': 'No stock symbols provided'}), 400
+                
+            symbols = data['symbols']
+            if not symbols:
+                return jsonify({'error': 'Empty stock symbols list'}), 400
+            
+            # Delete stats for each symbol
+            for symbol in symbols:
+                stats = StockStats.query.filter_by(symbol=symbol).first()
+                if stats:
+                    db.session.delete(stats)
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Successfully removed stats for {len(symbols)} stocks'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in remove_stock_stats: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+    
     # Serve React app
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
