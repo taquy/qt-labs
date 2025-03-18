@@ -79,7 +79,6 @@ class StockDataScraper:
             # Get the stock price
             try:
                 price_element = driver.find_element(By.ID, 'price__0')
-                print(price_element)
                 if price_element:
                     metrics_map['Price'] = price_element.text.strip()
             except NoSuchElementException:
