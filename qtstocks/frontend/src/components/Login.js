@@ -69,13 +69,7 @@ const Login = () => {
     e.preventDefault();
     dispatch(login(username, password));
   };
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      navigate('/');
-    }
-  }, [isLoggedIn, navigate]);
-
+  
   return (
     <Box
       sx={{

@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Register from './components/Register';
 import PrivateRoute from './components/PrivateRoute';
+import PublicRoute from './components/PublicRoute';
 
 export const routes = createBrowserRouter([
   {
@@ -12,11 +13,11 @@ export const routes = createBrowserRouter([
     children: [
       {
         path: 'login',
-        element: <Login />
+        element: <PublicRoute><Login /></PublicRoute>
       },
       {
         path: 'register',
-        element: <Register />
+        element: <PublicRoute><Register /></PublicRoute>
       },
       {
         path: '',
@@ -24,4 +25,4 @@ export const routes = createBrowserRouter([
       }
     ]
   }
-]); 
+]);
