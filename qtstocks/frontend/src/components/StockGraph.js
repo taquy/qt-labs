@@ -30,9 +30,6 @@ import {
   fetchSettings,
   saveSettings
 } from '../store/sagas/stockGraphSaga';
-import {
-  setSelectedStocks,
-} from '../store/slices/stockGraphSlice';
 
 // Register Chart.js components
 ChartJS.register(
@@ -59,11 +56,11 @@ const StockGraph = ({
   const dispatch = useDispatch();
   const [selectedMetric, setSelectedMetric] = useState('market_cap');
   const [chartData, setChartData] = useState();
-  
+  const [selectedStocks, setSelectedStocks] = useState([]);
+
   // Select state from Redux store
   const {
     availableStocks,
-    selectedStocks,
     error,
     settings
   } = useSelector(state => state.stockGraph);
@@ -107,7 +104,7 @@ const StockGraph = ({
         selectedSymbols.includes(stock.symbol)
       );
       if (selectedStocksData.length > 0) {
-        dispatch(setSelectedStocks(selectedStocksData));
+        setSelectedStocks(selectedStocksData);
       }
       if (savedMetric !== selectedMetric) {
         setSelectedMetric(savedMetric);
@@ -116,7 +113,7 @@ const StockGraph = ({
   }, [settings, selectedMetric, availableStocks, dispatch]);
 
   const handleStockChange = (event, newValue) => {
-    dispatch(setSelectedStocks(newValue));
+    setSelectedStocks(newValue);
     if (newValue.length > 0) {
       dispatch(saveSettings(newValue, selectedMetric));
     } else {
