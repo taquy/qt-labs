@@ -12,5 +12,6 @@ export const API_ENDPOINTS = {
     stocks: `${API_BASE_URL}/stocks`,
     downloadStockList: `${API_BASE_URL}/download_stock_list`,
     fetchStockData: `${API_BASE_URL}/fetch_stock_data`,
-    deleteSetting: (key) => `${API_BASE_URL}/settings/${key}`
-}; 
+    deleteSetting: (key) => `${API_BASE_URL}/settings/${key}`,
+    removeAvailableStock: `${API_BASE_URL}/remove_stock_stats`,
+};

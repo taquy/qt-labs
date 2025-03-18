@@ -14,7 +14,7 @@ import {
   Stack
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAvailableStocks } from '../store/sagas/stockGraphSaga';
+import { fetchAvailableStocks, removeAvailableStock } from '../store/sagas/stockGraphSaga';
 
 const StockSelectionTable = () => {
   const dispatch = useDispatch();
@@ -50,6 +50,8 @@ const StockSelectionTable = () => {
 
   const handleRemoveSelected = () => {
     console.log(selected);
+    
+    dispatch(removeAvailableStock(selected));
     setSelected([]);
   };
 

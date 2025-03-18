@@ -21,6 +21,8 @@ export const FETCH_STOCK_DATA = 'stockGraph/fetchStockData';
 export const LOGOUT = 'stockGraph/logout';
 export const LOGIN = 'stockGraph/login';
 export const GOOGLE_LOGIN = 'stockGraph/googleLogin';
+export const REMOVE_AVAILABLE_STOCK = 'stockGraph/removeAvailableStock';
+
 // Action Creators
 export const fetchAvailableStocks = () => ({ type: FETCH_AVAILABLE_STOCKS });
 export const fetchSettings = () => ({ type: FETCH_SETTINGS });
@@ -29,6 +31,8 @@ export const login = (username, password) => ({ type: LOGIN, payload: { username
 export const logout = () => ({ type: LOGOUT });
 export const fetchStocks = () => ({ type: FETCH_STOCKS });
 export const googleLogin = (token) => ({ type: GOOGLE_LOGIN, payload: { token } });
+export const removeAvailableStock = (payload) => ({ type: REMOVE_AVAILABLE_STOCK, payload });
+
 // Helper function to handle API errors
 const handleApiError = (error, saga) => {
   if (error.response?.status === 401) {
@@ -98,11 +102,26 @@ const api = {
       body: JSON.stringify({ token: token }),
     });
     return response.data;
+  },
+  removeAvailableStock: async (symbols) => {
+    const response = await axios.post(API_ENDPOINTS.removeAvailableStock, {
+      symbols: symbols
+    }, getRequestConfig());
+    return response.data;
   }
 };
 
 
 // Sagas
+function* removeAvailableStockSaga(action) {
+  try {
+    yield effects.call(api.removeAvailableStock, action.payload);
+    yield effects.call(fetchAvailableStocksSaga);
+  } catch (error) {
+    yield effects.put(setError('Failed to remove available stock'));
+  }
+}
+
 function* googleLoginSaga(action) {
   try {
     const response = yield effects.call(api.googleLogin, action.payload);
@@ -217,4 +236,5 @@ export function* stockGraphSaga() {
   yield effects.takeLatest(LOGOUT, logoutSaga);
   yield effects.takeLatest(LOGIN, loginSaga);
   yield effects.takeLatest(GOOGLE_LOGIN, googleLoginSaga);
+  yield effects.takeLatest(REMOVE_AVAILABLE_STOCK, removeAvailableStockSaga);
 }
