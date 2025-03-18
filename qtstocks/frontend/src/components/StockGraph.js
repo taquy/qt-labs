@@ -41,14 +41,6 @@ ChartJS.register(
   Legend
 );
 
-const METRICS = {
-  'market_cap': 'Market Cap',
-  'price': 'Price',
-  'eps': 'EPS',
-  'pe': 'P/E',
-  'pb': 'P/B'
-};
-
 const StockGraph = ({ 
   loading,
   setGraphData
@@ -62,7 +54,8 @@ const StockGraph = ({
   const {
     availableStocks,
     error,
-    settings
+    settings,
+    metrics
   } = useSelector(state => state.stockGraph);
 
   // Initial data loading
@@ -83,7 +76,7 @@ const StockGraph = ({
     const newChartData = {
       labels,
       datasets: [{
-        label: METRICS[selectedMetric],
+        label: metrics[selectedMetric],
         data: dataPoints,
         borderWidth: 1,
         backgroundColor: colors,
@@ -93,7 +86,7 @@ const StockGraph = ({
       }]
     }
     setChartData(newChartData);
-  }, [selectedStocks, selectedMetric]);
+  }, [selectedStocks, selectedMetric, metrics]);
 
   // Load settings when available
   useEffect(() => {
@@ -201,9 +194,9 @@ const StockGraph = ({
             label="Metric"
             onChange={onMetricChange}
           >
-            {Object.keys(METRICS).map((metric) => (
+            {Object.keys(metrics).map((metric) => (
               <MenuItem key={metric} value={metric}>
-                {METRICS[metric]}
+                {metrics[metric]}
               </MenuItem>
             ))}
           </Select>

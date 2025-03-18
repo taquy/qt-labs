@@ -1,12 +1,21 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+const METRICS = {
+  'market_cap': 'Market Cap',
+  'price': 'Price',
+  'eps': 'EPS',
+  'pe': 'P/E',
+  'pb': 'P/B'
+};
+
 const initialState = {
   availableStocks: [],
   selectedStocks: [],
   chartData: null,
   error: null,
   loading: false,
-  settings: null
+  settings: null,
+  metrics: METRICS,
 };
 
 const stockGraphSlice = createSlice({

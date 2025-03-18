@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -13,13 +13,21 @@ import {
   Button,
   Stack
 } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
 
-const StockSelectionTable = ({ stocks, onStockSelect, selectedStocks, onRemoveStocks }) => {
+const StockSelectionTable = ({ stocks, onStockSelect, onRemoveStocks }) => {
+
+  // Select state from Redux store
+  const {
+    availableStocks,
+    metrics
+  } = useSelector(state => state.stockGraph);
+
   const [selected, setSelected] = React.useState([]);
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      setSelected(stocks.map((stock) => stock.symbol));
+      setSelected(availableStocks.map((stock) => stock.symbol));
     } else {
       setSelected([]);
     }
@@ -43,7 +51,7 @@ const StockSelectionTable = ({ stocks, onStockSelect, selectedStocks, onRemoveSt
     <Box sx={{ width: '100%', mb: 3 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">
-          Available Stocks
+          Selected Stocks
         </Typography>
         <Button 
           variant="outlined" 
@@ -75,23 +83,24 @@ const StockSelectionTable = ({ stocks, onStockSelect, selectedStocks, onRemoveSt
             <TableRow>
               <TableCell padding="checkbox">
                 <Checkbox
-                  indeterminate={selected.length > 0 && selected.length < stocks.length}
-                  checked={stocks.length > 0 && selected.length === stocks.length}
+                  indeterminate={selected.length > 0 && selected.length < availableStocks.length}
+                  checked={availableStocks.length > 0 && selected.length === availableStocks.length}
                   onChange={handleSelectAll}
                 />
               </TableCell>
               <TableCell>Symbol</TableCell>
               <TableCell>Name</TableCell>
-              <TableCell>Exchange</TableCell>
+              {Object.entries(metrics).map(([key, label]) => (
+                <TableCell key={key}>{label}</TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {stocks.map((stock) => (
+            {availableStocks.map((stock) => (
               <TableRow
                 key={stock.symbol}
                 hover
                 selected={selected.includes(stock.symbol)}
-                onClick={() => onStockSelect(stock)}
                 sx={{ cursor: 'pointer' }}
               >
                 <TableCell padding="checkbox">
@@ -105,7 +114,9 @@ const StockSelectionTable = ({ stocks, onStockSelect, selectedStocks, onRemoveSt
                 </TableCell>
                 <TableCell>{stock.symbol}</TableCell>
                 <TableCell>{stock.name}</TableCell>
-                <TableCell>{stock.exchange}</TableCell>
+                {Object.entries(metrics).map(([key, label]) => (
+                  <TableCell key={key}>{stock[key]}</TableCell>
+                ))}
               </TableRow>
             ))}
           </TableBody>
