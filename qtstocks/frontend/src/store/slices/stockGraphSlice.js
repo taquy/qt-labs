@@ -37,12 +37,10 @@ const stockGraphSlice = createSlice({
 export const {
   setAvailableStocks,
   setSelectedStocks,
-  setChartData,
   setError,
   setLoading,
   setSettings,
   clearError,
-  clearChartData
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer; 

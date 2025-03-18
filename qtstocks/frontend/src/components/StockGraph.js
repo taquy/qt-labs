@@ -32,7 +32,6 @@ import {
 } from '../store/sagas/stockGraphSaga';
 import {
   setSelectedStocks,
-  clearChartData,
 } from '../store/slices/stockGraphSlice';
 
 // Register Chart.js components
@@ -59,14 +58,7 @@ const StockGraph = ({
 }) => {
   const dispatch = useDispatch();
   const [selectedMetric, setSelectedMetric] = useState('market_cap');
-  const [chartData, setChartData] = useState({
-    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-    datasets: [{
-      label: '# of Votes',
-      data: [12, 19, 3, 5, 2, 3],
-      borderWidth: 1
-    }]
-  });
+  const [chartData, setChartData] = useState();
   
   // Select state from Redux store
   const {
@@ -82,6 +74,29 @@ const StockGraph = ({
     dispatch(fetchSettings());
   }, [dispatch]);
 
+  useEffect(() => {
+    if (!selectedStocks) return;
+    const labels = selectedStocks.map(stock => stock.symbol);
+    const dataPoints = selectedStocks.map(stock => stock[selectedMetric]);
+
+    // Generate colors for each bar
+    const colors = labels.map((_, index) =>
+      `hsl(${(index * 360/ labels.length)}, 70%, 50%)`
+    );
+    const newChartData = {
+      labels,
+      datasets: [{
+        label: METRICS[selectedMetric],
+        data: dataPoints,
+        borderWidth: 1,
+        backgroundColor: colors,
+        borderColor: colors.map(color => color.replace('50%', '40%')),
+        borderRadius: 5,
+        hoverBackgroundColor: colors.map(color => color.replace('50%', '60%')),
+      }]
+    }
+    setChartData(newChartData);
+  }, [selectedStocks, selectedMetric]);
 
   // Load settings when available
   useEffect(() => {
@@ -105,7 +120,6 @@ const StockGraph = ({
     if (newValue.length > 0) {
       dispatch(saveSettings(newValue, selectedMetric));
     } else {
-      dispatch(clearChartData());
       setGraphData(null);
       dispatch(saveSettings([], selectedMetric));
     }
