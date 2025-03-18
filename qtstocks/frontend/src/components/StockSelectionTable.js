@@ -9,14 +9,51 @@ import {
   Paper,
   Box,
   Typography,
+  Checkbox,
+  Button,
+  Stack
 } from '@mui/material';
 
-const StockSelectionTable = ({ stocks, onStockSelect }) => {
+const StockSelectionTable = ({ stocks, onStockSelect, selectedStocks, onRemoveStocks }) => {
+  const [selected, setSelected] = React.useState([]);
+
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      setSelected(stocks.map((stock) => stock.symbol));
+    } else {
+      setSelected([]);
+    }
+  };
+
+  const handleSelect = (symbol) => {
+    setSelected((prev) => {
+      if (prev.includes(symbol)) {
+        return prev.filter((s) => s !== symbol);
+      }
+      return [...prev, symbol];
+    });
+  };
+
+  const handleRemoveSelected = () => {
+    onRemoveStocks(selected);
+    setSelected([]);
+  };
+
   return (
     <Box sx={{ width: '100%', mb: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Available Stocks
-      </Typography>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">
+          Available Stocks
+        </Typography>
+        <Button 
+          variant="outlined" 
+          color="error" 
+          onClick={handleRemoveSelected}
+          disabled={selected.length === 0}
+        >
+          Remove Selected ({selected.length})
+        </Button>
+      </Stack>
       <TableContainer 
         component={Paper} 
         sx={{ 
@@ -36,6 +73,13 @@ const StockSelectionTable = ({ stocks, onStockSelect }) => {
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  indeterminate={selected.length > 0 && selected.length < stocks.length}
+                  checked={stocks.length > 0 && selected.length === stocks.length}
+                  onChange={handleSelectAll}
+                />
+              </TableCell>
               <TableCell>Symbol</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Exchange</TableCell>
@@ -46,9 +90,19 @@ const StockSelectionTable = ({ stocks, onStockSelect }) => {
               <TableRow
                 key={stock.symbol}
                 hover
+                selected={selected.includes(stock.symbol)}
                 onClick={() => onStockSelect(stock)}
                 sx={{ cursor: 'pointer' }}
               >
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={selected.includes(stock.symbol)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleSelect(stock.symbol);
+                    }}
+                  />
+                </TableCell>
                 <TableCell>{stock.symbol}</TableCell>
                 <TableCell>{stock.name}</TableCell>
                 <TableCell>{stock.exchange}</TableCell>

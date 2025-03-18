@@ -167,6 +167,15 @@ const Dashboard = () => {
     }
   };
 
+  const handleRemoveStocks = (symbolsToRemove) => {
+    setSelectedStocks(prev => prev.filter(stock => !symbolsToRemove.includes(stock.symbol)));
+    setNotification({
+      open: true,
+      message: `Removed ${symbolsToRemove.length} stock(s) from selection`,
+      severity: 'info'
+    });
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -178,15 +187,21 @@ const Dashboard = () => {
         </Button>
       </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      <Grid item xs={12}>
+        <StockSelector
+          selectedStocks={selectedStocks}
+          setSelectedStocks={setSelectedStocks}
+          onFetchData={handleFetchStockData}
+          fetchingData={fetchingData}
+        />
 
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
           <Box sx={{ 
+            mt: 3,
             mb: 3,
             p: 2,
             bgcolor: 'background.paper',
@@ -196,6 +211,8 @@ const Dashboard = () => {
             <StockSelectionTable 
               stocks={stocks} 
               onStockSelect={handleStockSelect}
+              selectedStocks={selectedStocks}
+              onRemoveStocks={handleRemoveStocks}
             />
           </Box>
         </Grid>
@@ -208,15 +225,6 @@ const Dashboard = () => {
             <StockGraph data={graphData} />
           )}
         </Grid>
-        <Grid item xs={12}>
-          <StockSelector
-            selectedStocks={selectedStocks}
-            setSelectedStocks={setSelectedStocks}
-            onFetchData={handleFetchStockData}
-            fetchingData={fetchingData}
-          />
-        </Grid>
-      </Grid>
 
       <Snackbar
         open={notification.open}
