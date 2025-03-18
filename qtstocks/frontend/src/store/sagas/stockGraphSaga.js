@@ -92,15 +92,7 @@ const api = {
     return response.data;
   },
   googleLogin: async (token) => {
-    const response = await fetch(API_ENDPOINTS.googleLogin, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ token: token }),
-    });
+    const response = await axios.post(API_ENDPOINTS.googleLogin, token);
     return response.data;
   },
   removeAvailableStock: async (symbols) => {
@@ -138,8 +130,12 @@ function* removeAvailableStockSaga(action) {
 function* googleLoginSaga(action) {
   try {
     const response = yield effects.call(api.googleLogin, action.payload);
-    yield effects.put(setIsLoggedIn(true));
-    yield effects.put(setAuthToken(response.token));
+    if (response.token) {
+      yield effects.put(setIsLoggedIn(true));
+      yield effects.put(setAuthToken(response.token));
+    } else {
+      yield effects.put(setError('Failed to login'));
+    }
   } catch (error) {
     yield effects.put(setError('Failed to login'));
   }

@@ -136,9 +136,6 @@ const Login = () => {
             mb: 2,
             display: 'flex',
             justifyContent: 'center',
-            '& > div': {
-              width: '100% !important'
-            }
           }}
         />
 
