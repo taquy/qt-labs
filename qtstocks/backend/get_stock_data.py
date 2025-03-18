@@ -123,7 +123,12 @@ class StockDataScraper:
         except Exception as e:
             print(f"An error occurred while scraping {stock_symbol}: {str(e)}")
             raise
-            
+        
+        metrics_map['EPS'] = metrics_map.get('EPS', '')
+        metrics_map['P/E'] = metrics_map.get('P/E', '')
+        metrics_map['P/B'] = metrics_map.get('P/B', '')
+        metrics_map['MarketCap'] = metrics_map.get('MarketCap', '')
+        
         metrics_map['id'] = stock_symbol
         print(metrics_map)
         return metrics_map
@@ -142,6 +147,58 @@ class StockDataScraper:
         except ValueError:
             return None
 
+    def scrape_stock_data_with_driver_alt(self, stock_symbol):
+        """Alternative method to scrape stock data using a different approach."""
+        metrics_map = {}
+        try:
+            # Get the stock details URL
+            stock_url = self.get_stock_url(stock_symbol)
+            print(stock_url)
+            if not stock_url:
+                raise Exception(f"Could not find URL for stock symbol {stock_symbol}")
+            
+            # Create a new local Chrome session
+            driver = self.create_driver()
+            
+            # Visit the stock URL using the new Selenium WebDriver session
+            driver.get(stock_url)
+            
+               # Get the stock price
+            try:
+                price_element = driver.find_element(By.ID, 'real-time__price')
+                if price_element:
+                    metrics_map['Price'] = price_element.text.strip()
+            except NoSuchElementException:
+                print(f"Could not find price element for {stock_symbol}")
+                metrics_map['Price'] = ''
+                
+            table_right = driver.find_element(By.ID, 'transaction-information-table-right')
+            table_right_rows = table_right.find_elements(By.CLASS_NAME, 'table-right-item')
+            
+            def get_value_from_row(row):
+                p_elements = row.find_elements(By.TAG_NAME, 'p')
+                if len(p_elements) >= 2:
+                    return p_elements[1].text.strip()
+                return ''
+            
+            eps_row = table_right_rows[0]
+            pe_row = table_right_rows[2]
+            pb_row = table_right_rows[4]
+            market_cap_row = table_right_rows[5]
+            
+            metrics_map['EPS'] = get_value_from_row(eps_row)
+            metrics_map['P/E'] = get_value_from_row(pe_row)
+            metrics_map['P/B'] = get_value_from_row(pb_row)
+            metrics_map['MarketCap'] = get_value_from_row(market_cap_row)
+            metrics_map['id'] = stock_symbol
+            print(metrics_map)
+            return metrics_map
+            
+        except Exception as e:
+            print(f"Error in scrape_stock_data_with_driver_alt: {str(e)}")
+            raise
+        
+        
     def process_stock_list(self, symbols):
         """Process a list of stock symbols and update their data in the database."""
         self.driver = self.create_driver()
@@ -151,6 +208,12 @@ class StockDataScraper:
                 try:
                     print(f"\nProcessing stock symbol: {symbol}")
                     metrics = self.scrape_stock_data_with_driver(symbol)
+                    
+                    # Check if any metrics values are empty
+                    if any(not value for value in metrics.values()):
+                        print(f"No metrics found for {symbol}, trying alternative method")
+                        metrics = self.scrape_stock_data_with_driver_alt(symbol)
+                        
                     if not metrics:
                         print(f"No metrics found for {symbol}")
                         continue
