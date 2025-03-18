@@ -1,4 +1,4 @@
-from flask import Flask, current_app, render_template, jsonify, request, Response, send_file, redirect, url_for, flash, session
+from flask import Flask, current_app, render_template, jsonify, request, Response, send_file, redirect, url_for, flash, session, send_from_directory
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
@@ -7,7 +7,7 @@ import plotly.express as px
 import json
 import threading
 import queue
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import io
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -110,7 +110,7 @@ def create_app(config_class=Config):
                 
             token = PyJWT.encode({
                 'user_id': user.id,
-                'exp': datetime.utcnow() + timedelta(days=1)
+                'exp': datetime.now(UTC) + timedelta(days=1)
             }, app.config['SECRET_KEY'], algorithm="HS256")
             
             print(f"Login successful for user: {username}")
@@ -199,7 +199,7 @@ def create_app(config_class=Config):
 
             if setting:
                 setting.setting_value = data['value']
-                setting.updated_at = datetime.utcnow()
+                setting.updated_at = datetime.now(UTC)
             else:
                 setting = UserSettings(
                     user_id=current_user.id,
@@ -232,61 +232,7 @@ def create_app(config_class=Config):
             db.session.rollback()
             return jsonify({'error': str(e)}), 500
     
-    @app.route('/api/update_graph', methods=['POST'])
-    @token_required
-    def update_graph(current_user):
-        try:
-            data = request.get_json()
-            if not data:
-                return jsonify({'error': 'No data received'}), 400
-            print(data);
-            selected_stocks = data.get('stocks', [])
-            selected_metric = data.get('metric', 'Price')
-            
-            if not selected_stocks:
-                return jsonify({'error': 'No stocks selected'}), 400
-                
-            if not selected_metric:
-                return jsonify({'error': 'No metric selected'}), 400
-            
-            # Query stocks with stats from database
-            stocks_with_stats = db.session.query(Stock).join(StockStats).filter(Stock.symbol.in_(selected_stocks)).all()
-            
-            if not stocks_with_stats:
-                return jsonify({'error': 'No data found for selected stocks'}), 404
-            
-            # Create data structure for frontend
-            metric_mapping = {
-                'Price': 'price',
-                'Market Cap': 'market_cap',
-                'EPS': 'eps',
-                'P/E': 'pe',
-                'P/B': 'pb'
-            }
-            
-            # Return data in a format suitable for frontend plotting
-            plot_data = [
-                {
-                    'symbol': stock.symbol,
-                    'value': getattr(stock.stats, metric_mapping[selected_metric]),
-                    'name': stock.name,
-                    'last_updated': stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')
-                }
-                for stock in stocks_with_stats
-            ]
-            
-            # Sort data by the selected metric
-            plot_data.sort(key=lambda x: x['value'])
-            
-            return jsonify({
-                'data': plot_data,
-                'metric': selected_metric
-            })
-            
-        except Exception as e:
-            print(f"Error in update_graph: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-    
+
     @app.route('/api/download_stock_list', methods=['POST'])
     @token_required
     def download_stock_list(current_user):
@@ -295,13 +241,14 @@ def create_app(config_class=Config):
             
             for stock_data in stocks:
                 existing_stock = Stock.query.filter_by(symbol=stock_data['Symbol']).first()
-                if not existing_stock:
-                    stock = Stock(
-                        symbol=stock_data['Symbol'],
-                        name=stock_data['Name'],
-                        last_updated=datetime.utcnow()
-                    )
-                    db.session.add(stock)
+                if existing_stock:
+                    continue
+                stock = Stock(
+                    symbol=stock_data['Symbol'],
+                    name=stock_data['Name'],
+                    last_updated=datetime.now(UTC)
+                )
+                db.session.add(stock)
             
             db.session.commit()
             
@@ -392,7 +339,7 @@ def create_app(config_class=Config):
             # Create JWT token
             token = PyJWT.encode({
                 'user_id': user.id,
-                'exp': datetime.utcnow() + timedelta(days=1)
+                'exp': datetime.now(UTC) + timedelta(days=1)
             }, app.config['SECRET_KEY'], algorithm="HS256")
 
             return jsonify({
