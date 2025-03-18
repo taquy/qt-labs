@@ -10,8 +10,6 @@ import {
   Link as RouterLink
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { API_ENDPOINTS } from '../config';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, googleLogin } from '../store/sagas/stockGraphSaga';
 
@@ -21,7 +19,7 @@ const Login = () => {
   const navigate = useNavigate();
   const googleButtonRef = useRef(null);
   const dispatch = useDispatch();
-  const { authToken, isLoggedIn, error } = useSelector(state => state.stockGraph);
+  const { isLoggedIn, error } = useSelector(state => state.stockGraph);
 
   const handleGoogleLogin = useCallback(async (response) => {
     dispatch(googleLogin(response.credential));

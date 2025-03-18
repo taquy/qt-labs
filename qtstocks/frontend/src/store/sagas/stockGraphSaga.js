@@ -220,6 +220,7 @@ function* saveSettingsSaga(action) {
     yield effects.put(clearError());
     const { stocks, metric } = action.payload;
     yield effects.call(api.saveSettings, stocks, metric);
+    yield effects.call(fetchSettingsSaga);
   } catch (error) {
     yield effects.put(setError('Failed to save settings'));
     yield effects.call(handleApiError, error, 'saveSettingsSaga');

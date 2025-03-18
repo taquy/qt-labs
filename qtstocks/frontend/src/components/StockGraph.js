@@ -8,7 +8,6 @@ import {
   Select,
   MenuItem,
   Box,
-  CircularProgress,
   Autocomplete,
   TextField,
   Chip,
@@ -98,10 +97,6 @@ const StockGraph = () => {
     }
     setChartData(newChartData);
   }, [selectedStocks, selectedMetric, metrics]);
-
-  useEffect(() => {
-    console.log(chartData);
-  }, [chartData]);
 
   // Load settings when available
   useEffect(() => {

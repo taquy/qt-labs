@@ -9,7 +9,6 @@ import {
   TextField,
   Chip,
   CircularProgress,
-  Stack
 } from '@mui/material';
 
 import { fetchStocks, fetchStockData } from '../store/sagas/stockGraphSaga';
@@ -17,7 +16,7 @@ import { useSelector, useDispatch } from 'react-redux';
 
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue] = useState('');
   const dispatch = useDispatch();
   
   const {

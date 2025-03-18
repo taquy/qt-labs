@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   Container,
   Typography,
   Button,
   Alert,
-  Snackbar,
   Grid
 } from '@mui/material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS } from '../config';
 import StockSelector from './StockSelector';
 import StockGraph from './StockGraph';
 import StockSelectionTable from './StockSelectionTable';
@@ -24,7 +22,7 @@ axios.defaults.withCredentials = true;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 const Dashboard = () => {
-  const { error, fetchingData} = useSelector(state => state.stockGraph);
+  const { error } = useSelector(state => state.stockGraph);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
