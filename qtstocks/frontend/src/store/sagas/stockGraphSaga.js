@@ -8,7 +8,8 @@ import {
   setSettings,
   clearError,
   setIsLoggedIn,
-  setAuthToken
+  setAuthToken,
+  setStocks
 } from '../slices/stockGraphSlice';
 
 // Action Types
@@ -155,7 +156,7 @@ function* fetchStocksSaga() {
     yield effects.put(setLoading(true));
     yield effects.put(clearError());
     const stocks = yield effects.call(api.fetchStocks);
-    yield effects.put(setAvailableStocks(stocks));
+    yield effects.put(setStocks(stocks));
   } catch (error) {
     yield effects.put(setError('Failed to fetch stocks'));
     yield effects.call(handleApiError, error, 'fetchStocksSaga');

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Paper,
   Typography,
@@ -11,15 +11,21 @@ import {
   CircularProgress
 } from '@mui/material';
 
-import { useSelector } from 'react-redux';
+import { fetchStocks } from '../store/sagas/stockGraphSaga';
+import { useSelector, useDispatch } from 'react-redux';
 
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [inputValue, setInputValue] = useState('');
-
+  const dispatch = useDispatch();
+  
   const {
     stocks,
   } = useSelector(state => state.stockGraph);
+
+  useEffect(() => {
+    dispatch(fetchStocks());
+  }, [dispatch]);
 
   // Function to highlight matching text
   const highlightMatch = (text, search) => {
@@ -47,12 +53,11 @@ const StockSelector = () => {
           color="success"
           onClick={handleFetchStockData}
           disabled={selectedStocks.length === 0}
-        ></Button>
+        >
+          Fetch Stock Data
+        </Button>
       </Box>
 
-      <Typography variant="subtitle1" gutterBottom>
-        Select Stocks:
-      </Typography>
       <FormControl sx={{ minWidth: 300, mb: 2 }}>
         <Autocomplete
           multiple

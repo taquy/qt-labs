@@ -38,16 +38,6 @@ const Dashboard = () => {
     fetchStocks();
   }, [navigate]);
 
-  // Function to highlight matching text
-  const highlightMatch = (text, search) => {
-    if (!search) return text;
-    const parts = text.split(new RegExp(`(${search})`, 'gi'));
-    return parts.map((part, index) =>
-      part.toLowerCase() === search.toLowerCase() ? 
-        <span key={index} style={{ backgroundColor: '#fff59d' }}>{part}</span> : part
-    );
-  };
-
   const handleLogout = () => {
     dispatch(logout());
   };
