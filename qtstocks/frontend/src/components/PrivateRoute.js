@@ -6,11 +6,15 @@ import { checkIsLoggedIn } from '../store/sagas/stockGraphSaga';
 const PrivateRoute = ({ children }) => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const { isLoggedIn } = useSelector(state => state.stockGraph);
+  const { isLoggedIn, checkingLogin } = useSelector(state => state.stockGraph);
 
   useEffect(() => {
     dispatch(checkIsLoggedIn());
   }, [dispatch]);
+
+  if (checkingLogin) {
+    return <div>Loading...</div>;
+  }
 
   if (!isLoggedIn) {
     // Redirect to login page but save the attempted url

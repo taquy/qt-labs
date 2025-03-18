@@ -10,7 +10,8 @@ import {
   setIsLoggedIn,
   setAuthToken,
   setStocks,
-  setFetchingStockStats
+  setFetchingStockStats,
+  setCheckingLogin
 } from '../slices/stockGraphSlice';
 
 // Action Types
@@ -115,12 +116,14 @@ const api = {
 function* checkIsLoggedInSaga() {
   const isLoggedIn = localStorage.getItem('isLoggedIn');
   const authToken = localStorage.getItem('authToken');
+  yield effects.put(setCheckingLogin(true));
   if (isLoggedIn && authToken) {
     yield effects.put(setIsLoggedIn(true));
     yield effects.put(setAuthToken(authToken));
   } else {
     yield effects.put(setIsLoggedIn(false));
   }
+  yield effects.put(setCheckingLogin(false));
 }
 
 function* removeAvailableStockSaga(action) {

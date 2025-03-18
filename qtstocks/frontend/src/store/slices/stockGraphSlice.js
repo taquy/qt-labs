@@ -19,6 +19,7 @@ const initialState = {
   isLoggedIn: false,
   authToken: null,
   fetchingStockStats: false,
+  checkingLogin: true,
 };
 
 const stockGraphSlice = createSlice({
@@ -54,6 +55,9 @@ const stockGraphSlice = createSlice({
     setFetchingStockStats: (state, action) => {
       state.fetchingStockStats = action.payload;
     },
+    setCheckingLogin: (state, action) => {
+      state.checkingLogin = action.payload;
+    },
   }
 });
 
@@ -67,6 +71,7 @@ export const {
   setIsLoggedIn,
   setAuthToken,
   setFetchingStockStats,
+  setCheckingLogin,
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer;

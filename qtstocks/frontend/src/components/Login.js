@@ -9,17 +9,15 @@ import {
   Divider,
   Link as RouterLink
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, googleLogin } from '../store/sagas/stockGraphSaga';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigate();
   const googleButtonRef = useRef(null);
   const dispatch = useDispatch();
-  const { isLoggedIn, error } = useSelector(state => state.stockGraph);
+  const { error } = useSelector(state => state.stockGraph);
 
   const handleGoogleLogin = useCallback(async (response) => {
     dispatch(googleLogin(response.credential));
@@ -69,7 +67,7 @@ const Login = () => {
     e.preventDefault();
     dispatch(login(username, password));
   };
-  
+
   return (
     <Box
       sx={{
