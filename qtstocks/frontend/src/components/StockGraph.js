@@ -41,10 +41,7 @@ ChartJS.register(
   Legend
 );
 
-const StockGraph = ({ 
-  loading,
-  setGraphData
-}) => {
+const StockGraph = () => {
   const dispatch = useDispatch();
   const [selectedMetric, setSelectedMetric] = useState('market_cap');
   const [chartData, setChartData] = useState();
@@ -110,7 +107,7 @@ const StockGraph = ({
     if (newValue.length > 0) {
       dispatch(saveSettings(newValue, selectedMetric));
     } else {
-      setGraphData(null);
+      setChartData(null);
       dispatch(saveSettings([], selectedMetric));
     }
   };
@@ -208,13 +205,8 @@ const StockGraph = ({
           {error}
         </Typography>
       )}
-
       <Paper sx={{ p: 2 }}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress />
-          </Box>
-        ) : chartData ? (
+        {chartData ? (
           <Box sx={{ height: 500, width: '100%' }}>
             <Bar 
               data={chartData} 
