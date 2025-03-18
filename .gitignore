@@ -50,3 +50,17 @@ helm-deployments/9-otel/5-coroot/demo/vendor/brick/math/src/
 *.ods#
 
 *.pyc
+
+# Secrets and credentials
+.env
+.env.local
+.env.*
+*.pem
+*.key
+*secret*
+*credential*
+.secrets/
+secrets/
+credentials/
+config.json
+settings.json
