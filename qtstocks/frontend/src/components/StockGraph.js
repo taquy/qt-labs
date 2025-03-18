@@ -28,14 +28,12 @@ import { format } from 'date-fns';
 import {
   fetchAvailableStocks,
   fetchSettings,
-  updateGraph,
   saveSettings
 } from '../store/sagas/stockGraphSaga';
 import {
   setSelectedStocks,
   clearChartData,
 } from '../store/slices/stockGraphSlice';
-import { useState } from 'react';
 
 // Register Chart.js components
 ChartJS.register(
@@ -118,7 +116,6 @@ const StockGraph = ({
   const handleStockChange = (event, newValue) => {
     dispatch(setSelectedStocks(newValue));
     if (newValue.length > 0) {
-      dispatch(updateGraph(newValue.map(stock => stock.symbol), selectedMetric));
       dispatch(saveSettings(newValue, selectedMetric));
     } else {
       dispatch(clearChartData());

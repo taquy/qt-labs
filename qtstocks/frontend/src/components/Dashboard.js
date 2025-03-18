@@ -5,8 +5,8 @@ import {
   Typography,
   Button,
   Alert,
-  Grid,
-  Snackbar
+  Snackbar,
+  Grid
 } from '@mui/material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,11 @@ import StockGraph from './StockGraph';
 // Configure axios to include credentials
 axios.defaults.withCredentials = true;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+const getRequestConfig = () => ({
+  headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+  withCredentials: true
+});
 
 const METRICS = [
   'Market Cap',
@@ -45,9 +50,7 @@ const Dashboard = () => {
   const fetchStocks = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(API_ENDPOINTS.stocks, {
-        withCredentials: true
-      });
+      const response = await axios.get(API_ENDPOINTS.stocks, getRequestConfig());
       setStocks(response.data.stocks);
     } catch (err) {
       if (err.response?.status === 401) {
@@ -79,7 +82,7 @@ const Dashboard = () => {
   const highlightMatch = (text, search) => {
     if (!search) return text;
     const parts = text.split(new RegExp(`(${search})`, 'gi'));
-    return parts.map((part, index) => 
+    return parts.map((part, index) =>
       part.toLowerCase() === search.toLowerCase() ? 
         <span key={index} style={{ backgroundColor: '#fff59d' }}>{part}</span> : part
     );
@@ -91,9 +94,7 @@ const Dashboard = () => {
 
   const handleDownloadStockList = async () => {
     try {
-      await axios.post(API_ENDPOINTS.downloadStockList, {}, {
-        withCredentials: true
-      });
+      await axios.post(API_ENDPOINTS.downloadStockList, {}, getRequestConfig());
       fetchStocks();
     } catch (err) {
       if (err.response?.status === 401) {
@@ -116,9 +117,7 @@ const Dashboard = () => {
     try {
       await axios.post(API_ENDPOINTS.fetchStockData, {
         symbols: selectedStocks
-      }, {
-        withCredentials: true
-      });
+      }, getRequestConfig());
       setError('');
       
       setNotification({
@@ -146,9 +145,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post(API_ENDPOINTS.logout, {}, {
-        withCredentials: true
-      });
+      await axios.post(API_ENDPOINTS.logout, {}, getRequestConfig());
       localStorage.removeItem('token');
       localStorage.removeItem('isLoggedIn');
       delete axios.defaults.headers.common['Authorization'];
