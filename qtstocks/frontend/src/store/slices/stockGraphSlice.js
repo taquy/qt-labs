@@ -19,9 +19,6 @@ const stockGraphSlice = createSlice({
     setSelectedStocks: (state, action) => {
       state.selectedStocks = action.payload;
     },
-    setChartData: (state, action) => {
-      state.chartData = action.payload;
-    },
     setError: (state, action) => {
       state.error = action.payload;
     },
@@ -34,9 +31,6 @@ const stockGraphSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    clearChartData: (state) => {
-      state.chartData = null;
-    }
   }
 });
 

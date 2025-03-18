@@ -35,6 +35,7 @@ import {
   setSelectedStocks,
   clearChartData,
 } from '../store/slices/stockGraphSlice';
+import { useState } from 'react';
 
 // Register Chart.js components
 ChartJS.register(
@@ -47,11 +48,11 @@ ChartJS.register(
 );
 
 const StockGraph = ({ 
-  selectedMetric, 
-  metrics, 
-  handleMetricChange, 
-  loading, 
-  setGraphData 
+  selectedMetric,
+  metrics,
+  handleMetricChange,
+  loading,
+  setGraphData
 }) => {
   const dispatch = useDispatch();
   
@@ -60,7 +61,8 @@ const StockGraph = ({
     availableStocks,
     selectedStocks,
     chartData,
-    error
+    error,
+    settings
   } = useSelector(state => state.stockGraph);
 
   // Initial data loading
@@ -69,20 +71,49 @@ const StockGraph = ({
     dispatch(fetchSettings());
   }, [dispatch]);
 
+  // Load settings when available
+  useEffect(() => {
+    if (settings?.stockGraph && availableStocks.length > 0) {
+      const { selectedSymbols, selectedMetric: savedMetric } = settings.stockGraph;
+      // Find and set selected stocks
+      const selectedStocksData = availableStocks.filter(stock => 
+        selectedSymbols.includes(stock.symbol)
+      );
+      if (selectedStocksData.length > 0) {
+        dispatch(setSelectedStocks(selectedStocksData));
+        // Generate colors for each bar
+        // const colors = response.data.map((_, index) => 
+        //   `hsl(${(index * 360/response.data.length)}, 70%, 50%)`
+        // );
+
+        // const chartConfig = {
+        //   labels: response.data.map(item => item.symbol),
+        //   datasets: [{
+        //     label: response.metric,
+        //     data: response.data.map(item => item.value),
+        //     backgroundColor: colors,
+        //     borderColor: colors.map(color => color.replace('50%', '40%')),
+        //     borderWidth: 1,
+        //     borderRadius: 5,
+        //     hoverBackgroundColor: colors.map(color => color.replace('50%', '60%')),
+        //   }]
+        // };
+        // dispatch(updateGraph(selectedSymbols, savedMetric));
+      }
+      // Update metric in parent component
+      if (savedMetric) {
+        handleMetricChange({ target: { value: savedMetric } });
+      }
+    }
+  }, [settings, availableStocks, dispatch, handleMetricChange]);
+
+
   // Update parent's graph data when chartData changes
   useEffect(() => {
     if (chartData) {
       setGraphData(chartData);
     }
   }, [chartData, setGraphData]);
-
-  // Update chart when metric changes
-  useEffect(() => {
-    if (selectedStocks.length > 0) {
-      dispatch(updateGraph(selectedStocks.map(stock => stock.symbol), selectedMetric));
-      dispatch(saveSettings(selectedStocks, selectedMetric));
-    }
-  }, [selectedMetric, selectedStocks, dispatch]);
 
   const handleStockChange = (event, newValue) => {
     dispatch(setSelectedStocks(newValue));
