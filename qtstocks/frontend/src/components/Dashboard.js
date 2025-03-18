@@ -54,23 +54,14 @@ const Dashboard = () => {
       </Box>
 
       <Grid item xs={12}>
-        <StockSelector/>
-
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-          <Box sx={{ 
-            mt: 3,
-            mb: 3,
-            p: 2,
-            bgcolor: 'background.paper',
-            borderRadius: 1,
-            boxShadow: 1
-          }}>
-            <StockSelectionTable />
-          </Box>
+        <StockSelector/>
+        <StockSelectionTable />
+        <StockGraph />
         </Grid>
     </Container>
   );

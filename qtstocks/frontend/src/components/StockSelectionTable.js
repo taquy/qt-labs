@@ -14,8 +14,10 @@ import {
   Stack
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchAvailableStocks } from '../store/sagas/stockGraphSaga';
 
 const StockSelectionTable = () => {
+  const dispatch = useDispatch();
 
   // Select state from Redux store
   const {
@@ -24,6 +26,10 @@ const StockSelectionTable = () => {
   } = useSelector(state => state.stockGraph);
 
   const [selected, setSelected] = React.useState([]);
+
+  useEffect(() => {
+    dispatch(fetchAvailableStocks());
+  }, [dispatch]);
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
@@ -48,6 +54,7 @@ const StockSelectionTable = () => {
   };
 
   return (
+    <Paper sx={{ p: 2, mt: 3, mb: 3 }}> 
     <Box sx={{ width: '100%', mb: 3 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">
@@ -123,6 +130,7 @@ const StockSelectionTable = () => {
         </Table>
       </TableContainer>
     </Box>
+    </Paper>
   );
 };
 
