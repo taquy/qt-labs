@@ -66,6 +66,7 @@ const Login = () => {
   }, [handleGoogleLogin]);
 
   const handleSubmit = async (e) => {
+    e.preventDefault();
     dispatch(login(username, password));
   };
 
@@ -130,6 +131,7 @@ const Login = () => {
             size="large"
             fullWidth
           >
+            Sign In
           </Button>
         </form>
 

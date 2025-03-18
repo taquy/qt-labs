@@ -23,7 +23,7 @@ export const LOGOUT = 'stockGraph/logout';
 export const LOGIN = 'stockGraph/login';
 export const GOOGLE_LOGIN = 'stockGraph/googleLogin';
 export const REMOVE_AVAILABLE_STOCK = 'stockGraph/removeAvailableStock';
-
+export const CHECK_IS_LOGGED_IN = 'stockGraph/checkIsLoggedIn';
 // Action Creators
 export const fetchAvailableStocks = () => ({ type: FETCH_AVAILABLE_STOCKS });
 export const fetchSettings = () => ({ type: FETCH_SETTINGS });
@@ -34,11 +34,11 @@ export const fetchStocks = () => ({ type: FETCH_STOCKS });
 export const googleLogin = (token) => ({ type: GOOGLE_LOGIN, payload: { token } });
 export const removeAvailableStock = (payload) => ({ type: REMOVE_AVAILABLE_STOCK, payload });
 export const fetchStockData = (payload) => ({ type: FETCH_STOCK_DATA, payload });
-
+export const checkIsLoggedIn = () => ({ type: CHECK_IS_LOGGED_IN });
 // Helper function to handle API errors
 const handleApiError = (error, saga) => {
   if (error.response?.status === 401) {
-    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     localStorage.removeItem('isLoggedIn');
     window.location.href = '/login';
   }
@@ -46,7 +46,7 @@ const handleApiError = (error, saga) => {
 }
 
 const getRequestConfig = () => ({
-  headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+  headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
   withCredentials: true
 });
 
@@ -86,11 +86,8 @@ const api = {
     const response = await axios.post(API_ENDPOINTS.logout, {}, getRequestConfig());
     return response.data;
   },
-  login: async (username, password) => {
-    const response = await axios.post(API_ENDPOINTS.login, {
-      username,
-      password
-    });
+  login: async (payload) => {
+    const response = await axios.post(API_ENDPOINTS.login, payload);
     return response.data;
   },
   googleLogin: async (token) => {
@@ -115,6 +112,17 @@ const api = {
 
 
 // Sagas
+function* checkIsLoggedInSaga() {
+  const isLoggedIn = localStorage.getItem('isLoggedIn');
+  const authToken = localStorage.getItem('authToken');
+  if (isLoggedIn && authToken) {
+    yield effects.put(setIsLoggedIn(true));
+    yield effects.put(setAuthToken(authToken));
+  } else {
+    yield effects.put(setIsLoggedIn(false));
+  }
+}
+
 function* removeAvailableStockSaga(action) {
   try {
     yield effects.call(api.removeAvailableStock, action.payload);
@@ -147,11 +155,10 @@ function* loginSaga(action) {
 function* logoutSaga() {
   try {
     yield effects.call(api.logout);
-    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     localStorage.removeItem('isLoggedIn');
     delete axios.defaults.headers.common['Authorization'];
     yield effects.put(setIsLoggedIn(false));
-    // navigate('/login');
   } catch (error) {
     yield effects.put(setError('Failed to logout'));
     yield effects.call(handleApiError, error, 'logoutSaga');
@@ -240,4 +247,5 @@ export function* stockGraphSaga() {
   yield effects.takeLatest(LOGIN, loginSaga);
   yield effects.takeLatest(GOOGLE_LOGIN, googleLoginSaga);
   yield effects.takeLatest(REMOVE_AVAILABLE_STOCK, removeAvailableStockSaga);
+  yield effects.takeLatest(CHECK_IS_LOGGED_IN, checkIsLoggedInSaga);
 }
