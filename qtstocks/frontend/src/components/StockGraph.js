@@ -80,10 +80,19 @@ const StockGraph = () => {
         borderColor: colors.map(color => color.replace('50%', '40%')),
         borderRadius: 5,
         hoverBackgroundColor: colors.map(color => color.replace('50%', '60%')),
-      }]
+      }],
+      title: {
+        display: true,
+        text: `Comparison of ${metrics[selectedMetric]} across selected stocks`,
+        font: { size: 16 }
+      }
     }
     setChartData(newChartData);
   }, [selectedStocks, selectedMetric, metrics]);
+
+  useEffect(() => {
+    console.log(chartData);
+  }, [chartData]);
 
   // Load settings when available
   useEffect(() => {
@@ -96,11 +105,9 @@ const StockGraph = () => {
       if (selectedStocksData.length > 0) {
         setSelectedStocks(selectedStocksData);
       }
-      if (savedMetric !== selectedMetric) {
-        setSelectedMetric(savedMetric);
-      };
+      setSelectedMetric(savedMetric);
     }
-  }, [settings, selectedMetric, availableStocks, dispatch]);
+  }, [settings, availableStocks, dispatch]);
 
   const handleStockChange = (event, newValue) => {
     setSelectedStocks(newValue);
@@ -217,22 +224,10 @@ const StockGraph = () => {
                   duration: 750,
                   easing: 'easeInOutQuart'
                 },
-                // plugins: {
-                //   legend: { display: false },
-                //   title: {
-                //     display: true,
-                //     text: `Comparison of ${chartData.metric} across Selected Stocks`,
-                //     font: { size: 16 }
-                //   },
-                //   tooltip: {
-                //     callbacks: {
-                //       label: (context) => {
-                //         const value = context.parsed.y;
-                //         return `${chartData.metric}: ${value.toFixed(2)}`;
-                //       }
-                //     }
-                //   }
-                // },
+                plugins: {
+                  legend: { display: false },
+                  title: chartData.title
+                },
                 scales: {
                   y: {
                     beginAtZero: true,
