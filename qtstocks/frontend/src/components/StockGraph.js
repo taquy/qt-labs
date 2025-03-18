@@ -63,13 +63,22 @@ const StockGraph = () => {
 
   useEffect(() => {
     if (!selectedStocks) return;
-    const labels = selectedStocks.map(stock => stock.symbol);
-    const dataPoints = selectedStocks.map(stock => stock[selectedMetric]);
+    let labels = selectedStocks.map(stock => stock.symbol);
+    let dataPoints = selectedStocks.map(stock => stock[selectedMetric]);
 
     // Generate colors for each bar
-    const colors = labels.map((_, index) =>
+    let colors = labels.map((_, index) =>
       `hsl(${(index * 360/ labels.length)}, 70%, 50%)`
     );
+    // Sort labels and dataPoints together based on dataPoints values
+    const sortedIndices = dataPoints
+      .map((value, index) => ({ value, index }))
+      .sort((a, b) => b.value - a.value)
+      .map(item => item.index);
+
+    labels = sortedIndices.map(i => labels[i]);
+    dataPoints = sortedIndices.map(i => dataPoints[i]);
+    colors = sortedIndices.map(i => colors[i]);
     const newChartData = {
       labels,
       datasets: [{
