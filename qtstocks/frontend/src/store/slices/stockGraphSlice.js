@@ -9,24 +9,34 @@ const METRICS = {
 };
 
 const initialState = {
+  stocks: [],
   availableStocks: [],
-  selectedStocks: [],
   chartData: null,
   error: null,
   loading: false,
   settings: null,
   metrics: METRICS,
+  isLoggedIn: false,
+  authToken: null,
 };
 
 const stockGraphSlice = createSlice({
   name: 'stockGraph',
   initialState,
   reducers: {
+    setAuthToken: (state, action) => {
+      state.authToken = action.payload;
+      localStorage.setItem('authToken', action.payload);
+    },
+    setIsLoggedIn: (state, action) => {
+      state.isLoggedIn = action.payload;
+      localStorage.setItem('isLoggedIn', action.payload);
+    },
+    setStocks: (state, action) => {
+      state.stocks = action.payload;
+    },
     setAvailableStocks: (state, action) => {
       state.availableStocks = action.payload;
-    },
-    setSelectedStocks: (state, action) => {
-      state.selectedStocks = action.payload;
     },
     setError: (state, action) => {
       state.error = action.payload;
@@ -45,11 +55,13 @@ const stockGraphSlice = createSlice({
 
 export const {
   setAvailableStocks,
-  setSelectedStocks,
   setError,
   setLoading,
   setSettings,
   clearError,
+  setStocks,
+  setIsLoggedIn,
+  setAuthToken,
 } = stockGraphSlice.actions;
 
-export default stockGraphSlice.reducer; 
+export default stockGraphSlice.reducer;

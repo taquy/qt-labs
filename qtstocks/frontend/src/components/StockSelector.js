@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Paper,
   Typography,
@@ -11,16 +11,30 @@ import {
   CircularProgress
 } from '@mui/material';
 
-const StockSelector = ({
-  stocks,
-  selectedStocks,
-  setSelectedStocks,
-  handleDownloadStockList,
-  handleFetchStockData,
-  highlightMatch,
-  inputValue,
-  loading
-}) => {
+import { useSelector } from 'react-redux';
+
+const StockSelector = () => {
+  const [selectedStocks, setSelectedStocks] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+
+  const {
+    stocks,
+  } = useSelector(state => state.stockGraph);
+
+  // Function to highlight matching text
+  const highlightMatch = (text, search) => {
+    if (!search) return text;
+    const parts = text.split(new RegExp(`(${search})`, 'gi'));
+    return parts.map((part, index) =>
+      part.toLowerCase() === search.toLowerCase() ? 
+        <span key={index} style={{ backgroundColor: '#fff59d' }}>{part}</span> : part
+    );
+  };
+
+  const handleFetchStockData = () => {
+    console.log('Fetching stock data');
+  };
+  
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
@@ -30,22 +44,10 @@ const StockSelector = ({
       <Box sx={{ mb: 2 }}>
         <Button
           variant="contained"
-          color="primary"
-          onClick={handleDownloadStockList}
-          sx={{ mr: 2 }}
-          disabled={loading}
-        >
-          Download Stock List
-        </Button>
-        <Button
-          variant="contained"
           color="success"
           onClick={handleFetchStockData}
-          disabled={selectedStocks.length === 0 || loading}
-          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
-        >
-          {loading ? 'Fetching Data...' : 'Fetch Stock Data'}
-        </Button>
+          disabled={selectedStocks.length === 0}
+        ></Button>
       </Box>
 
       <Typography variant="subtitle1" gutterBottom>
@@ -77,7 +79,6 @@ const StockSelector = ({
                 ...params.InputProps,
                 endAdornment: (
                   <>
-                    {loading && <CircularProgress color="inherit" size={20} />}
                     {params.InputProps.endAdornment}
                   </>
                 ),
@@ -118,7 +119,6 @@ const StockSelector = ({
               maxHeight: '250px'
             }
           }}
-          disabled={loading}
         />
       </FormControl>
     </Paper>

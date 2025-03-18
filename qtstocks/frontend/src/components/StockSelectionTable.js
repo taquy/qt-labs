@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 
-const StockSelectionTable = ({ stocks, onStockSelect, onRemoveStocks }) => {
+const StockSelectionTable = () => {
 
   // Select state from Redux store
   const {
@@ -43,7 +43,7 @@ const StockSelectionTable = ({ stocks, onStockSelect, onRemoveStocks }) => {
   };
 
   const handleRemoveSelected = () => {
-    onRemoveStocks(selected);
+    console.log(selected);
     setSelected([]);
   };
 

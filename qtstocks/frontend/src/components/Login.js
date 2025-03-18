@@ -12,95 +12,48 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config';
-
-// Configure axios to include credentials
-axios.defaults.withCredentials = true;
-axios.defaults.headers.common['Content-Type'] = 'application/json';
+import { useDispatch, useSelector } from 'react-redux';
+import { login, googleLogin } from '../store/sagas/stockGraphSaga';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
   const googleButtonRef = useRef(null);
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { authToken, isLoggedIn, error } = useSelector(state => state.stockGraph);
 
   const handleGoogleLogin = useCallback(async (response) => {
-    try {
-      if (!response || !response.credential) {
-        setError('Failed to get Google credentials');
-        return;
-      }
-
-      const result = await fetch(API_ENDPOINTS.googleLogin, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ token: response.credential }),
-      });
-
-      if (!result.ok) {
-        const errorData = await result.json().catch(() => ({ message: 'Failed to authenticate with Google' }));
-        throw new Error(errorData.message || 'Failed to authenticate with Google');
-      }
-
-      const data = await result.json();
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('isLoggedIn', 'true');
-        // Set the token for future axios requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-        navigate('/');
-      } else {
-        throw new Error('No token received from server');
-      }
-    } catch (err) {
-      console.error('Google login error:', err);
-      setError(err.message || 'Failed to login with Google');
-    }
-  }, [navigate]);
+    dispatch(googleLogin(response.credential));
+  }, [dispatch]);
 
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
-    
     const handleLoad = () => {
       const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-      if (!clientId) {
-        console.error('Google Client ID is not configured');
-        setError('Google Sign-In is not properly configured');
-        return;
-      }
 
-      try {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleLogin,
-          auto_select: false,
-          cancel_on_tap_outside: true
-        });
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleLogin,
+        auto_select: false,
+        cancel_on_tap_outside: true
+      });
 
-        // Render the Google Sign-In button
-        window.google.accounts.id.renderButton(
-          googleButtonRef.current,
-          {
-            type: 'standard',
-            theme: 'outline',
-            size: 'large',
-            text: 'continue_with',
-            width: '100%',
-            logo_alignment: 'left'
-          }
-        );
-      } catch (err) {
-        console.error('Error initializing Google Sign-In:', err);
-        setError('Failed to initialize Google Sign-In');
-      }
+      // Render the Google Sign-In button
+      window.google.accounts.id.renderButton(
+        googleButtonRef.current,
+        {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'continue_with',
+          width: '100%',
+          logo_alignment: 'left'
+        }
+      );
     };
 
     script.addEventListener('load', handleLoad);
@@ -115,30 +68,14 @@ const Login = () => {
   }, [handleGoogleLogin]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const response = await axios.post(API_ENDPOINTS.login, {
-        username,
-        password
-      });
-      if (response.data.success) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('isLoggedIn', 'true');
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-        navigate('/');
-      } else {
-        setError(response.data.message || 'Login failed');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Failed to login. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    dispatch(login(username, password));
   };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate('/');
+    }
+  }, [isLoggedIn, navigate]);
 
   return (
     <Box
@@ -193,10 +130,8 @@ const Login = () => {
             variant="contained"
             color="primary"
             size="large"
-            disabled={loading}
             fullWidth
           >
-            {loading ? 'Logging in...' : 'Login'}
           </Button>
         </form>
 
