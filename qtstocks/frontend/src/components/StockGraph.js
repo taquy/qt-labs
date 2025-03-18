@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Paper,
@@ -45,20 +45,33 @@ ChartJS.register(
   Legend
 );
 
+const METRICS = {
+  'market_cap': 'Market Cap',
+  'price': 'Price',
+  'eps': 'EPS',
+  'pe': 'P/E',
+  'pb': 'P/B'
+};
+
 const StockGraph = ({ 
-  selectedMetric,
-  metrics,
-  handleMetricChange,
   loading,
   setGraphData
 }) => {
   const dispatch = useDispatch();
+  const [selectedMetric, setSelectedMetric] = useState('market_cap');
+  const [chartData, setChartData] = useState({
+    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+    datasets: [{
+      label: '# of Votes',
+      data: [12, 19, 3, 5, 2, 3],
+      borderWidth: 1
+    }]
+  });
   
   // Select state from Redux store
   const {
     availableStocks,
     selectedStocks,
-    chartData,
     error,
     settings
   } = useSelector(state => state.stockGraph);
@@ -69,49 +82,23 @@ const StockGraph = ({
     dispatch(fetchSettings());
   }, [dispatch]);
 
+
   // Load settings when available
   useEffect(() => {
     if (settings?.stockGraph && availableStocks.length > 0) {
       const { selectedSymbols, selectedMetric: savedMetric } = settings.stockGraph;
       // Find and set selected stocks
-      const selectedStocksData = availableStocks.filter(stock => 
+      const selectedStocksData = availableStocks.filter(stock =>
         selectedSymbols.includes(stock.symbol)
       );
       if (selectedStocksData.length > 0) {
         dispatch(setSelectedStocks(selectedStocksData));
-        // Generate colors for each bar
-        // const colors = response.data.map((_, index) => 
-        //   `hsl(${(index * 360/response.data.length)}, 70%, 50%)`
-        // );
-
-        // const chartConfig = {
-        //   labels: response.data.map(item => item.symbol),
-        //   datasets: [{
-        //     label: response.metric,
-        //     data: response.data.map(item => item.value),
-        //     backgroundColor: colors,
-        //     borderColor: colors.map(color => color.replace('50%', '40%')),
-        //     borderWidth: 1,
-        //     borderRadius: 5,
-        //     hoverBackgroundColor: colors.map(color => color.replace('50%', '60%')),
-        //   }]
-        // };
-        // dispatch(updateGraph(selectedSymbols, savedMetric));
       }
-      // Update metric in parent component
-      if (savedMetric) {
-        handleMetricChange({ target: { value: savedMetric } });
-      }
+      if (savedMetric !== selectedMetric) {
+        setSelectedMetric(savedMetric);
+      };
     }
-  }, [settings, availableStocks, dispatch, handleMetricChange]);
-
-
-  // Update parent's graph data when chartData changes
-  useEffect(() => {
-    if (chartData) {
-      setGraphData(chartData);
-    }
-  }, [chartData, setGraphData]);
+  }, [settings, selectedMetric, availableStocks, dispatch]);
 
   const handleStockChange = (event, newValue) => {
     dispatch(setSelectedStocks(newValue));
@@ -122,6 +109,12 @@ const StockGraph = ({
       setGraphData(null);
       dispatch(saveSettings([], selectedMetric));
     }
+  };
+
+  const onMetricChange = (event) => {
+    const newMetric = event.target.value;
+    setSelectedMetric(newMetric);
+    dispatch(saveSettings(selectedStocks, newMetric));
   };
 
   return (
@@ -195,11 +188,11 @@ const StockGraph = ({
           <Select
             value={selectedMetric}
             label="Metric"
-            onChange={handleMetricChange}
+            onChange={onMetricChange}
           >
-            {metrics.map((metric) => (
+            {Object.keys(METRICS).map((metric) => (
               <MenuItem key={metric} value={metric}>
-                {metric}
+                {METRICS[metric]}
               </MenuItem>
             ))}
           </Select>
@@ -220,7 +213,7 @@ const StockGraph = ({
         ) : chartData ? (
           <Box sx={{ height: 500, width: '100%' }}>
             <Bar 
-              data={chartData.data} 
+              data={chartData} 
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
@@ -228,22 +221,22 @@ const StockGraph = ({
                   duration: 750,
                   easing: 'easeInOutQuart'
                 },
-                plugins: {
-                  legend: { display: false },
-                  title: {
-                    display: true,
-                    text: `Comparison of ${chartData.metric} across Selected Stocks`,
-                    font: { size: 16 }
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: (context) => {
-                        const value = context.parsed.y;
-                        return `${chartData.metric}: ${value.toFixed(2)}`;
-                      }
-                    }
-                  }
-                },
+                // plugins: {
+                //   legend: { display: false },
+                //   title: {
+                //     display: true,
+                //     text: `Comparison of ${chartData.metric} across Selected Stocks`,
+                //     font: { size: 16 }
+                //   },
+                //   tooltip: {
+                //     callbacks: {
+                //       label: (context) => {
+                //         const value = context.parsed.y;
+                //         return `${chartData.metric}: ${value.toFixed(2)}`;
+                //       }
+                //     }
+                //   }
+                // },
                 scales: {
                   y: {
                     beginAtZero: true,

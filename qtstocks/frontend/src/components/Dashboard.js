@@ -23,18 +23,9 @@ const getRequestConfig = () => ({
   withCredentials: true
 });
 
-const METRICS = [
-  'Market Cap',
-  'Price',
-  'EPS',
-  'P/E',
-  'P/B'
-];
-
 const Dashboard = () => {
   const [stocks, setStocks] = useState([]);
   const [selectedStocks, setSelectedStocks] = useState([]);
-  const [selectedMetric, setSelectedMetric] = useState(METRICS[0]);
   const [graphData, setGraphData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -86,10 +77,6 @@ const Dashboard = () => {
       part.toLowerCase() === search.toLowerCase() ? 
         <span key={index} style={{ backgroundColor: '#fff59d' }}>{part}</span> : part
     );
-  };
-
-  const handleMetricChange = (event) => {
-    setSelectedMetric(event.target.value);
   };
 
   const handleDownloadStockList = async () => {
@@ -194,9 +181,6 @@ const Dashboard = () => {
         </Grid>
         <Grid item xs={12}>
           <StockGraph
-            selectedMetric={selectedMetric}
-            metrics={METRICS}
-            handleMetricChange={handleMetricChange}
             loading={loading}
             graphData={graphData}
             setGraphData={setGraphData}
