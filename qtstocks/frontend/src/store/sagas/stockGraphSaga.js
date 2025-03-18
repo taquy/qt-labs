@@ -9,7 +9,8 @@ import {
   clearError,
   setIsLoggedIn,
   setAuthToken,
-  setStocks
+  setStocks,
+  setFetchingStockStats
 } from '../slices/stockGraphSlice';
 
 // Action Types
@@ -159,7 +160,7 @@ function* logoutSaga() {
 
 function* fetchStockDataSaga(action) {
   try {
-    yield effects.put(setLoading(true));
+    yield effects.put(setFetchingStockStats(true));
     yield effects.put(clearError());
     yield effects.call(api.fetchStockData, action.payload);
     yield effects.call(fetchAvailableStocksSaga);
@@ -167,7 +168,7 @@ function* fetchStockDataSaga(action) {
     yield effects.put(setError('Failed to fetch stocks'));
     yield effects.call(handleApiError, error, 'fetchStockDataSaga');
   } finally {
-    yield effects.put(setLoading(false));
+    yield effects.put(setFetchingStockStats(false));
   }
 }
 

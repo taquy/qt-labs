@@ -8,7 +8,8 @@ import {
   Autocomplete,
   TextField,
   Chip,
-  CircularProgress
+  CircularProgress,
+  Stack
 } from '@mui/material';
 
 import { fetchStocks, fetchStockData } from '../store/sagas/stockGraphSaga';
@@ -21,7 +22,12 @@ const StockSelector = () => {
   
   const {
     stocks,
+    fetchingStockStats
   } = useSelector(state => state.stockGraph);
+
+  useEffect(() => {
+    console.log(fetchingStockStats);
+  }, [fetchingStockStats]);
 
   useEffect(() => {
     dispatch(fetchStocks());
@@ -41,6 +47,10 @@ const StockSelector = () => {
     dispatch(fetchStockData(selectedStocks));
   };
   
+  const handleRemoveStock = (stockToRemove) => {
+    setSelectedStocks(selectedStocks.filter(stock => stock.symbol !== stockToRemove.symbol));
+  };
+
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
@@ -50,11 +60,21 @@ const StockSelector = () => {
       <Box sx={{ mb: 2 }}>
         <Button
           variant="contained"
-          color="success"
+          color="primary"
           onClick={handleFetchStockData}
-          disabled={selectedStocks.length === 0}
+          disabled={selectedStocks.length === 0 || fetchingStockStats}
+          sx={{ 
+            minWidth: '200px',
+            position: 'relative'
+          }}
         >
-          Fetch Stock Data
+          {fetchingStockStats ? (
+            <>
+              Fetching Data...
+            </>
+          ) : (
+            'Fetch Stock Data'
+          )}
         </Button>
       </Box>
 
@@ -114,6 +134,7 @@ const StockSelector = () => {
                   label={option.symbol}
                   {...chipProps}
                   size="small"
+                  onDelete={() => handleRemoveStock(option)}
                 />
               );
             })

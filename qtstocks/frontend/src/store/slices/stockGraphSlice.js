@@ -18,6 +18,7 @@ const initialState = {
   metrics: METRICS,
   isLoggedIn: false,
   authToken: null,
+  fetchingStockStats: false,
 };
 
 const stockGraphSlice = createSlice({
@@ -50,6 +51,9 @@ const stockGraphSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    setFetchingStockStats: (state, action) => {
+      state.fetchingStockStats = action.payload;
+    },
   }
 });
 
@@ -62,6 +66,7 @@ export const {
   setStocks,
   setIsLoggedIn,
   setAuthToken,
+  setFetchingStockStats,
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer;
