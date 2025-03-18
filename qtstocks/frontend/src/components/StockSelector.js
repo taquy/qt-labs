@@ -24,11 +24,7 @@ const StockSelector = () => {
     stocks,
     fetchingStockStats
   } = useSelector(state => state.stockGraph);
-
-  useEffect(() => {
-    console.log(fetchingStockStats);
-  }, [fetchingStockStats]);
-
+  
   useEffect(() => {
     dispatch(fetchStocks());
   }, [dispatch]);
@@ -48,7 +44,7 @@ const StockSelector = () => {
   };
   
   const handleRemoveStock = (stockToRemove) => {
-    setSelectedStocks(selectedStocks.filter(stock => stock.symbol !== stockToRemove.symbol));
+    setSelectedStocks(selectedStocks.filter(stock => stock !== stockToRemove));
   };
 
   return (
@@ -65,12 +61,23 @@ const StockSelector = () => {
           disabled={selectedStocks.length === 0 || fetchingStockStats}
           sx={{ 
             minWidth: '200px',
+            height: '40px',
             position: 'relative'
           }}
         >
           {fetchingStockStats ? (
             <>
-              Fetching Data...
+              <CircularProgress
+                size={24}
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  marginTop: '-12px',
+                  marginLeft: '-12px',
+                  color: 'white'
+                }}
+              />
             </>
           ) : (
             'Fetch Stock Data'
@@ -134,7 +141,7 @@ const StockSelector = () => {
                   label={option.symbol}
                   {...chipProps}
                   size="small"
-                  onDelete={() => handleRemoveStock(option)}
+                  onDelete={() => handleRemoveStock(option.symbol)}
                 />
               );
             })
