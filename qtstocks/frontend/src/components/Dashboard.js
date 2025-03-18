@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
 import StockSelector from './StockSelector';
 import StockGraph from './StockGraph';
+import StockSelectionTable from './StockSelectionTable';
 
 // Configure axios to include credentials
 axios.defaults.withCredentials = true;
@@ -149,6 +150,23 @@ const Dashboard = () => {
     setNotification(prev => ({ ...prev, open: false }));
   };
 
+  const handleStockSelect = (stock) => {
+    if (!selectedStocks.find(s => s.symbol === stock.symbol)) {
+      setSelectedStocks([...selectedStocks, stock]);
+      setNotification({
+        open: true,
+        message: `${stock.symbol} added to selection`,
+        severity: 'success'
+      });
+    } else {
+      setNotification({
+        open: true,
+        message: `${stock.symbol} is already selected`,
+        severity: 'info'
+      });
+    }
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -168,22 +186,34 @@ const Dashboard = () => {
 
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <StockSelector
-            stocks={stocks}
-            selectedStocks={selectedStocks}
-            setSelectedStocks={setSelectedStocks}
-            handleDownloadStockList={handleDownloadStockList}
-            handleFetchStockData={handleFetchStockData}
-            highlightMatch={highlightMatch}
-            inputValue={inputValue}
-            loading={fetchingData}
-          />
+          <Box sx={{ 
+            mb: 3,
+            p: 2,
+            bgcolor: 'background.paper',
+            borderRadius: 1,
+            boxShadow: 1
+          }}>
+            <StockSelectionTable 
+              stocks={stocks} 
+              onStockSelect={handleStockSelect}
+            />
+          </Box>
         </Grid>
         <Grid item xs={12}>
-          <StockGraph
-            loading={loading}
-            graphData={graphData}
-            setGraphData={setGraphData}
+          {loading ? (
+            <Typography>Loading...</Typography>
+          ) : error ? (
+            <Alert severity="error">{error}</Alert>
+          ) : (
+            <StockGraph data={graphData} />
+          )}
+        </Grid>
+        <Grid item xs={12}>
+          <StockSelector
+            selectedStocks={selectedStocks}
+            setSelectedStocks={setSelectedStocks}
+            onFetchData={handleFetchStockData}
+            fetchingData={fetchingData}
           />
         </Grid>
       </Grid>
