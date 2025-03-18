@@ -49,8 +49,6 @@ const StockSelectionTable = () => {
   };
 
   const handleRemoveSelected = () => {
-    console.log(selected);
-    
     dispatch(removeAvailableStock(selected));
     setSelected([]);
   };

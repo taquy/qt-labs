@@ -11,7 +11,7 @@ import {
   CircularProgress
 } from '@mui/material';
 
-import { fetchStocks } from '../store/sagas/stockGraphSaga';
+import { fetchStocks, fetchStockData } from '../store/sagas/stockGraphSaga';
 import { useSelector, useDispatch } from 'react-redux';
 
 const StockSelector = () => {
@@ -38,7 +38,7 @@ const StockSelector = () => {
   };
 
   const handleFetchStockData = () => {
-    console.log('Fetching stock data');
+    dispatch(fetchStockData(selectedStocks));
   };
   
   return (

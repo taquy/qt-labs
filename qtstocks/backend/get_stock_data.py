@@ -222,11 +222,3 @@ scraper = StockDataScraper()
 def process_stock_list(symbols):
     """Wrapper function to maintain backward compatibility."""
     return scraper.process_stock_list(symbols)
-
-metric_mapping = {
-    'Price': 'price',
-    'MarketCap': 'market_cap',
-    'EPS': 'eps',
-    'P/E': 'pe',
-    'P/B': 'pb'
-}

@@ -32,6 +32,7 @@ export const logout = () => ({ type: LOGOUT });
 export const fetchStocks = () => ({ type: FETCH_STOCKS });
 export const googleLogin = (token) => ({ type: GOOGLE_LOGIN, payload: { token } });
 export const removeAvailableStock = (payload) => ({ type: REMOVE_AVAILABLE_STOCK, payload });
+export const fetchStockData = (payload) => ({ type: FETCH_STOCK_DATA, payload });
 
 // Helper function to handle API errors
 const handleApiError = (error, saga) => {
@@ -160,8 +161,8 @@ function* fetchStockDataSaga(action) {
   try {
     yield effects.put(setLoading(true));
     yield effects.put(clearError());
-    const stocks = yield effects.call(api.fetchStockData, action.payload);
-    yield effects.put(setAvailableStocks(stocks));
+    yield effects.call(api.fetchStockData, action.payload);
+    yield effects.call(fetchAvailableStocksSaga);
   } catch (error) {
     yield effects.put(setError('Failed to fetch stocks'));
     yield effects.call(handleApiError, error, 'fetchStockDataSaga');
