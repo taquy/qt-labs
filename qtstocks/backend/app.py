@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, UTC
 import io
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from models import User, Stock, StockStats, UserSettings
+from models import User, Stock, StockStats, UserSettings, user_stock_stats
 from config import Config
 import requests
 from bs4 import BeautifulSoup
@@ -152,7 +152,7 @@ def create_app(config_class=Config):
     def get_stocks_with_stats(current_user):
         try:
             # Query stocks that have stats
-            stocks_with_stats = db.session.query(Stock).join(StockStats).all()
+            stocks_with_stats = db.session.query(Stock).join(StockStats).join(user_stock_stats).filter(user_stock_stats.c.user_id == current_user.id).all()
             return jsonify({
                 'stocks': [
                     {
@@ -279,7 +279,7 @@ def create_app(config_class=Config):
                 if not stock:
                     return jsonify({'error': f'Stock {symbol} not found in database'}), 404
             
-            process_stock_list(symbols)
+            process_stock_list(symbols, current_user)
             
             return jsonify({
                 'success': True,
@@ -369,6 +369,12 @@ def create_app(config_class=Config):
                 stats = StockStats.query.filter_by(symbol=symbol).first()
                 if stats:
                     db.session.delete(stats)
+            
+            # Delete user_stock_stats for each symbol
+            for symbol in symbols:
+                user_stock_stat = db.session.query(user_stock_stats).filter_by(stock_symbol=symbol, user_id=current_user.id).first()
+                if user_stock_stat:
+                    db.session.delete(user_stock_stat)
             
             db.session.commit()
             

@@ -10,7 +10,7 @@ import sys
 import platform
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from models import Stock, StockStats
 from extensions import db
 from bs4 import BeautifulSoup
@@ -199,7 +199,7 @@ class StockDataScraper:
             raise
         
         
-    def process_stock_list(self, symbols):
+    def process_stock_list(self, symbols, current_user):
         """Process a list of stock symbols and update their data in the database."""
         self.driver = self.create_driver()
         
@@ -245,7 +245,10 @@ class StockDataScraper:
                         stats.eps = self.clean_number(eps_str)
                         stats.pe = self.clean_number(pe_str)
                         stats.pb = self.clean_number(pb_str)
-                        stats.last_updated = datetime.utcnow()
+                        stats.last_updated = datetime.now(UTC)
+                        
+                        # Add the stock to the user's stock_stats relationship
+                        current_user.stock_stats.append(stats)
 
                         # Commit the changes
                         db.session.commit()
@@ -281,6 +284,6 @@ class StockDataScraper:
 scraper = StockDataScraper()
 
 # Function to be called from app.py
-def process_stock_list(symbols):
+def process_stock_list(symbols, current_user):
     """Wrapper function to maintain backward compatibility."""
-    return scraper.process_stock_list(symbols)
+    return scraper.process_stock_list(symbols, current_user)
