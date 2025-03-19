@@ -15,6 +15,7 @@ const initialState = {
   metrics: METRICS,
   fetchingStockStats: false,
   exportedCsv: null,
+  loadingDownloadPdf: false,
   ...sharedInitialState,
 };
 
@@ -34,6 +35,12 @@ const stockGraphSlice = createSlice({
     setExportedCsv: (state, action) => {
       state.exportedCsv = action.payload;
     },
+    setExportedGraphPdf: (state, action) => {
+      state.exportedGraphPdf = action.payload;
+    },
+    setLoadingDownloadPdf: (state, action) => {
+      state.loadingDownloadPdf = action.payload;
+    },
     ...sharedReducer,
   }
 });
@@ -46,6 +53,8 @@ export const {
   setLoading,
   clearError,
   setExportedCsv,
+  setExportedGraphPdf,
+  setLoadingDownloadPdf,
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer;

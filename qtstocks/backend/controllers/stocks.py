@@ -214,7 +214,7 @@ def init_stock_routes(app, token_required):
             print(f"Error exporting stocks: {str(e)}")
             return {'error': str(e)}, 500
     
-    @app.route('/api/stocks/export_pdf')
+    @app.route('/api/export_graph_pdf')
     @token_required
     def export_stocks_pdf(current_user):
         try:

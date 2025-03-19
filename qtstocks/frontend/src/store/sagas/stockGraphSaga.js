@@ -9,6 +9,8 @@ import {
   setStocks,
   setFetchingStockStats,
   setExportedCsv,
+  setExportedGraphPdf,
+  setLoadingDownloadPdf,
 } from '../slices/stockGraphSlice';
 import { handleApiError, getRequestConfig } from '../utils';
 
@@ -18,6 +20,7 @@ export const FETCH_AVAILABLE_STOCKS = 'stockGraph/fetchAvailableStocks';
 export const FETCH_STOCK_DATA = 'stockGraph/fetchStockData';
 export const REMOVE_AVAILABLE_STOCK = 'stockGraph/removeAvailableStock';
 export const EXPORT_STOCK_DATA = 'stockGraph/exportStockData';
+export const EXPORT_GRAPH_PDF = 'stockGraph/exportGraphPdf';
 
 // Action Creators
 export const fetchAvailableStocks = () => ({ type: FETCH_AVAILABLE_STOCKS });
@@ -25,6 +28,7 @@ export const fetchStocks = () => ({ type: FETCH_STOCKS });
 export const removeAvailableStock = (payload) => ({ type: REMOVE_AVAILABLE_STOCK, payload });
 export const fetchStockData = (payload) => ({ type: FETCH_STOCK_DATA, payload });
 export const exportCsv = () => ({ type: EXPORT_STOCK_DATA });
+export const exportGraphPdf = () => ({ type: EXPORT_GRAPH_PDF });
 // API calls
 const api = {
   fetchStocks: async () => {
@@ -51,10 +55,27 @@ const api = {
   exportCsv: async () => {
     const response = await axios.get(API_STOCK_ENDPOINTS.exportCsv, getRequestConfig());
     return response.data;
+  },
+  exportGraphPdf: async () => {
+    const response = await axios.get(API_STOCK_ENDPOINTS.exportGraphPdf, getRequestConfig());
+    return response.data;
   }
 };
 
 // Sagas
+function* exportGraphPdfSaga(action) {
+  try {
+    yield effects.put(setLoadingDownloadPdf(true));
+    const response = yield effects.call(api.exportGraphPdf);
+    yield effects.put(setExportedGraphPdf(response));
+  } catch (error) {
+    yield effects.put(setError('Failed to export graph PDF'));
+    yield effects.call(handleApiError, error, 'exportGraphPdfSaga');
+  } finally {
+    yield effects.put(setLoadingDownloadPdf(false));
+  }
+}
+
 function* removeAvailableStockSaga(action) {
   try {
     yield effects.call(api.removeAvailableStock, action.payload);
@@ -123,4 +144,5 @@ export function* stockGraphSaga() {
   yield effects.takeLatest(FETCH_STOCK_DATA, fetchStockDataSaga);
   yield effects.takeLatest(REMOVE_AVAILABLE_STOCK, removeAvailableStockSaga);
   yield effects.takeLatest(EXPORT_STOCK_DATA, exportCsvSaga);
+  yield effects.takeLatest(EXPORT_GRAPH_PDF, exportGraphPdfSaga);
 }

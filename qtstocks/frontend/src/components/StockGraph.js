@@ -13,7 +13,8 @@ import {
   Chip,
   Tooltip,
   Button,
-  Stack
+  Stack,
+  CircularProgress
 } from '@mui/material';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -28,6 +29,7 @@ import {
 import { format } from 'date-fns';
 import {
   fetchAvailableStocks,
+  exportGraphPdf
 } from '../store/sagas/stockGraphSaga';
 
 import {
@@ -58,7 +60,9 @@ const StockGraph = () => {
   const {
     availableStocks,
     error,
-    metrics
+    metrics,
+    exportedGraphPdf,
+    loadingDownloadPdf
   } = useSelector(state => state.stockGraph);
 
   const { settings } = useSelector(state => state.settings);
@@ -137,6 +141,30 @@ const StockGraph = () => {
     }
   };
 
+  useEffect(() => {
+    if (exportedGraphPdf) {
+      // Create a blob from the binary data
+      const blob = new Blob([exportedGraphPdf], { type: 'application/pdf' });
+      
+      // Create a link element
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      // Set link properties
+      link.setAttribute('href', url);
+      link.setAttribute('download', `stock-comparison-${new Date().toISOString().split('T')[0]}.pdf`);
+      link.style.visibility = 'hidden';
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      URL.revokeObjectURL(url);
+    }
+  }, [exportedGraphPdf]);
+
   const onMetricChange = (event) => {
     const newMetric = event.target.value;
     setSelectedMetric(newMetric);
@@ -144,47 +172,7 @@ const StockGraph = () => {
   };
 
   const exportToPDF = async () => {
-    try {
-      if (!chartRef.current) return;
-
-      const chart = chartRef.current;
-      const canvas = chart.canvas;
-
-      // Create PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
-      const contentWidth = pageWidth - (margin * 2);
-
-      // Calculate dimensions to maintain aspect ratio
-      const imgWidth = contentWidth;
-      const imgHeight = (canvas.height * contentWidth) / canvas.width;
-
-      // Add title
-      pdf.setFontSize(16);
-      pdf.text(chartData.title.text, margin, margin);
-
-      // Add the chart image
-      pdf.addImage(
-        canvas.toDataURL('image/png'),
-        'PNG',
-        margin,
-        margin + 10,
-        imgWidth,
-        imgHeight
-      );
-
-      // Add footer with metric information
-      pdf.setFontSize(10);
-      pdf.text(`Metric: ${chartData.datasets[0].label}`, margin, pageHeight - margin);
-      pdf.text(`Generated on: ${new Date().toLocaleString()}`, margin, pageHeight - margin + 5);
-
-      // Save the PDF
-      pdf.save('stock-chart.pdf');
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-    }
+    dispatch(exportGraphPdf());
   };
 
   if (error) {
@@ -218,9 +206,10 @@ const StockGraph = () => {
             variant="contained"
             color="primary"
             onClick={exportToPDF}
-            disabled={!currentChartData || Object.keys(currentChartData).length === 0}
+            disabled={!currentChartData || Object.keys(currentChartData).length === 0 || loadingDownloadPdf}
+            startIcon={loadingDownloadPdf ? <CircularProgress size={20} color="inherit" /> : null}
           >
-            Export PDF
+            {loadingDownloadPdf ? 'Exporting...' : 'Export PDF'}
           </Button>
         </Stack>
       </Box>

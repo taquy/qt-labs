@@ -20,4 +20,5 @@ export const API_STOCK_ENDPOINTS = {
     fetchStockData: `${API_BASE_URL}/fetch_stock_data`,
     removeAvailableStock: `${API_BASE_URL}/remove_stock_stats`,
     exportCsv: `${API_BASE_URL}/export_csv`,
+    exportGraphPdf: `${API_BASE_URL}/export_graph_pdf`,
 };
