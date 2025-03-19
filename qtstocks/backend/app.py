@@ -22,6 +22,9 @@ import jwt as PyJWT
 from functools import wraps
 from oauthlib.oauth2 import WebApplicationClient
 from get_stock_data import process_stock_list
+import csv
+from controllers.auth import init_auth_routes
+from controllers.settings import init_settings_routes
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -74,60 +77,9 @@ def create_app(config_class=Config):
             return f(current_user, *args, **kwargs)
         return decorated
     
-    @app.route('/api/login', methods=['POST', 'OPTIONS'])
-    def login():
-        if request.method == 'OPTIONS':
-            return Response()
-            
-        try:
-            # Add debug logging
-            print("Received login request")
-            print("Request headers:", dict(request.headers))
-            print("Request data:", request.get_data())
-            
-            data = request.get_json()
-            if not data:
-                print("No JSON data received")
-                return jsonify({'success': False, 'message': 'No data received'}), 400
-                
-            username = data.get('username')
-            password = data.get('password')
-            
-            print(f"Login attempt for username: {username}")
-            
-            if not username or not password:
-                print("Missing username or password")
-                return jsonify({'success': False, 'message': 'Please enter both username and password.'}), 400
-            
-            user = User.query.filter_by(username=username).first()
-            if not user:
-                print(f"User not found: {username}")
-                return jsonify({'success': False, 'message': 'Invalid username or password.'}), 401
-                
-            if not user.check_password(password):
-                print(f"Invalid password for user: {username}")
-                return jsonify({'success': False, 'message': 'Invalid username or password.'}), 401
-                
-            token = PyJWT.encode({
-                'user_id': user.id,
-                'exp': datetime.now(UTC) + timedelta(days=1)
-            }, app.config['SECRET_KEY'], algorithm="HS256")
-            
-            print(f"Login successful for user: {username}")
-            return jsonify({
-                'success': True, 
-                'message': 'Logged in successfully.',
-                'token': token
-            })
-            
-        except Exception as e:
-            print(f"Login error: {str(e)}")
-            return jsonify({'success': False, 'message': 'An error occurred during login.'}), 500
-    
-    @app.route('/api/logout', methods=['POST'])
-    @token_required
-    def logout(current_user):
-        return jsonify({'success': True, 'message': 'Logged out successfully.'})
+    # Initialize routes
+    init_auth_routes(app)
+    init_settings_routes(app, token_required)
     
     @app.route('/api/stocks')
     @token_required
@@ -171,68 +123,6 @@ def create_app(config_class=Config):
         except Exception as e:
             return jsonify({'error': str(e)}), 500
     
-    @app.route('/api/settings', methods=['GET'])
-    @token_required
-    def get_settings(current_user):
-        try:
-            # Get all settings for the current user
-            settings = UserSettings.query.filter_by(user_id=current_user.id).all()
-            return jsonify({
-                'settings': {setting.setting_key: setting.setting_value for setting in settings}
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-
-    @app.route('/api/settings/<setting_key>', methods=['PUT'])
-    @token_required
-    def update_setting(current_user, setting_key):
-        try:
-            data = request.get_json()
-            if not data or 'value' not in data:
-                return jsonify({'error': 'No data received'}), 400
-
-            # Find existing setting or create new one
-            setting = UserSettings.query.filter_by(
-                user_id=current_user.id,
-                setting_key=setting_key
-            ).first()
-
-            if setting:
-                setting.setting_value = data['value']
-                setting.updated_at = datetime.now(UTC)
-            else:
-                setting = UserSettings(
-                    user_id=current_user.id,
-                    setting_key=setting_key,
-                    setting_value=data['value']
-                )
-                db.session.add(setting)
-
-            db.session.commit()
-            return jsonify(setting.to_dict())
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': str(e)}), 500
-
-    @app.route('/api/settings/<setting_key>', methods=['DELETE'])
-    @token_required
-    def delete_setting(current_user, setting_key):
-        try:
-            setting = UserSettings.query.filter_by(
-                user_id=current_user.id,
-                setting_key=setting_key
-            ).first()
-
-            if setting:
-                db.session.delete(setting)
-                db.session.commit()
-                return jsonify({'message': 'Setting deleted successfully'})
-            return jsonify({'message': 'Setting not found'}), 404
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': str(e)}), 500
-    
-
     @app.route('/api/download_stock_list', methods=['POST'])
     @token_required
     def download_stock_list(current_user):
@@ -405,6 +295,48 @@ def create_app(config_class=Config):
             db.session.rollback()
             print(f"Error in remove_stock_stats: {str(e)}")
             return jsonify({'error': str(e)}), 500
+    
+    @app.route('/api/stocks/export')
+    @token_required
+    def export_stocks(current_user):
+        try:
+            # Get all stocks with their stats
+            stocks = Stock.query.all()
+            
+            # Create CSV data
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            # Write header
+            writer.writerow(['Symbol', 'Name', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B', 'Last Updated'])
+            
+            # Write data
+            for stock in stocks:
+                stats = StockStats.query.filter_by(symbol=stock.symbol).first()
+                writer.writerow([
+                    stock.symbol,
+                    stock.name,
+                    stats.price if stats else '',
+                    stats.market_cap if stats else '',
+                    stats.eps if stats else '',
+                    stats.pe if stats else '',
+                    stats.pb if stats else '',
+                    stats.last_updated.strftime('%Y-%m-%d %H:%M:%S') if stats else ''
+                ])
+            
+            # Create response
+            output.seek(0)
+            return Response(
+                output.getvalue(),
+                mimetype='text/csv',
+                headers={
+                    'Content-Disposition': f'attachment; filename=stocks_{datetime.now(UTC).strftime("%Y%m%d_%H%M%S")}.csv'
+                }
+            )
+            
+        except Exception as e:
+            print(f"Error exporting stocks: {str(e)}")
+            return {'error': str(e)}, 500
     
     # Serve React app
     @app.route('/', defaults={'path': ''})
