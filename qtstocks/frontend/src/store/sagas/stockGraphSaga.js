@@ -1,6 +1,6 @@
 import * as effects from 'redux-saga/effects';
 import axios from 'axios';
-import { API_ENDPOINTS } from '../../config';
+import { API_STOCK_ENDPOINTS } from '../../config';
 import {
   setAvailableStocks,
   setError,
@@ -26,24 +26,28 @@ export const fetchStockData = (payload) => ({ type: FETCH_STOCK_DATA, payload })
 // API calls
 const api = {
   fetchStocks: async () => {
-    const response = await axios.get(API_ENDPOINTS.stocks, getRequestConfig());
+    const response = await axios.get(API_STOCK_ENDPOINTS.stocks, getRequestConfig());
     return response.data.stocks;
   },
   fetchAvailableStocks: async () => {
-    const response = await axios.get(API_ENDPOINTS.stocksWithStats, getRequestConfig());
+    const response = await axios.get(API_STOCK_ENDPOINTS.stocksWithStats, getRequestConfig());
     return response.data.stocks;
   },
   fetchStockData: async (payload) => {
-    const response = await axios.post(API_ENDPOINTS.fetchStockData, {
+    const response = await axios.post(API_STOCK_ENDPOINTS.fetchStockData, {
       symbols: payload.selectedStocks,
       loadLatestData: payload.loadLatestData
     }, getRequestConfig());
     return response.data.data;
   },
   removeAvailableStock: async (symbols) => {
-    const response = await axios.post(API_ENDPOINTS.removeAvailableStock, {
+    const response = await axios.post(API_STOCK_ENDPOINTS.removeAvailableStock, {
       symbols: symbols
     }, getRequestConfig());
+    return response.data;
+  },
+  exportStockData: async (payload) => {
+    const response = await axios.post(API_STOCK_ENDPOINTS.exportStockData, payload, getRequestConfig());
     return response.data;
   }
 };

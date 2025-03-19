@@ -56,32 +56,11 @@ def create_app(config_class=Config):
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
-        
-    def token_required(f):
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            token = None
-            if 'Authorization' in request.headers:
-                token = request.headers['Authorization'].split(" ")[1]
-            
-            if not token:
-                return jsonify({'message': 'Token is missing'}), 401
-            
-            try:
-                data = PyJWT.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-                current_user = db.session.get(User, data['user_id'])
-                if not current_user:
-                    return jsonify({'message': 'User not found'}), 401
-            except:
-                return jsonify({'message': 'Token is invalid'}), 401
-            
-            return f(current_user, *args, **kwargs)
-        return decorated
     
     # Initialize routes
     init_auth_routes(app)
-    init_settings_routes(app, token_required)
-    init_stock_routes(app, token_required)
+    init_settings_routes(app)
+    init_stock_routes(app)
     
     # Serve React app
     @app.route('/', defaults={'path': ''})

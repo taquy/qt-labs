@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_ENDPOINTS } from '../../config';
+import { API_SETTINGS_ENDPOINTS } from '../../config';
 import { getRequestConfig } from '../utils';
 import * as effects from 'redux-saga/effects';
 import { setError, setSettings, setLoading, clearError } from '../slices/settingsSlice';
@@ -13,7 +13,7 @@ export const saveSettings = (stocks, metric) => ({ type: SAVE_SETTINGS, payload:
 
 const api = {
   fetchSettings: async () => {
-    const response = await axios.get(API_ENDPOINTS.settings, getRequestConfig());
+    const response = await axios.get(API_SETTINGS_ENDPOINTS.settings, getRequestConfig());
     return response.data.settings;
   },
   saveSettings: async (stocks, metric) => {
@@ -24,7 +24,7 @@ const api = {
       }
     };
     await axios.put(
-      API_ENDPOINTS.updateSetting('stockGraph'), payload, getRequestConfig()
+      API_SETTINGS_ENDPOINTS.updateSetting('stockGraph'), payload, getRequestConfig()
     );
   },
 };
