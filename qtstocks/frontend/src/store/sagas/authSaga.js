@@ -1,13 +1,14 @@
-import { effects } from 'redux-saga';
-import { setError, setIsLoggedIn, setAuthToken, setCheckingLogin } from '../slices/authSlice';
+import * as effects from 'redux-saga/effects';
+import { setIsLoggedIn, setAuthToken, setCheckingLogin, setError } from '../slices/authSlice';
 import { handleApiError } from '../utils';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config';
+import { getRequestConfig } from '../utils';
 
-export const LOGOUT = 'aytg/logout';
-export const LOGIN = 'aytg/login';
-export const GOOGLE_LOGIN = 'aytg/googleLogin';
-export const CHECK_IS_LOGGED_IN = 'aytg/checkIsLoggedIn';
+export const LOGOUT = 'auth/logout';
+export const LOGIN = 'auth/login';
+export const GOOGLE_LOGIN = 'auth/googleLogin';
+export const CHECK_IS_LOGGED_IN = 'auth/checkIsLoggedIn';
 
 export const login = (username, password) => ({ type: LOGIN, payload: { username, password } });
 export const logout = () => ({ type: LOGOUT });

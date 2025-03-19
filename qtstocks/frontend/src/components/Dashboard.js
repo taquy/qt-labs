@@ -13,7 +13,7 @@ import StockSelector from './StockSelector';
 import StockGraph from './StockGraph';
 import StockSelectionTable from './StockSelectionTable';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout, checkIsLoggedIn } from '../store/sagas/stockGraphSaga';
+import { logout } from '../store/sagas/authSaga';
 
 
 // Configure axios to include credentials
@@ -21,7 +21,7 @@ axios.defaults.withCredentials = true;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 const Dashboard = () => {
-  const { error, isLoggedIn } = useSelector(state => state.stockGraph);
+  const { error, isLoggedIn } = useSelector(state => state.auth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -29,10 +29,6 @@ const Dashboard = () => {
     // Check if user is logged in and has token
     if (!isLoggedIn) navigate('/login');
   }, [navigate, isLoggedIn]);
-
-  useEffect(() => {
-    dispatch(checkIsLoggedIn());
-  }, [dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());

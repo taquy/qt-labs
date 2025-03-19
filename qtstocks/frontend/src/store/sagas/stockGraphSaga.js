@@ -5,7 +5,6 @@ import {
   setAvailableStocks,
   setError,
   setLoading,
-  setSettings,
   clearError,
   setStocks,
   setFetchingStockStats,

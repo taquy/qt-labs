@@ -1,17 +1,15 @@
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config';
 import { getRequestConfig } from '../utils';
-import { effects } from 'redux-saga';
+import * as effects from 'redux-saga/effects';
 import { setError, setSettings, setLoading, clearError } from '../slices/settingsSlice';
 import { handleApiError } from '../utils';
 
 export const FETCH_SETTINGS = 'settings/fetchSettings';
 export const SAVE_SETTINGS = 'settings/saveSettings';
 
-
 export const fetchSettings = () => ({ type: FETCH_SETTINGS });
 export const saveSettings = (stocks, metric) => ({ type: SAVE_SETTINGS, payload: { stocks, metric } });
-
 
 const api = {
   fetchSettings: async () => {

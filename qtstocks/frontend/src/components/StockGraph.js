@@ -13,7 +13,6 @@ import {
   Chip,
   Tooltip,
   Button,
-  CircularProgress,
   Stack
 } from '@mui/material';
 import { Bar } from 'react-chartjs-2';
@@ -29,9 +28,12 @@ import {
 import { format } from 'date-fns';
 import {
   fetchAvailableStocks,
+} from '../store/sagas/stockGraphSaga';
+
+import {
   fetchSettings,
   saveSettings
-} from '../store/sagas/stockGraphSaga';
+} from '../store/sagas/settingsSaga';
 import jsPDF from 'jspdf';
 
 // Register Chart.js components
@@ -147,7 +149,6 @@ const StockGraph = () => {
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
-      const contentHeight = pageHeight - (margin * 2);
 
       // Calculate dimensions to maintain aspect ratio
       const imgWidth = contentWidth;

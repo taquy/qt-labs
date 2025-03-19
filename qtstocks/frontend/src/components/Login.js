@@ -10,14 +10,14 @@ import {
   Link as RouterLink
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { login, googleLogin } from '../store/sagas/stockGraphSaga';
+import { login, googleLogin } from '../store/sagas/authSaga';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const googleButtonRef = useRef(null);
   const dispatch = useDispatch();
-  const { error } = useSelector(state => state.stockGraph);
+  const { error } = useSelector(state => state.auth);
 
   const handleGoogleLogin = useCallback(async (response) => {
     dispatch(googleLogin(response.credential));

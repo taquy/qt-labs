@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { commonState, commonSlice } from './commonSlice';
+import { sharedReducer, sharedInitialState } from './sharedSlice';
 
 const METRICS = {
   'market_cap': 'Market Cap',
@@ -14,7 +14,7 @@ const initialState = {
   availableStocks: [],
   metrics: METRICS,
   fetchingStockStats: false,
-  ...commonState,
+  ...sharedInitialState,
 };
 
 const stockGraphSlice = createSlice({
@@ -30,16 +30,17 @@ const stockGraphSlice = createSlice({
     setFetchingStockStats: (state, action) => {
       state.fetchingStockStats = action.payload;
     },
-    ...commonSlice
+    ...sharedReducer,
   }
 });
 
 export const {
   setAvailableStocks,
-  setError,
-  setLoading,
   setStocks,
   setFetchingStockStats,
+  setError,
+  setLoading,
+  clearError,
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer;

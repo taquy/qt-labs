@@ -1,28 +1,19 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { commonState, commonSlice } from './commonSlice';
+import { sharedReducer, sharedInitialState } from './sharedSlice';
 
 const initialState = {
   settings: null,
-  ...commonState,
+  ...sharedInitialState,
 };
 
 const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    setError: (state, action) => {
-      state.error = action.payload;
-    },
-    setLoading: (state, action) => {
-      state.loading = action.payload;
-    },
     setSettings: (state, action) => {
       state.settings = action.payload;
     },
-    clearError: (state) => {
-      state.error = null;
-    },
-    ...commonSlice
+    ...sharedReducer,
   }
 });
 
@@ -30,6 +21,7 @@ export const {
   setSettings,
   setError,
   setLoading,
+  clearError,
 } = settingsSlice.actions;
 
 export default settingsSlice.reducer;

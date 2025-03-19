@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { checkIsLoggedIn } from '../store/sagas/stockGraphSaga';
+import { checkIsLoggedIn } from '../store/sagas/authSaga';
 import PageLoader from './PageLoader';
 
 const PublicRoute = ({ children }) => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const { isLoggedIn, checkingLogin } = useSelector(state => state.stockGraph);
+  const { isLoggedIn, checkingLogin } = useSelector(state => state.auth);
 
   useEffect(() => {
     dispatch(checkIsLoggedIn());

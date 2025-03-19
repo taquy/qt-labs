@@ -1,10 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
-import commonSlice from './commonSlice';
+import { sharedReducer, sharedInitialState } from './sharedSlice';
 const initialState = {
-  error: null,
   isLoggedIn: false,
   authToken: null,
   checkingLogin: true,
+  ...sharedInitialState,
 };
 
 const authSlice = createSlice({
@@ -22,15 +22,17 @@ const authSlice = createSlice({
     setCheckingLogin: (state, action) => {
       state.checkingLogin = action.payload;
     },
-    ...commonSlice,
+    ...sharedReducer,
   }
 });
 
 export const {
-  setError,
   setIsLoggedIn,
   setAuthToken,
   setCheckingLogin,
+  setError,
+  setLoading,
+  clearError,
 } = authSlice.actions;
 
 export default authSlice.reducer;
