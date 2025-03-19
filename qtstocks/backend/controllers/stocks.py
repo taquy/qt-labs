@@ -238,84 +238,7 @@ def init_stock_routes(app, token_required):
             )
             elements.append(Paragraph("Stock Statistics Report", title_style))
 
-            # Create bar charts
-            symbols = [stock.symbol for stock in stocks_with_stats]
-            prices = [stock.stats.price for stock in stocks_with_stats]
-            market_caps = [stock.stats.market_cap for stock in stocks_with_stats]
-            eps_values = [stock.stats.eps for stock in stocks_with_stats]
-            pe_values = [stock.stats.pe for stock in stocks_with_stats]
-            pb_values = [stock.stats.pb for stock in stocks_with_stats]
-
-            # Create price chart
-            plt.figure(figsize=(10, 6))
-            plt.bar(symbols, prices)
-            plt.title('Stock Prices')
-            plt.xticks(rotation=45)
-            plt.tight_layout()
-            price_chart = io.BytesIO()
-            plt.savefig(price_chart, format='png')
-            plt.close()
-            price_chart.seek(0)
-
-            # Create market cap chart
-            plt.figure(figsize=(10, 6))
-            plt.bar(symbols, market_caps)
-            plt.title('Market Capitalization')
-            plt.xticks(rotation=45)
-            plt.tight_layout()
-            market_cap_chart = io.BytesIO()
-            plt.savefig(market_cap_chart, format='png')
-            plt.close()
-            market_cap_chart.seek(0)
-
-            # Create EPS chart
-            plt.figure(figsize=(10, 6))
-            plt.bar(symbols, eps_values)
-            plt.title('Earnings Per Share (EPS)')
-            plt.xticks(rotation=45)
-            plt.tight_layout()
-            eps_chart = io.BytesIO()
-            plt.savefig(eps_chart, format='png')
-            plt.close()
-            eps_chart.seek(0)
-
-            # Create P/E chart
-            plt.figure(figsize=(10, 6))
-            plt.bar(symbols, pe_values)
-            plt.title('Price-to-Earnings Ratio (P/E)')
-            plt.xticks(rotation=45)
-            plt.tight_layout()
-            pe_chart = io.BytesIO()
-            plt.savefig(pe_chart, format='png')
-            plt.close()
-            pe_chart.seek(0)
-
-            # Create P/B chart
-            plt.figure(figsize=(10, 6))
-            plt.bar(symbols, pb_values)
-            plt.title('Price-to-Book Ratio (P/B)')
-            plt.xticks(rotation=45)
-            plt.tight_layout()
-            pb_chart = io.BytesIO()
-            plt.savefig(pb_chart, format='png')
-            plt.close()
-            pb_chart.seek(0)
-
-            # Add charts to PDF
-            from reportlab.platypus import Image
-            for chart_data, title in [
-                (price_chart, "Stock Prices"),
-                (market_cap_chart, "Market Capitalization"),
-                (eps_chart, "Earnings Per Share (EPS)"),
-                (pe_chart, "Price-to-Earnings Ratio (P/E)"),
-                (pb_chart, "Price-to-Book Ratio (P/B)")
-            ]:
-                elements.append(Paragraph(title, styles['Heading2']))
-                img = Image(chart_data, width=7*inch, height=4*inch)
-                elements.append(img)
-                elements.append(Spacer(1, 20))
-
-            # Add detailed table
+            # Add detailed table first
             table_style = TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -359,6 +282,117 @@ def init_stock_routes(app, token_required):
             table = Table(table_data)
             table.setStyle(table_style)
             elements.append(table)
+
+            # Create bar charts
+            symbols = [stock.symbol for stock in stocks_with_stats]
+            prices = [stock.stats.price for stock in stocks_with_stats]
+            market_caps = [stock.stats.market_cap for stock in stocks_with_stats]
+            eps_values = [stock.stats.eps for stock in stocks_with_stats]
+            pe_values = [stock.stats.pe for stock in stocks_with_stats]
+            pb_values = [stock.stats.pb for stock in stocks_with_stats]
+
+            # Create price chart
+            plt.figure(figsize=(10, 6))
+            bars = plt.bar(symbols, prices)
+            plt.title('Stock Prices')
+            plt.xticks(rotation=45)
+            # Add value labels on top of bars
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{height:,.2f}',
+                        ha='center', va='bottom')
+            plt.tight_layout()
+            price_chart = io.BytesIO()
+            plt.savefig(price_chart, format='png')
+            plt.close()
+            price_chart.seek(0)
+
+            # Create market cap chart
+            plt.figure(figsize=(10, 6))
+            bars = plt.bar(symbols, market_caps)
+            plt.title('Market Capitalization')
+            plt.xticks(rotation=45)
+            # Add value labels on top of bars
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{height:,.0f}',
+                        ha='center', va='bottom')
+            plt.tight_layout()
+            market_cap_chart = io.BytesIO()
+            plt.savefig(market_cap_chart, format='png')
+            plt.close()
+            market_cap_chart.seek(0)
+
+            # Create EPS chart
+            plt.figure(figsize=(10, 6))
+            bars = plt.bar(symbols, eps_values)
+            plt.title('Earnings Per Share (EPS)')
+            plt.xticks(rotation=45)
+            # Add value labels on top of bars
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{height:,.2f}',
+                        ha='center', va='bottom')
+            plt.tight_layout()
+            eps_chart = io.BytesIO()
+            plt.savefig(eps_chart, format='png')
+            plt.close()
+            eps_chart.seek(0)
+
+            # Create P/E chart
+            plt.figure(figsize=(10, 6))
+            bars = plt.bar(symbols, pe_values)
+            plt.title('Price-to-Earnings Ratio (P/E)')
+            plt.xticks(rotation=45)
+            # Add value labels on top of bars
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{height:,.2f}',
+                        ha='center', va='bottom')
+            plt.tight_layout()
+            pe_chart = io.BytesIO()
+            plt.savefig(pe_chart, format='png')
+            plt.close()
+            pe_chart.seek(0)
+
+            # Create P/B chart
+            plt.figure(figsize=(10, 6))
+            bars = plt.bar(symbols, pb_values)
+            plt.title('Price-to-Book Ratio (P/B)')
+            plt.xticks(rotation=45)
+            # Add value labels on top of bars
+            for bar in bars:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2., height,
+                        f'{height:,.2f}',
+                        ha='center', va='bottom')
+            plt.tight_layout()
+            pb_chart = io.BytesIO()
+            plt.savefig(pb_chart, format='png')
+            plt.close()
+            pb_chart.seek(0)
+
+            # Add charts to PDF (2 per page)
+            from reportlab.platypus import Image, PageBreak
+            charts = [
+                (price_chart, "Stock Prices"),
+                (market_cap_chart, "Market Capitalization"),
+                (eps_chart, "Earnings Per Share (EPS)"),
+                (pe_chart, "Price-to-Earnings Ratio (P/E)"),
+                (pb_chart, "Price-to-Book Ratio (P/B)")
+            ]
+
+            for i, (chart_data, title) in enumerate(charts):
+                if i > 0 and i % 2 == 0:
+                    elements.append(PageBreak())
+                elements.append(Paragraph(title, styles['Heading2']))
+                img = Image(chart_data, width=7*inch, height=4*inch)
+                elements.append(img)
+                elements.append(Spacer(1, 20))
 
             # Build PDF
             doc.build(elements)
