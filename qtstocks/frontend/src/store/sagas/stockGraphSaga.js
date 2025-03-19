@@ -77,9 +77,10 @@ const api = {
       API_ENDPOINTS.updateSetting('stockGraph'), payload, getRequestConfig()
     );
   },
-  fetchStockData: async (symbols) => {
+  fetchStockData: async (payload) => {
     const response = await axios.post(API_ENDPOINTS.fetchStockData, {
-      symbols: symbols
+      symbols: payload.selectedStocks,
+      loadLatestData: payload.loadLatestData
     }, getRequestConfig());
     return response.data.data;
   },

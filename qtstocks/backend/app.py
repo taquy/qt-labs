@@ -273,17 +273,35 @@ def create_app(config_class=Config):
             if not symbols:
                 return jsonify({'error': 'Empty stock symbols list'}), 400
             
+            fetching_latest = data.get('loadLatestData', False)
+            
             # Verify all symbols exist in database
             for symbol in symbols:
                 stock = Stock.query.filter_by(symbol=symbol).first()
                 if not stock:
                     return jsonify({'error': f'Stock {symbol} not found in database'}), 404
+                
+            if fetching_latest:
+                new_symbols = symbols
+            else:
+                # reuse existing stock stats if already available in stock_stats table
+                new_symbols = []
+                for symbol in symbols:
+                    stock_stat = StockStats.query.filter_by(symbol=symbol).first()
+                    if stock_stat:
+                        if stock_stat not in current_user.stock_stats:
+                            current_user.stock_stats.append(stock_stat)
+                    else:
+                        new_symbols.append(symbol)
+                db.session.commit()
             
-            process_stock_list(symbols, current_user)
+            # scrape data for any new symbols
+            if len(new_symbols) > 0:
+                process_stock_list(new_symbols, current_user)
             
             return jsonify({
                 'success': True,
-                'message': f'Successfully fetched data for {len(symbols)} stocks'
+                'message': f'Successfully fetched data for {len(new_symbols)} stocks {", ".join(new_symbols)}'
             })
             
         except Exception as e:

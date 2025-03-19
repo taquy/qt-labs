@@ -9,6 +9,8 @@ import {
   TextField,
   Chip,
   CircularProgress,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 
 import { fetchStocks, fetchStockData } from '../store/sagas/stockGraphSaga';
@@ -16,6 +18,7 @@ import { useSelector, useDispatch } from 'react-redux';
 
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
+  const [loadLatestData, setLoadLatestData] = useState(false);
   const [inputValue] = useState('');
   const dispatch = useDispatch();
   
@@ -39,7 +42,7 @@ const StockSelector = () => {
   };
 
   const handleFetchStockData = () => {
-    dispatch(fetchStockData(selectedStocks));
+    dispatch(fetchStockData({selectedStocks, loadLatestData}));
   };
   
   const handleRemoveStock = (stockToRemove) => {
@@ -55,8 +58,7 @@ const StockSelector = () => {
       <Box sx={{ 
         display: 'flex', 
         gap: 2, 
-        alignItems: 'flex-start',
-        mb: 2 
+        alignItems: 'flex-start'
       }}>
         <FormControl sx={{ flex: 1 }}>
           <Autocomplete
@@ -156,6 +158,19 @@ const StockSelector = () => {
             'Fetch Stock Data'
           )}
         </Button>
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={loadLatestData}
+              onChange={(e) => setLoadLatestData(e.target.checked)}
+              name="loadLatestData"
+              color="primary"
+            />
+          }
+          label="Load latest data"
+        />
       </Box>
     </Paper>
   );
