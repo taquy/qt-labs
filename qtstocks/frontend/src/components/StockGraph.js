@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Paper,
@@ -12,6 +12,9 @@ import {
   TextField,
   Chip,
   Tooltip,
+  Button,
+  CircularProgress,
+  Stack
 } from '@mui/material';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -29,6 +32,7 @@ import {
   fetchSettings,
   saveSettings
 } from '../store/sagas/stockGraphSaga';
+import jsPDF from 'jspdf';
 
 // Register Chart.js components
 ChartJS.register(
@@ -45,6 +49,7 @@ const StockGraph = () => {
   const [selectedMetric, setSelectedMetric] = useState('market_cap');
   const [chartData, setChartData] = useState();
   const [selectedStocks, setSelectedStocks] = useState([]);
+  const chartRef = useRef(null);
 
   // Select state from Redux store
   const {
@@ -129,12 +134,87 @@ const StockGraph = () => {
     dispatch(saveSettings(selectedStocks, newMetric));
   };
 
+  const exportToPDF = async () => {
+    try {
+      if (!chartRef.current) return;
+
+      const chart = chartRef.current;
+      const canvas = chart.canvas;
+      
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      const contentWidth = pageWidth - (margin * 2);
+      const contentHeight = pageHeight - (margin * 2);
+
+      // Calculate dimensions to maintain aspect ratio
+      const imgWidth = contentWidth;
+      const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+      // Add title
+      pdf.setFontSize(16);
+      pdf.text(chartData.title.text, margin, margin);
+
+      // Add the chart image
+      pdf.addImage(
+        canvas.toDataURL('image/png'),
+        'PNG',
+        margin,
+        margin + 10,
+        imgWidth,
+        imgHeight
+      );
+
+      // Add footer with metric information
+      pdf.setFontSize(10);
+      pdf.text(`Metric: ${chartData.datasets[0].label}`, margin, pageHeight - margin);
+      pdf.text(`Generated on: ${new Date().toLocaleString()}`, margin, pageHeight - margin + 5);
+
+      // Save the PDF
+      pdf.save('stock-chart.pdf');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+    }
+  };
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="body1" color="error">
+          {error}
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!chartData || Object.keys(chartData).length === 0) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="body1" color="text.secondary">
+          No data available. Please select stocks to view their charts.
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Paper sx={{ p: 2, mt: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">
           Stock Comparison Graph
         </Typography>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={exportToPDF}
+            disabled={!chartData || Object.keys(chartData).length === 0}
+          >
+            Export PDF
+          </Button>
+        </Stack>
       </Box>
       
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
@@ -211,15 +291,11 @@ const StockGraph = () => {
         </FormControl>
       </Box>
 
-      {error && (
-        <Typography color="error" sx={{ mb: 2 }}>
-          {error}
-        </Typography>
-      )}
       <Paper sx={{ p: 2 }}>
         {chartData ? (
           <Box sx={{ height: 500, width: '100%' }}>
             <Bar 
+              ref={chartRef}
               data={chartData} 
               options={{
                 responsive: true,

@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { commonState, commonSlice } from './commonSlice';
 
 const METRICS = {
   'market_cap': 'Market Cap',
@@ -11,53 +12,25 @@ const METRICS = {
 const initialState = {
   stocks: [],
   availableStocks: [],
-  chartData: null,
-  error: null,
-  loading: false,
-  settings: null,
   metrics: METRICS,
-  isLoggedIn: false,
-  authToken: null,
   fetchingStockStats: false,
-  checkingLogin: true,
+  ...commonState,
 };
 
 const stockGraphSlice = createSlice({
   name: 'stockGraph',
   initialState,
   reducers: {
-    setAuthToken: (state, action) => {
-      state.authToken = action.payload;
-      localStorage.setItem('authToken', action.payload);
-    },
-    setIsLoggedIn: (state, action) => {
-      state.isLoggedIn = action.payload;
-      localStorage.setItem('isLoggedIn', action.payload);
-    },
     setStocks: (state, action) => {
       state.stocks = action.payload;
     },
     setAvailableStocks: (state, action) => {
       state.availableStocks = action.payload;
     },
-    setError: (state, action) => {
-      state.error = action.payload;
-    },
-    setLoading: (state, action) => {
-      state.loading = action.payload;
-    },
-    setSettings: (state, action) => {
-      state.settings = action.payload;
-    },
-    clearError: (state) => {
-      state.error = null;
-    },
     setFetchingStockStats: (state, action) => {
       state.fetchingStockStats = action.payload;
     },
-    setCheckingLogin: (state, action) => {
-      state.checkingLogin = action.payload;
-    },
+    ...commonSlice
   }
 });
 
@@ -65,13 +38,8 @@ export const {
   setAvailableStocks,
   setError,
   setLoading,
-  setSettings,
-  clearError,
   setStocks,
-  setIsLoggedIn,
-  setAuthToken,
   setFetchingStockStats,
-  setCheckingLogin,
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer;
