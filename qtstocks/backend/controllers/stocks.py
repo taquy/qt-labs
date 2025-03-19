@@ -316,21 +316,7 @@ def init_stock_routes(app, token_required):
                 elements.append(Spacer(1, 20))
 
             # Add detailed table
-            table_data = [['Symbol', 'Name', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B', 'Last Updated']]
-            for stock in stocks_with_stats:
-                table_data.append([
-                    stock.symbol,
-                    stock.name,
-                    f"{stock.stats.price:,.2f}",
-                    f"{stock.stats.market_cap:,.0f}",
-                    f"{stock.stats.eps:,.2f}",
-                    f"{stock.stats.pe:,.2f}",
-                    f"{stock.stats.pb:,.2f}",
-                    stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')
-                ])
-
-            table = Table(table_data)
-            table.setStyle(TableStyle([
+            table_style = TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -343,7 +329,35 @@ def init_stock_routes(app, token_required):
                 ('FONTSIZE', (0, 1), (-1, -1), 12),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
+            ])            
+            table_data = [['Symbol', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B', 'Last Updated']]
+            for stock in stocks_with_stats:
+                table_data.append([
+                    stock.symbol,
+                    f"{stock.stats.price:,.2f}",
+                    f"{stock.stats.market_cap:,.0f}",
+                    f"{stock.stats.eps:,.2f}",
+                    f"{stock.stats.pe:,.2f}",
+                    f"{stock.stats.pb:,.2f}",
+                    stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')
+                ])
+
+            table = Table(table_data)
+            table.setStyle(table_style)
+            elements.append(table)
+            
+            # Add spacer    
+            elements.append(Spacer(1, 20))
+            
+            # Add table for symbol and name
+            table_data = [['Symbol', 'Name']]
+            for stock in stocks_with_stats:
+                table_data.append([
+                    stock.symbol,
+                    stock.name,
+                ])
+            table = Table(table_data)
+            table.setStyle(table_style)
             elements.append(table)
 
             # Build PDF
