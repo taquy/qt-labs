@@ -14,6 +14,7 @@ from reportlab.lib.units import inch
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as path_effects
 import numpy as np
 
 def init_stock_routes(app, token_required):
@@ -308,63 +309,103 @@ def init_stock_routes(app, token_required):
             table.setStyle(table_style)
             elements.append(table)
 
-            # Create bar charts with larger text
+            # Create bar charts with larger text and better styling
             plt.rcParams.update({
-                'font.size': 12,
-                'axes.titlesize': 14,
-                'axes.labelsize': 12,
-                'xtick.labelsize': 10,
-                'ytick.labelsize': 10
+                'font.size': 16,
+                'axes.titlesize': 20,
+                'axes.labelsize': 16,
+                'xtick.labelsize': 14,
+                'ytick.labelsize': 14,
+                'figure.facecolor': 'white',
+                'axes.facecolor': 'white',
+                'axes.grid': True,
+                'grid.color': '#E0E0E0',
+                'grid.linestyle': '--',
+                'grid.alpha': 0.7
             })
+
+            # Define a color palette for charts
+            chart_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD']
 
             # Define chart configurations
             chart_configs = [
                 {
                     'data': [stock.stats.price for stock in stocks_with_stats],
                     'title': 'Stock Prices',
-                    'format': '{:,.2f}'
+                    'format': '{:,.2f}',
+                    'ylabel': 'Price (x1000 VND)'
                 },
                 {
                     'data': [stock.stats.market_cap for stock in stocks_with_stats],
                     'title': 'Market Capitalization',
-                    'format': '{:,.0f}'
+                    'format': '{:,.2f}',
+                    'ylabel': 'Market Cap (Billion VND)'
                 },
                 {
                     'data': [stock.stats.eps for stock in stocks_with_stats],
                     'title': 'Earnings Per Share (EPS)',
-                    'format': '{:,.2f}'
+                    'format': '{:,.2f}',
+                    'ylabel': 'EPS (x1000 VND)'
                 },
                 {
                     'data': [stock.stats.pe for stock in stocks_with_stats],
                     'title': 'Price-to-Earnings Ratio (P/E)',
-                    'format': '{:,.2f}'
+                    'format': '{:,.2f}',
+                    'ylabel': 'P/E Ratio'
                 },
                 {
                     'data': [stock.stats.pb for stock in stocks_with_stats],
                     'title': 'Price-to-Book Ratio (P/B)',
-                    'format': '{:,.2f}'
+                    'format': '{:,.2f}',
+                    'ylabel': 'P/B Ratio'
                 }
             ]
 
             # Create charts
             charts = []
-            for config in chart_configs:
-                plt.figure(figsize=(10, 6))
-                bars = plt.bar([stock.symbol for stock in stocks_with_stats], config['data'])
-                plt.title(config['title'], pad=20)
-                plt.xticks(rotation=45)
+            for i, config in enumerate(chart_configs):
+                plt.figure(figsize=(12, 7))
                 
-                # Add value labels on top of bars
+                # Create 3D-like effect with shadow
+                bars = plt.bar([stock.symbol for stock in stocks_with_stats], config['data'],
+                             color=chart_colors[i % len(chart_colors)],
+                             edgecolor='white',
+                             linewidth=1.5,
+                             alpha=0.8)
+                
+                # Add shadow effect
+                for bar in bars:
+                    bar.set_path_effects([
+                        path_effects.withSimplePatchShadow(),
+                        path_effects.Normal()
+                    ])
+                
+                plt.title(config['title'], pad=20, fontweight='bold')
+                plt.xlabel('')  # Remove x-axis label
+                plt.ylabel(config['ylabel'], fontweight='bold')
+                plt.xticks(rotation=45, ha='right')
+                
+                # Add value labels on top of bars with improved visibility
                 for bar in bars:
                     height = bar.get_height()
                     plt.text(bar.get_x() + bar.get_width()/2., height,
                             config['format'].format(height),
                             ha='center', va='bottom',
-                            fontsize=10)
+                            fontsize=12,
+                            fontweight='bold',
+                            color='#2C3E50')
                 
+                # Add subtle background color
+                plt.gca().set_facecolor('#F8F9FA')
+                
+                # Adjust layout to prevent label cutoff
                 plt.tight_layout()
+                
+                # Add padding around the plot
+                plt.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95)
+                
                 chart_buffer = io.BytesIO()
-                plt.savefig(chart_buffer, format='png')
+                plt.savefig(chart_buffer, format='png', dpi=300, bbox_inches='tight')
                 plt.close()
                 chart_buffer.seek(0)
                 charts.append((chart_buffer, config['title']))
