@@ -6,6 +6,15 @@ from models import Stock, StockStats, user_stock_stats
 from extensions import db
 from services.get_stock_lists import get_stock_list
 from services.get_stock_data import process_stock_list
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
+import matplotlib.pyplot as plt
+import numpy as np
 
 def init_stock_routes(app, token_required):
     @app.route('/api/stocks')
@@ -202,5 +211,155 @@ def init_stock_routes(app, token_required):
             
         except Exception as e:
             print(f"Error exporting stocks: {str(e)}")
-            return {'error': str(e)}, 500 
+            return {'error': str(e)}, 500
+    
+    @app.route('/api/stocks/export_pdf')
+    @token_required
+    def export_stocks_pdf(current_user):
+        try:
+            # Get stocks with stats for current user
+            stocks_with_stats = db.session.query(Stock).join(StockStats).join(user_stock_stats).filter(user_stock_stats.c.user_id == current_user.id).all()
+            
+            if not stocks_with_stats:
+                return jsonify({'error': 'No stock stats found for export'}), 404
+
+            # Create PDF buffer
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter)
+            styles = getSampleStyleSheet()
+            elements = []
+
+            # Add title
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=24,
+                spaceAfter=30
+            )
+            elements.append(Paragraph("Stock Statistics Report", title_style))
+
+            # Create bar charts
+            symbols = [stock.symbol for stock in stocks_with_stats]
+            prices = [stock.stats.price for stock in stocks_with_stats]
+            market_caps = [stock.stats.market_cap for stock in stocks_with_stats]
+            eps_values = [stock.stats.eps for stock in stocks_with_stats]
+            pe_values = [stock.stats.pe for stock in stocks_with_stats]
+            pb_values = [stock.stats.pb for stock in stocks_with_stats]
+
+            # Create price chart
+            plt.figure(figsize=(10, 6))
+            plt.bar(symbols, prices)
+            plt.title('Stock Prices')
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            price_chart = io.BytesIO()
+            plt.savefig(price_chart, format='png')
+            plt.close()
+            price_chart.seek(0)
+
+            # Create market cap chart
+            plt.figure(figsize=(10, 6))
+            plt.bar(symbols, market_caps)
+            plt.title('Market Capitalization')
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            market_cap_chart = io.BytesIO()
+            plt.savefig(market_cap_chart, format='png')
+            plt.close()
+            market_cap_chart.seek(0)
+
+            # Create EPS chart
+            plt.figure(figsize=(10, 6))
+            plt.bar(symbols, eps_values)
+            plt.title('Earnings Per Share (EPS)')
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            eps_chart = io.BytesIO()
+            plt.savefig(eps_chart, format='png')
+            plt.close()
+            eps_chart.seek(0)
+
+            # Create P/E chart
+            plt.figure(figsize=(10, 6))
+            plt.bar(symbols, pe_values)
+            plt.title('Price-to-Earnings Ratio (P/E)')
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            pe_chart = io.BytesIO()
+            plt.savefig(pe_chart, format='png')
+            plt.close()
+            pe_chart.seek(0)
+
+            # Create P/B chart
+            plt.figure(figsize=(10, 6))
+            plt.bar(symbols, pb_values)
+            plt.title('Price-to-Book Ratio (P/B)')
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            pb_chart = io.BytesIO()
+            plt.savefig(pb_chart, format='png')
+            plt.close()
+            pb_chart.seek(0)
+
+            # Add charts to PDF
+            from reportlab.platypus import Image
+            for chart_data, title in [
+                (price_chart, "Stock Prices"),
+                (market_cap_chart, "Market Capitalization"),
+                (eps_chart, "Earnings Per Share (EPS)"),
+                (pe_chart, "Price-to-Earnings Ratio (P/E)"),
+                (pb_chart, "Price-to-Book Ratio (P/B)")
+            ]:
+                elements.append(Paragraph(title, styles['Heading2']))
+                img = Image(chart_data, width=7*inch, height=4*inch)
+                elements.append(img)
+                elements.append(Spacer(1, 20))
+
+            # Add detailed table
+            table_data = [['Symbol', 'Name', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B', 'Last Updated']]
+            for stock in stocks_with_stats:
+                table_data.append([
+                    stock.symbol,
+                    stock.name,
+                    f"{stock.stats.price:,.2f}",
+                    f"{stock.stats.market_cap:,.0f}",
+                    f"{stock.stats.eps:,.2f}",
+                    f"{stock.stats.pe:,.2f}",
+                    f"{stock.stats.pb:,.2f}",
+                    stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')
+                ])
+
+            table = Table(table_data)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 14),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 12),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            elements.append(table)
+
+            # Build PDF
+            doc.build(elements)
+
+            # Create response
+            buffer.seek(0)
+            return Response(
+                buffer.getvalue(),
+                mimetype='application/pdf',
+                headers={
+                    'Content-Disposition': f'attachment; filename=stock_stats_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.pdf'
+                }
+            )
+
+        except Exception as e:
+            print(f"Error exporting stocks to PDF: {str(e)}")
+            return jsonify({'error': str(e)}), 500 
     
