@@ -26,7 +26,6 @@ import {
   Tooltip as ChartTooltip,
   Legend
 } from 'chart.js';
-import { format } from 'date-fns';
 import {
   fetchAvailableStocks,
   exportGraphPdf
@@ -36,7 +35,6 @@ import {
   fetchSettings,
   saveSettings
 } from '../store/sagas/settingsSaga';
-import jsPDF from 'jspdf';
 
 // Register Chart.js components
 ChartJS.register(
@@ -51,7 +49,6 @@ ChartJS.register(
 const StockGraph = () => {
   const dispatch = useDispatch();
   const [selectedMetric, setSelectedMetric] = useState('market_cap');
-  const [chartData, setChartData] = useState();
   const [currentChartData, setCurrentChartData] = useState();
   const [selectedStocks, setSelectedStocks] = useState([]);
   const chartRef = useRef(null);
@@ -76,44 +73,37 @@ const StockGraph = () => {
   useEffect(() => {
     if (!selectedStocks) return;
 
-    const allCharts = {};
-    // Generate colors for each bar
-    for (let metric of Object.keys(metrics)) {
-      let dataPoints = selectedStocks.map(stock => stock[metric]);
-      let labels = selectedStocks.map(stock => stock.symbol);
-      let colors = labels.map((_, index) =>
-        `hsl(${(index * 360/ labels.length)}, 70%, 50%)`
-      );
-      // Sort labels and dataPoints together based on dataPoints values
-      const sortedIndices = dataPoints
-        .map((value, index) => ({ value, index }))
-        .sort((a, b) => b.value - a.value)
-        .map(item => item.index);
+    let dataPoints = selectedStocks.map(stock => stock[selectedMetric]);
+    let labels = selectedStocks.map(stock => stock.symbol);
+    let colors = labels.map((_, index) =>
+      `hsl(${(index * 360/ labels.length)}, 70%, 50%)`
+    );
+    // Sort labels and dataPoints together based on dataPoints values
+    const sortedIndices = dataPoints
+      .map((value, index) => ({ value, index }))
+      .sort((a, b) => b.value - a.value)
+      .map(item => item.index);
 
-      labels = sortedIndices.map(i => labels[i]);
-      dataPoints = sortedIndices.map(i => dataPoints[i]);
-      colors = sortedIndices.map(i => colors[i]);
-      const newChartData = {
-        labels,
-        datasets: [{
-          label: metrics[metric],
-          data: dataPoints,
-          borderWidth: 1,
-          backgroundColor: colors,
-          borderColor: colors.map(color => color.replace('50%', '40%')),
-          borderRadius: 5,
-          hoverBackgroundColor: colors.map(color => color.replace('50%', '60%')),
-        }],
-        title: {
-          display: true,
-          text: `Comparison of ${metrics[metric]} across selected stocks`,
-          font: { size: 16 }
-        }
+    labels = sortedIndices.map(i => labels[i]);
+    dataPoints = sortedIndices.map(i => dataPoints[i]);
+    colors = sortedIndices.map(i => colors[i]);
+    setCurrentChartData({
+      labels,
+      datasets: [{
+        label: metrics[selectedMetric],
+        data: dataPoints,
+        borderWidth: 1,
+        backgroundColor: colors,
+        borderColor: colors.map(color => color.replace('50%', '40%')),
+        borderRadius: 5,
+        hoverBackgroundColor: colors.map(color => color.replace('50%', '60%')),
+      }],
+      title: {
+        display: true,
+        text: `Comparison of ${metrics[selectedMetric]} across selected stocks`,
+        font: { size: 16 }
       }
-      allCharts[metric] = newChartData;
-    }
-    setChartData(allCharts);
-    setCurrentChartData(allCharts[selectedMetric]);
+    });
   }, [selectedStocks, selectedMetric, metrics]);
 
   // Load settings when available
@@ -136,7 +126,7 @@ const StockGraph = () => {
     if (newValue.length > 0) {
       dispatch(saveSettings(newValue, selectedMetric));
     } else {
-      setChartData(null);
+      setCurrentChartData(null);
       dispatch(saveSettings([], selectedMetric));
     }
   };
@@ -235,7 +225,7 @@ const StockGraph = () => {
               return (
                 <Tooltip 
                   key={`tooltip-${option.symbol}`}
-                  title={`Last updated: ${format(new Date(option.last_updated), 'PPpp')}`}
+                  title={`Last updated: ${new Date(option.last_updated).toLocaleString()}`}
                   placement="right"
                 >
                   <Box component="li" {...otherProps}>
@@ -257,7 +247,7 @@ const StockGraph = () => {
                 return (
                   <Tooltip 
                     key={`tag-tooltip-${option.symbol}-${index}`}
-                    title={`Last updated: ${format(new Date(option.last_updated), 'PPpp')}`}
+                    title={`Last updated: ${new Date(option.last_updated).toLocaleString()}`}
                     placement="top"
                   >
                     <Chip

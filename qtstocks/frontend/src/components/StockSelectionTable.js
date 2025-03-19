@@ -16,7 +16,6 @@ import {
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAvailableStocks, removeAvailableStock, exportCsv } from '../store/sagas/stockGraphSaga';
-import { format } from 'date-fns';
 import { Delete, Download } from '@mui/icons-material';
 
 const StockSelectionTable = () => {
