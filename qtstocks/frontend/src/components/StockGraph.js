@@ -57,14 +57,15 @@ const StockGraph = () => {
   const {
     availableStocks,
     error,
-    settings,
     metrics
   } = useSelector(state => state.stockGraph);
 
+  const { settings } = useSelector(state => state.settings);
+
   // Initial data loading
   useEffect(() => {
-    dispatch(fetchAvailableStocks());
     dispatch(fetchSettings());
+    dispatch(fetchAvailableStocks());
   }, [dispatch]);
 
   useEffect(() => {
@@ -278,7 +279,7 @@ const StockGraph = () => {
 
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel>Metric</InputLabel>
-          <Select
+          <Select 
             value={selectedMetric}
             label="Metric"
             onChange={onMetricChange}
