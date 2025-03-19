@@ -37,6 +37,7 @@ function* checkIsLoggedInSaga() {
   if (isLoggedIn && authToken) {
     yield effects.put(setIsLoggedIn(true));
     yield effects.put(setAuthToken(authToken));
+    yield effects.put(setError(''));
   } else {
     yield effects.put(setIsLoggedIn(false));
   }

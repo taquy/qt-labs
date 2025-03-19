@@ -3,13 +3,12 @@ from datetime import datetime, timedelta, timezone
 from models import User, UserJWT
 from extensions import db
 import jwt as PyJWT
-from oauthlib.oauth2 import WebApplicationClient
-import requests
+from google.oauth2 import id_token
+from google.auth.transport import requests
 from functools import wraps
+import secrets
 
 def init_auth_routes(app):
-    client = WebApplicationClient(app.config['GOOGLE_CLIENT_ID'])
-    
     def token_required(f):
         @wraps(f)
         def decorated(*args, **kwargs):
@@ -102,10 +101,11 @@ def init_auth_routes(app):
                 return jsonify({'error': 'Missing Google token'}), 400
             
             # Verify the token with Google
-            idinfo = client.verify_id_token(data['token'], requests.Request())
-            
-            if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
-                raise ValueError('Invalid issuer.')
+            idinfo = id_token.verify_oauth2_token(
+                data['token'],
+                requests.Request(),
+                app.config['GOOGLE_CLIENT_ID']
+            )
             
             # Get user email from token
             email = idinfo['email']
@@ -113,12 +113,14 @@ def init_auth_routes(app):
             # Check if user exists
             user = User.query.filter_by(email=email).first()
             if not user:
-                # Create new user
+                # Create new user with a random password
+                random_password = secrets.token_urlsafe(32)
                 user = User(
                     username=email.split('@')[0],
                     email=email,
                     google_id=idinfo['sub']
                 )
+                user.set_password(random_password)
                 db.session.add(user)
                 db.session.commit()
             
