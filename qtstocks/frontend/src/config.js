@@ -4,7 +4,7 @@ export const API_ENDPOINTS = {
     login: `${API_BASE_URL}/login`,
     googleLogin: `${API_BASE_URL}/login/google`,
     register: `${API_BASE_URL}/auth/register`,
-    stocksWithStats: `${API_BASE_URL}/stocks_with_stats`,
+    stocksWithStats: `${API_BASE_URL}/stocks/stats`,
     settings: `${API_BASE_URL}/settings`,
     updateGraph: `${API_BASE_URL}/update_graph`,
     updateSetting: (key) => `${API_BASE_URL}/settings/${key}`,
