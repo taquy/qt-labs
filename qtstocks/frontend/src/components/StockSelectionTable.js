@@ -16,6 +16,8 @@ import {
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAvailableStocks, removeAvailableStock } from '../store/sagas/stockGraphSaga';
+import { format } from 'date-fns';
+import { Delete, Download } from '@mui/icons-material';
 
 const StockSelectionTable = () => {
   const dispatch = useDispatch();
@@ -77,8 +79,44 @@ const StockSelectionTable = () => {
   };
 
   const handleRemoveSelected = () => {
-    dispatch(removeAvailableStock(selected));
-    setSelected([]);
+    const newSelected = selected.filter(id => !availableStocks.includes(id));
+    setSelected(newSelected);
+    dispatch(removeAvailableStock(newSelected));
+  };
+
+  const handleExportCSV = () => {
+    // Create CSV header
+    const headers = ['Symbol', 'Name', 'Market Cap', 'Price', 'Volume', 'Last Updated'];
+    const csvRows = [headers];
+
+    // Add data rows
+    selected.forEach(symbol => {
+      const stock = availableStocks.find(s => s.symbol === symbol);
+      if (stock) {
+        csvRows.push([
+          stock.symbol,
+          stock.name,
+          stock.market_cap,
+          stock.price,
+          stock.volume,
+          format(new Date(stock.last_updated), 'PPpp')
+        ]);
+      }
+    });
+
+    // Convert to CSV string
+    const csvContent = csvRows.map(row => row.join(',')).join('\n');
+    
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'selected-stocks.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const createSortHandler = (property) => () => {
@@ -92,14 +130,26 @@ const StockSelectionTable = () => {
           <Typography variant="h6">
             Selected Stocks
           </Typography>
-          <Button 
-            variant="outlined" 
-            color="error" 
-            onClick={handleRemoveSelected}
-            disabled={selected.length === 0}
-          >
-            Remove Selected ({selected.length})
-          </Button>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={handleExportCSV}
+              startIcon={<Download />}
+            >
+              Export CSV
+            </Button>
+            {selected.length > 0 && (
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleRemoveSelected}
+                startIcon={<Delete />}
+              >
+                Remove Selected ({selected.length})
+              </Button>
+            )}
+          </Stack>
         </Stack>
         <TableContainer 
           component={Paper} 
