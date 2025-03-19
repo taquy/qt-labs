@@ -21,15 +21,17 @@ def init_auth_routes(app):
                 return jsonify({'message': 'Token is missing'}), 401
             
             try:
-                # First check if token exists in database and is active
-                user_jwt = UserJWT.query.filter_by(token=token, is_active=True).first()
+                # First check if token exists in database
+                user_jwt = UserJWT.query.filter_by(token=token).first()
                 if not user_jwt:
-                    return jsonify({'message': 'Token is invalid or expired'}), 401
+                    return jsonify({'message': 'Token is invalid'}), 401
                 
                 # Check if token is expired
                 current_time = datetime.now(timezone.utc)
-                if user_jwt.expires_at < current_time:
-                    user_jwt.is_active = False
+                expires_at = user_jwt.expires_at.replace(tzinfo=timezone.utc)
+                if expires_at < current_time:
+                    # Remove expired token
+                    db.session.delete(user_jwt)
                     db.session.commit()
                     return jsonify({'message': 'Token has expired'}), 401
                 
@@ -37,11 +39,18 @@ def init_auth_routes(app):
                 data = PyJWT.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
                 current_user = User.query.get(data['user_id'])
                 if not current_user:
+                    # Remove token if user not found
+                    db.session.delete(user_jwt)
+                    db.session.commit()
                     return jsonify({'message': 'User not found'}), 401
                 
                 return f(current_user, *args, **kwargs)
             except Exception as e:
                 print(f"Error in token_required: {str(e)}")
+                # Remove invalid token
+                if user_jwt:
+                    db.session.delete(user_jwt)
+                    db.session.commit()
                 return jsonify({'message': 'Token is invalid'}), 401
         return decorated
     
@@ -149,10 +158,10 @@ def init_auth_routes(app):
             # Get token from request
             token = request.headers['Authorization'].split(" ")[1]
             
-            # Find and deactivate the token
+            # Find and remove the token
             user_jwt = UserJWT.query.filter_by(token=token).first()
             if user_jwt:
-                user_jwt.is_active = False
+                db.session.delete(user_jwt)
                 db.session.commit()
             
             return jsonify({'message': 'Successfully logged out'})
