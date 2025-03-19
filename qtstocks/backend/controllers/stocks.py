@@ -8,7 +8,7 @@ from services.get_stock_lists import get_stock_list
 from services.get_stock_data import process_stock_list
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak, Frame, PageTemplate
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 import matplotlib
@@ -229,16 +229,39 @@ def init_stock_routes(app, token_required):
             styles = getSampleStyleSheet()
             elements = []
 
-            # Add title
-            title_style = ParagraphStyle(
-                'CustomTitle',
+            # Create centered title style
+            centered_title_style = ParagraphStyle(
+                'CenteredTitle',
                 parent=styles['Heading1'],
                 fontSize=24,
-                spaceAfter=30
+                spaceAfter=10,  # Reduced space after title
+                alignment=1  # 1 = center alignment
             )
-            elements.append(Paragraph("Stock Statistics Report", title_style))
+
+            # Create date style
+            date_style = ParagraphStyle(
+                'DateStyle',
+                parent=styles['Normal'],
+                fontSize=12,
+                spaceAfter=30,  # Space after date
+                alignment=1  # 1 = center alignment
+            )
+
+            centered_heading_style = ParagraphStyle(
+                'CenteredHeading',
+                parent=styles['Heading2'],
+                fontSize=18,
+                spaceAfter=10,
+                alignment=1  # 1 = center alignment
+            )
+
+            # Add title and date
+            elements.append(Paragraph("Stock Statistics Report", centered_title_style))
+            elements.append(Paragraph(f"Generated on {datetime.now(timezone.utc).strftime('%B %d, %Y at %I:%M %p %Z')}", date_style))
 
             # Add detailed table first
+            elements.append(Paragraph("Stock Statistics", centered_heading_style))
+            elements.append(Spacer(1, 10))
             table_style = TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -273,6 +296,8 @@ def init_stock_routes(app, token_required):
             elements.append(Spacer(1, 20))
             
             # Add table for symbol and name
+            elements.append(Paragraph("Stock Information", centered_heading_style))
+            elements.append(Spacer(1, 10))
             table_data = [['Symbol', 'Name']]
             for stock in stocks_with_stats:
                 table_data.append([
@@ -282,6 +307,15 @@ def init_stock_routes(app, token_required):
             table = Table(table_data)
             table.setStyle(table_style)
             elements.append(table)
+
+            # Create bar charts with larger text
+            plt.rcParams.update({
+                'font.size': 12,
+                'axes.titlesize': 14,
+                'axes.labelsize': 12,
+                'xtick.labelsize': 10,
+                'ytick.labelsize': 10
+            })
 
             # Create bar charts
             symbols = [stock.symbol for stock in stocks_with_stats]
@@ -294,14 +328,15 @@ def init_stock_routes(app, token_required):
             # Create price chart
             plt.figure(figsize=(10, 6))
             bars = plt.bar(symbols, prices)
-            plt.title('Stock Prices')
+            plt.title('Stock Prices', pad=20)
             plt.xticks(rotation=45)
             # Add value labels on top of bars
             for bar in bars:
                 height = bar.get_height()
                 plt.text(bar.get_x() + bar.get_width()/2., height,
                         f'{height:,.2f}',
-                        ha='center', va='bottom')
+                        ha='center', va='bottom',
+                        fontsize=10)  # Increased font size for bar labels
             plt.tight_layout()
             price_chart = io.BytesIO()
             plt.savefig(price_chart, format='png')
@@ -311,14 +346,15 @@ def init_stock_routes(app, token_required):
             # Create market cap chart
             plt.figure(figsize=(10, 6))
             bars = plt.bar(symbols, market_caps)
-            plt.title('Market Capitalization')
+            plt.title('Market Capitalization', pad=20)
             plt.xticks(rotation=45)
             # Add value labels on top of bars
             for bar in bars:
                 height = bar.get_height()
                 plt.text(bar.get_x() + bar.get_width()/2., height,
                         f'{height:,.0f}',
-                        ha='center', va='bottom')
+                        ha='center', va='bottom',
+                        fontsize=10)  # Increased font size for bar labels
             plt.tight_layout()
             market_cap_chart = io.BytesIO()
             plt.savefig(market_cap_chart, format='png')
@@ -328,14 +364,15 @@ def init_stock_routes(app, token_required):
             # Create EPS chart
             plt.figure(figsize=(10, 6))
             bars = plt.bar(symbols, eps_values)
-            plt.title('Earnings Per Share (EPS)')
+            plt.title('Earnings Per Share (EPS)', pad=20)
             plt.xticks(rotation=45)
             # Add value labels on top of bars
             for bar in bars:
                 height = bar.get_height()
                 plt.text(bar.get_x() + bar.get_width()/2., height,
                         f'{height:,.2f}',
-                        ha='center', va='bottom')
+                        ha='center', va='bottom',
+                        fontsize=10)  # Increased font size for bar labels
             plt.tight_layout()
             eps_chart = io.BytesIO()
             plt.savefig(eps_chart, format='png')
@@ -345,14 +382,15 @@ def init_stock_routes(app, token_required):
             # Create P/E chart
             plt.figure(figsize=(10, 6))
             bars = plt.bar(symbols, pe_values)
-            plt.title('Price-to-Earnings Ratio (P/E)')
+            plt.title('Price-to-Earnings Ratio (P/E)', pad=20)
             plt.xticks(rotation=45)
             # Add value labels on top of bars
             for bar in bars:
                 height = bar.get_height()
                 plt.text(bar.get_x() + bar.get_width()/2., height,
                         f'{height:,.2f}',
-                        ha='center', va='bottom')
+                        ha='center', va='bottom',
+                        fontsize=10)  # Increased font size for bar labels
             plt.tight_layout()
             pe_chart = io.BytesIO()
             plt.savefig(pe_chart, format='png')
@@ -362,22 +400,22 @@ def init_stock_routes(app, token_required):
             # Create P/B chart
             plt.figure(figsize=(10, 6))
             bars = plt.bar(symbols, pb_values)
-            plt.title('Price-to-Book Ratio (P/B)')
+            plt.title('Price-to-Book Ratio (P/B)', pad=20)
             plt.xticks(rotation=45)
             # Add value labels on top of bars
             for bar in bars:
                 height = bar.get_height()
                 plt.text(bar.get_x() + bar.get_width()/2., height,
                         f'{height:,.2f}',
-                        ha='center', va='bottom')
+                        ha='center', va='bottom',
+                        fontsize=10)  # Increased font size for bar labels
             plt.tight_layout()
             pb_chart = io.BytesIO()
             plt.savefig(pb_chart, format='png')
             plt.close()
             pb_chart.seek(0)
 
-            # Add charts to PDF (2 per page)
-            from reportlab.platypus import Image, PageBreak
+            # Add charts to PDF (1 per page)
             charts = [
                 (price_chart, "Stock Prices"),
                 (market_cap_chart, "Market Capitalization"),
@@ -386,13 +424,34 @@ def init_stock_routes(app, token_required):
                 (pb_chart, "Price-to-Book Ratio (P/B)")
             ]
 
+            # Create a frame for centered content
+            frame = Frame(
+                doc.leftMargin,
+                doc.bottomMargin,
+                doc.width,
+                doc.height,
+                id='normal'
+            )
+
+            # Create a page template with the centered frame
+            template = PageTemplate(id='centered', frames=[frame])
+            doc.addPageTemplates([template])
+
+            # Add page break before first chart to ensure it starts on a new page
+            elements.append(PageBreak())
+
             for i, (chart_data, title) in enumerate(charts):
-                if i > 0 and i % 2 == 0:
+                if i > 0:  # Add page break before each chart except the first one
                     elements.append(PageBreak())
-                elements.append(Paragraph(title, styles['Heading2']))
+                elements.append(Paragraph(title, centered_heading_style))
+                elements.append(Spacer(1, 5))  # Reduced space between title and chart
+                
+                # Calculate center position for the chart
                 img = Image(chart_data, width=7*inch, height=4*inch)
+                # Add spacer before chart to center it vertically
+                elements.append(Spacer(1, 2*inch))  # Add space to push chart down
                 elements.append(img)
-                elements.append(Spacer(1, 20))
+                elements.append(Spacer(1, 2*inch))  # Add space after chart to maintain vertical centering
 
             # Build PDF
             doc.build(elements)
