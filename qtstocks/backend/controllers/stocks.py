@@ -317,112 +317,57 @@ def init_stock_routes(app, token_required):
                 'ytick.labelsize': 10
             })
 
-            # Create bar charts
-            symbols = [stock.symbol for stock in stocks_with_stats]
-            prices = [stock.stats.price for stock in stocks_with_stats]
-            market_caps = [stock.stats.market_cap for stock in stocks_with_stats]
-            eps_values = [stock.stats.eps for stock in stocks_with_stats]
-            pe_values = [stock.stats.pe for stock in stocks_with_stats]
-            pb_values = [stock.stats.pb for stock in stocks_with_stats]
-
-            # Create price chart
-            plt.figure(figsize=(10, 6))
-            bars = plt.bar(symbols, prices)
-            plt.title('Stock Prices', pad=20)
-            plt.xticks(rotation=45)
-            # Add value labels on top of bars
-            for bar in bars:
-                height = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{height:,.2f}',
-                        ha='center', va='bottom',
-                        fontsize=10)  # Increased font size for bar labels
-            plt.tight_layout()
-            price_chart = io.BytesIO()
-            plt.savefig(price_chart, format='png')
-            plt.close()
-            price_chart.seek(0)
-
-            # Create market cap chart
-            plt.figure(figsize=(10, 6))
-            bars = plt.bar(symbols, market_caps)
-            plt.title('Market Capitalization', pad=20)
-            plt.xticks(rotation=45)
-            # Add value labels on top of bars
-            for bar in bars:
-                height = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{height:,.0f}',
-                        ha='center', va='bottom',
-                        fontsize=10)  # Increased font size for bar labels
-            plt.tight_layout()
-            market_cap_chart = io.BytesIO()
-            plt.savefig(market_cap_chart, format='png')
-            plt.close()
-            market_cap_chart.seek(0)
-
-            # Create EPS chart
-            plt.figure(figsize=(10, 6))
-            bars = plt.bar(symbols, eps_values)
-            plt.title('Earnings Per Share (EPS)', pad=20)
-            plt.xticks(rotation=45)
-            # Add value labels on top of bars
-            for bar in bars:
-                height = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{height:,.2f}',
-                        ha='center', va='bottom',
-                        fontsize=10)  # Increased font size for bar labels
-            plt.tight_layout()
-            eps_chart = io.BytesIO()
-            plt.savefig(eps_chart, format='png')
-            plt.close()
-            eps_chart.seek(0)
-
-            # Create P/E chart
-            plt.figure(figsize=(10, 6))
-            bars = plt.bar(symbols, pe_values)
-            plt.title('Price-to-Earnings Ratio (P/E)', pad=20)
-            plt.xticks(rotation=45)
-            # Add value labels on top of bars
-            for bar in bars:
-                height = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{height:,.2f}',
-                        ha='center', va='bottom',
-                        fontsize=10)  # Increased font size for bar labels
-            plt.tight_layout()
-            pe_chart = io.BytesIO()
-            plt.savefig(pe_chart, format='png')
-            plt.close()
-            pe_chart.seek(0)
-
-            # Create P/B chart
-            plt.figure(figsize=(10, 6))
-            bars = plt.bar(symbols, pb_values)
-            plt.title('Price-to-Book Ratio (P/B)', pad=20)
-            plt.xticks(rotation=45)
-            # Add value labels on top of bars
-            for bar in bars:
-                height = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width()/2., height,
-                        f'{height:,.2f}',
-                        ha='center', va='bottom',
-                        fontsize=10)  # Increased font size for bar labels
-            plt.tight_layout()
-            pb_chart = io.BytesIO()
-            plt.savefig(pb_chart, format='png')
-            plt.close()
-            pb_chart.seek(0)
-
-            # Add charts to PDF (1 per page)
-            charts = [
-                (price_chart, "Stock Prices"),
-                (market_cap_chart, "Market Capitalization"),
-                (eps_chart, "Earnings Per Share (EPS)"),
-                (pe_chart, "Price-to-Earnings Ratio (P/E)"),
-                (pb_chart, "Price-to-Book Ratio (P/B)")
+            # Define chart configurations
+            chart_configs = [
+                {
+                    'data': [stock.stats.price for stock in stocks_with_stats],
+                    'title': 'Stock Prices',
+                    'format': '{:,.2f}'
+                },
+                {
+                    'data': [stock.stats.market_cap for stock in stocks_with_stats],
+                    'title': 'Market Capitalization',
+                    'format': '{:,.0f}'
+                },
+                {
+                    'data': [stock.stats.eps for stock in stocks_with_stats],
+                    'title': 'Earnings Per Share (EPS)',
+                    'format': '{:,.2f}'
+                },
+                {
+                    'data': [stock.stats.pe for stock in stocks_with_stats],
+                    'title': 'Price-to-Earnings Ratio (P/E)',
+                    'format': '{:,.2f}'
+                },
+                {
+                    'data': [stock.stats.pb for stock in stocks_with_stats],
+                    'title': 'Price-to-Book Ratio (P/B)',
+                    'format': '{:,.2f}'
+                }
             ]
+
+            # Create charts
+            charts = []
+            for config in chart_configs:
+                plt.figure(figsize=(10, 6))
+                bars = plt.bar([stock.symbol for stock in stocks_with_stats], config['data'])
+                plt.title(config['title'], pad=20)
+                plt.xticks(rotation=45)
+                
+                # Add value labels on top of bars
+                for bar in bars:
+                    height = bar.get_height()
+                    plt.text(bar.get_x() + bar.get_width()/2., height,
+                            config['format'].format(height),
+                            ha='center', va='bottom',
+                            fontsize=10)
+                
+                plt.tight_layout()
+                chart_buffer = io.BytesIO()
+                plt.savefig(chart_buffer, format='png')
+                plt.close()
+                chart_buffer.seek(0)
+                charts.append((chart_buffer, config['title']))
 
             # Create a frame for centered content
             frame = Frame(
