@@ -1,11 +1,11 @@
 from flask import jsonify, request, Response
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 import io
 import csv
 from models import Stock, StockStats, user_stock_stats
 from extensions import db
-from get_stock_lists import get_stock_list
-from get_stock_data import process_stock_list
+from services.get_stock_lists import get_stock_list
+from services.get_stock_data import process_stock_list
 
 def init_stock_routes(app, token_required):
     @app.route('/api/stocks')
@@ -31,7 +31,11 @@ def init_stock_routes(app, token_required):
     def get_stocks_with_stats(current_user):
         try:
             # Query stocks that have stats
-            stocks_with_stats = db.session.query(Stock).join(StockStats).join(user_stock_stats).filter(user_stock_stats.c.user_id == current_user.id).all()
+            stocks_with_stats = db.session.query(Stock) \
+                .join(StockStats) \
+                .join(user_stock_stats) \
+                .filter(user_stock_stats.c.user_id == current_user.id) \
+                .all()
             return jsonify({
                 'stocks': [
                     {
@@ -63,7 +67,7 @@ def init_stock_routes(app, token_required):
                 stock = Stock(
                     symbol=stock_data['Symbol'],
                     name=stock_data['Name'],
-                    last_updated=datetime.now(UTC)
+                    last_updated=datetime.now(timezone)
                 )
                 db.session.add(stock)
             
@@ -165,9 +169,6 @@ def init_stock_routes(app, token_required):
     @token_required
     def export_stocks(current_user):
         try:
-            # Get all stocks with their stats
-            stocks = Stock.query.all()
-            
             # Create CSV data
             output = io.StringIO()
             writer = csv.writer(output)
@@ -175,30 +176,32 @@ def init_stock_routes(app, token_required):
             # Write header
             writer.writerow(['Symbol', 'Name', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B', 'Last Updated'])
             
-            # Write data
-            for stock in stocks:
-                stats = StockStats.query.filter_by(symbol=stock.symbol).first()
+            
+            stocks_with_stats = db.session.query(Stock).join(StockStats).join(user_stock_stats).filter(user_stock_stats.c.user_id == current_user.id).all()
+                        
+            for stock in stocks_with_stats:
                 writer.writerow([
                     stock.symbol,
                     stock.name,
-                    stats.price if stats else '',
-                    stats.market_cap if stats else '',
-                    stats.eps if stats else '',
-                    stats.pe if stats else '',
-                    stats.pb if stats else '',
-                    stats.last_updated.strftime('%Y-%m-%d %H:%M:%S') if stats else ''
+                    stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S'),
+                    stock.stats.price,
+                    stock.stats.market_cap,
+                    stock.stats.eps,
+                    stock.stats.pe,
+                    stock.stats.pb,
+                    stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')
                 ])
-            
             # Create response
             output.seek(0)
             return Response(
                 output.getvalue(),
                 mimetype='text/csv',
                 headers={
-                    'Content-Disposition': f'attachment; filename=stocks_{datetime.now(UTC).strftime("%Y%m%d_%H%M%S")}.csv'
+                    'Content-Disposition': f'attachment; filename=stocks_{datetime.now(timezone).strftime("%Y%m%d_%H%M%S")}.csv'
                 }
             )
             
         except Exception as e:
             print(f"Error exporting stocks: {str(e)}")
             return {'error': str(e)}, 500 
+    

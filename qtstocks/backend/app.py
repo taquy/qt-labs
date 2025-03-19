@@ -7,7 +7,7 @@ import plotly.express as px
 import json
 import threading
 import queue
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 import io
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -15,13 +15,13 @@ from models import User, Stock, StockStats, UserSettings, user_stock_stats
 from config import Config
 import requests
 from bs4 import BeautifulSoup
-from get_stock_lists import get_stock_list
+from services.get_stock_lists import get_stock_list
 from extensions import db, login_manager, cors, init_extensions
 import os
 import jwt as PyJWT
 from functools import wraps
 from oauthlib.oauth2 import WebApplicationClient
-from get_stock_data import process_stock_list
+from services.get_stock_data import process_stock_list
 import csv
 from controllers.auth import init_auth_routes
 from controllers.settings import init_settings_routes
@@ -57,10 +57,10 @@ def create_app(config_class=Config):
     def load_user(user_id):
         return db.session.get(User, int(user_id))
     
-    # Initialize routes
-    init_auth_routes(app)
-    init_settings_routes(app)
-    init_stock_routes(app)
+    # Initialize routes and get token_required decorator
+    token_required = init_auth_routes(app)
+    init_settings_routes(app, token_required)
+    init_stock_routes(app, token_required)
     
     # Serve React app
     @app.route('/', defaults={'path': ''})
