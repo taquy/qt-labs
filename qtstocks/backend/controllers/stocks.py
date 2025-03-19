@@ -182,7 +182,6 @@ def init_stock_routes(app, token_required):
                 writer.writerow([
                     stock.symbol,
                     stock.name,
-                    stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S'),
                     stock.stats.price,
                     stock.stats.market_cap,
                     stock.stats.eps,

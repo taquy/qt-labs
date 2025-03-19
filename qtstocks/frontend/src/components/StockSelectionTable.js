@@ -15,7 +15,7 @@ import {
   TableSortLabel
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAvailableStocks, removeAvailableStock, exportStockData } from '../store/sagas/stockGraphSaga';
+import { fetchAvailableStocks, removeAvailableStock, exportCsv } from '../store/sagas/stockGraphSaga';
 import { format } from 'date-fns';
 import { Delete, Download } from '@mui/icons-material';
 
@@ -25,7 +25,8 @@ const StockSelectionTable = () => {
   // Select state from Redux store
   const {
     availableStocks,
-    metrics
+    metrics,
+    exportedCsv
   } = useSelector(state => state.stockGraph);
 
   const [selected, setSelected] = React.useState([]);
@@ -46,16 +47,14 @@ const StockSelectionTable = () => {
     return [...stocks].sort((a, b) => {
       let aValue = a[orderBy];
       let bValue = b[orderBy];
-
       // Handle numeric values
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return order === 'asc' ? aValue - bValue : bValue - aValue;
       }
-
       // Handle string values
       aValue = String(aValue).toLowerCase();
       bValue = String(bValue).toLowerCase();
-      return order === 'asc' 
+      return order === 'asc'
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     });
@@ -85,12 +84,36 @@ const StockSelectionTable = () => {
   };
 
   const handleExportCSV = () => {
-    dispatch(exportStockData());
+    dispatch(exportCsv());
   };
 
   const createSortHandler = (property) => () => {
     handleRequestSort(property);
   };
+
+  useEffect(() => {
+    if (exportedCsv) {
+      // Create a blob from the CSV data
+      const blob = new Blob([exportedCsv], { type: 'text/csv;charset=utf-8;' });
+      
+      // Create a link element
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      // Set link properties
+      link.setAttribute('href', url);
+      link.setAttribute('download', `stocks-report-${Date.now()}.csv`);
+      link.style.visibility = 'hidden';
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      URL.revokeObjectURL(url);
+    }
+  }, [exportedCsv]);
 
   return (
     <Paper sx={{ p: 2, mt: 3, mb: 3 }}> 

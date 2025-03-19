@@ -14,6 +14,7 @@ const initialState = {
   availableStocks: [],
   metrics: METRICS,
   fetchingStockStats: false,
+  exportedCsv: null,
   ...sharedInitialState,
 };
 
@@ -30,6 +31,9 @@ const stockGraphSlice = createSlice({
     setFetchingStockStats: (state, action) => {
       state.fetchingStockStats = action.payload;
     },
+    setExportedCsv: (state, action) => {
+      state.exportedCsv = action.payload;
+    },
     ...sharedReducer,
   }
 });
@@ -41,6 +45,7 @@ export const {
   setError,
   setLoading,
   clearError,
+  setExportedCsv,
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer;

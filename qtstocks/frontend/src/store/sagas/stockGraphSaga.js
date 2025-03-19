@@ -8,6 +8,7 @@ import {
   clearError,
   setStocks,
   setFetchingStockStats,
+  setExportedCsv,
 } from '../slices/stockGraphSlice';
 import { handleApiError, getRequestConfig } from '../utils';
 
@@ -23,7 +24,7 @@ export const fetchAvailableStocks = () => ({ type: FETCH_AVAILABLE_STOCKS });
 export const fetchStocks = () => ({ type: FETCH_STOCKS });
 export const removeAvailableStock = (payload) => ({ type: REMOVE_AVAILABLE_STOCK, payload });
 export const fetchStockData = (payload) => ({ type: FETCH_STOCK_DATA, payload });
-export const exportStockData = () => ({ type: EXPORT_STOCK_DATA });
+export const exportCsv = () => ({ type: EXPORT_STOCK_DATA });
 // API calls
 const api = {
   fetchStocks: async () => {
@@ -47,8 +48,8 @@ const api = {
     }, getRequestConfig());
     return response.data;
   },
-  exportStockData: async () => {
-    const response = await axios.get(API_STOCK_ENDPOINTS.exportStockData, getRequestConfig());
+  exportCsv: async () => {
+    const response = await axios.get(API_STOCK_ENDPOINTS.exportCsv, getRequestConfig());
     return response.data;
   }
 };
@@ -63,12 +64,13 @@ function* removeAvailableStockSaga(action) {
   }
     }
 
-function* exportStockDataSaga(action) {
+function* exportCsvSaga(action) {
   try {
-    yield effects.call(api.exportStockData);
+    const response = yield effects.call(api.exportCsv);
+    yield effects.put(setExportedCsv(response));
   } catch (error) {
     yield effects.put(setError('Failed to export stock data'));
-    yield effects.call(handleApiError, error, 'exportStockDataSaga');
+    yield effects.call(handleApiError, error, 'exportCsvSaga');
   }
 }
 
@@ -120,5 +122,5 @@ export function* stockGraphSaga() {
   yield effects.takeLatest(FETCH_AVAILABLE_STOCKS, fetchAvailableStocksSaga);
   yield effects.takeLatest(FETCH_STOCK_DATA, fetchStockDataSaga);
   yield effects.takeLatest(REMOVE_AVAILABLE_STOCK, removeAvailableStockSaga);
-  yield effects.takeLatest(EXPORT_STOCK_DATA, exportStockDataSaga);
+  yield effects.takeLatest(EXPORT_STOCK_DATA, exportCsvSaga);
 }

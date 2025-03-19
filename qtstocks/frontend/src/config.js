@@ -14,10 +14,10 @@ export const API_SETTINGS_ENDPOINTS = {
 }
 
 export const API_STOCK_ENDPOINTS = {
-    stocksWithStats: `${API_BASE_URL}/stocks/stats`,
+    stocksWithStats: `${API_BASE_URL}/stocks_with_stats`,
     stocks: `${API_BASE_URL}/stocks`,
     downloadStockList: `${API_BASE_URL}/download_stock_list`,
     fetchStockData: `${API_BASE_URL}/fetch_stock_data`,
     removeAvailableStock: `${API_BASE_URL}/remove_stock_stats`,
-    exportStockData: `${API_BASE_URL}/export_csv`,
+    exportCsv: `${API_BASE_URL}/export_csv`,
 };
