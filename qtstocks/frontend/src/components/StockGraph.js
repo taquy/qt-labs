@@ -50,6 +50,7 @@ const StockGraph = () => {
   const dispatch = useDispatch();
   const [selectedMetric, setSelectedMetric] = useState('market_cap');
   const [chartData, setChartData] = useState();
+  const [currentChartData, setCurrentChartData] = useState();
   const [selectedStocks, setSelectedStocks] = useState([]);
   const chartRef = useRef(null);
 
@@ -70,40 +71,45 @@ const StockGraph = () => {
 
   useEffect(() => {
     if (!selectedStocks) return;
-    let labels = selectedStocks.map(stock => stock.symbol);
-    let dataPoints = selectedStocks.map(stock => stock[selectedMetric]);
 
+    const allCharts = {};
     // Generate colors for each bar
-    let colors = labels.map((_, index) =>
-      `hsl(${(index * 360/ labels.length)}, 70%, 50%)`
-    );
-    // Sort labels and dataPoints together based on dataPoints values
-    const sortedIndices = dataPoints
-      .map((value, index) => ({ value, index }))
-      .sort((a, b) => b.value - a.value)
-      .map(item => item.index);
+    for (let metric of Object.keys(metrics)) {
+      let dataPoints = selectedStocks.map(stock => stock[metric]);
+      let labels = selectedStocks.map(stock => stock.symbol);
+      let colors = labels.map((_, index) =>
+        `hsl(${(index * 360/ labels.length)}, 70%, 50%)`
+      );
+      // Sort labels and dataPoints together based on dataPoints values
+      const sortedIndices = dataPoints
+        .map((value, index) => ({ value, index }))
+        .sort((a, b) => b.value - a.value)
+        .map(item => item.index);
 
-    labels = sortedIndices.map(i => labels[i]);
-    dataPoints = sortedIndices.map(i => dataPoints[i]);
-    colors = sortedIndices.map(i => colors[i]);
-    const newChartData = {
-      labels,
-      datasets: [{
-        label: metrics[selectedMetric],
-        data: dataPoints,
-        borderWidth: 1,
-        backgroundColor: colors,
-        borderColor: colors.map(color => color.replace('50%', '40%')),
-        borderRadius: 5,
-        hoverBackgroundColor: colors.map(color => color.replace('50%', '60%')),
-      }],
-      title: {
-        display: true,
-        text: `Comparison of ${metrics[selectedMetric]} across selected stocks`,
-        font: { size: 16 }
+      labels = sortedIndices.map(i => labels[i]);
+      dataPoints = sortedIndices.map(i => dataPoints[i]);
+      colors = sortedIndices.map(i => colors[i]);
+      const newChartData = {
+        labels,
+        datasets: [{
+          label: metrics[metric],
+          data: dataPoints,
+          borderWidth: 1,
+          backgroundColor: colors,
+          borderColor: colors.map(color => color.replace('50%', '40%')),
+          borderRadius: 5,
+          hoverBackgroundColor: colors.map(color => color.replace('50%', '60%')),
+        }],
+        title: {
+          display: true,
+          text: `Comparison of ${metrics[metric]} across selected stocks`,
+          font: { size: 16 }
+        }
       }
+      allCharts[metric] = newChartData;
     }
-    setChartData(newChartData);
+    setChartData(allCharts);
+    setCurrentChartData(allCharts[selectedMetric]);
   }, [selectedStocks, selectedMetric, metrics]);
 
   // Load settings when available
@@ -113,7 +119,7 @@ const StockGraph = () => {
       // Find and set selected stocks
       const selectedStocksData = availableStocks.filter(stock =>
         selectedSymbols.includes(stock.symbol)
-      );
+      )
       if (selectedStocksData.length > 0) {
         setSelectedStocks(selectedStocksData);
       }
@@ -143,7 +149,7 @@ const StockGraph = () => {
 
       const chart = chartRef.current;
       const canvas = chart.canvas;
-      
+
       // Create PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -191,7 +197,7 @@ const StockGraph = () => {
     );
   }
 
-  if (!chartData || Object.keys(chartData).length === 0) {
+  if (!currentChartData || Object.keys(currentChartData).length === 0) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
         <Typography variant="body1" color="text.secondary">
@@ -212,7 +218,7 @@ const StockGraph = () => {
             variant="contained"
             color="primary"
             onClick={exportToPDF}
-            disabled={!chartData || Object.keys(chartData).length === 0}
+            disabled={!currentChartData || Object.keys(currentChartData).length === 0}
           >
             Export PDF
           </Button>
@@ -294,11 +300,11 @@ const StockGraph = () => {
       </Box>
 
       <Paper sx={{ p: 2 }}>
-        {chartData ? (
+        {currentChartData ? (
           <Box sx={{ height: 500, width: '100%' }}>
             <Bar 
               ref={chartRef}
-              data={chartData} 
+              data={currentChartData} 
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
@@ -308,14 +314,14 @@ const StockGraph = () => {
                 },
                 plugins: {
                   legend: { display: false },
-                  title: chartData.title
+                  title: currentChartData.title
                 },
                 scales: {
                   y: {
                     beginAtZero: true,
                     title: {
                       display: true,
-                      text: chartData.metric,
+                      text: currentChartData.metric,
                       font: { size: 14 }
                     },
                     grid: { color: 'rgba(0, 0, 0, 0.1)' }
