@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkIsLoggedIn } from '../store/sagas/stockGraphSaga';
-
+import PageLoader from './PageLoader';
 
 const PublicRoute = ({ children }) => {
   const dispatch = useDispatch();
@@ -14,7 +14,7 @@ const PublicRoute = ({ children }) => {
   }, [dispatch]);
 
   if (checkingLogin) {
-    return <div>Loading...</div>;
+    return <PageLoader/>
   }
 
   if (isLoggedIn) {
