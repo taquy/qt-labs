@@ -26,16 +26,12 @@ def init_stock_routes(app, token_required):
         except Exception as e:
             return jsonify({'error': str(e)}), 500
     
-    @app.route('/api/stocks/stats')
+    @app.route('/api/stocks_with_stats')
     @token_required
     def get_stocks_with_stats(current_user):
         try:
             # Query stocks that have stats
-            stocks_with_stats = db.session.query(Stock) \
-                .join(StockStats) \
-                .join(user_stock_stats) \
-                .filter(user_stock_stats.c.user_id == current_user.id) \
-                .all()
+            stocks_with_stats = db.session.query(Stock).join(StockStats).join(user_stock_stats).filter(user_stock_stats.c.user_id == current_user.id).all()
             return jsonify({
                 'stocks': [
                     {
@@ -67,7 +63,7 @@ def init_stock_routes(app, token_required):
                 stock = Stock(
                     symbol=stock_data['Symbol'],
                     name=stock_data['Name'],
-                    last_updated=datetime.now(timezone)
+                    last_updated=datetime.now(timezone.utc)
                 )
                 db.session.add(stock)
             
@@ -165,7 +161,7 @@ def init_stock_routes(app, token_required):
             print(f"Error in remove_stock_stats: {str(e)}")
             return jsonify({'error': str(e)}), 500
     
-    @app.route('/api/stocks/export')
+    @app.route('/api/export_csv')
     @token_required
     def export_stocks(current_user):
         try:
@@ -176,8 +172,11 @@ def init_stock_routes(app, token_required):
             # Write header
             writer.writerow(['Symbol', 'Name', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B', 'Last Updated'])
             
-            
-            stocks_with_stats = db.session.query(Stock).join(StockStats).join(user_stock_stats).filter(user_stock_stats.c.user_id == current_user.id).all()
+            stocks_with_stats = db.session.query(Stock)\
+                .join(StockStats)\
+                .join(user_stock_stats)\
+                .filter(user_stock_stats.c.user_id == current_user.id)\
+                .all()
                         
             for stock in stocks_with_stats:
                 writer.writerow([
@@ -191,13 +190,14 @@ def init_stock_routes(app, token_required):
                     stock.stats.pb,
                     stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')
                 ])
+            
             # Create response
             output.seek(0)
             return Response(
                 output.getvalue(),
                 mimetype='text/csv',
                 headers={
-                    'Content-Disposition': f'attachment; filename=stocks_{datetime.now(timezone).strftime("%Y%m%d_%H%M%S")}.csv'
+                    'Content-Disposition': f'attachment; filename=stocks_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.csv'
                 }
             )
             

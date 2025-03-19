@@ -15,7 +15,7 @@ import {
   TableSortLabel
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAvailableStocks, removeAvailableStock } from '../store/sagas/stockGraphSaga';
+import { fetchAvailableStocks, removeAvailableStock, exportStockData } from '../store/sagas/stockGraphSaga';
 import { format } from 'date-fns';
 import { Delete, Download } from '@mui/icons-material';
 
@@ -85,38 +85,7 @@ const StockSelectionTable = () => {
   };
 
   const handleExportCSV = () => {
-    // Create CSV header
-    const headers = ['Symbol', 'Name', 'Market Cap', 'Price', 'Volume', 'Last Updated'];
-    const csvRows = [headers];
-
-    // Add data rows
-    selected.forEach(symbol => {
-      const stock = availableStocks.find(s => s.symbol === symbol);
-      if (stock) {
-        csvRows.push([
-          stock.symbol,
-          stock.name,
-          stock.market_cap,
-          stock.price,
-          stock.volume,
-          format(new Date(stock.last_updated), 'PPpp')
-        ]);
-      }
-    });
-
-    // Convert to CSV string
-    const csvContent = csvRows.map(row => row.join(',')).join('\n');
-    
-    // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'selected-stocks.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    dispatch(exportStockData());
   };
 
   const createSortHandler = (property) => () => {

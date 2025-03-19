@@ -16,13 +16,14 @@ export const FETCH_STOCKS = 'stockGraph/fetchStocks';
 export const FETCH_AVAILABLE_STOCKS = 'stockGraph/fetchAvailableStocks';
 export const FETCH_STOCK_DATA = 'stockGraph/fetchStockData';
 export const REMOVE_AVAILABLE_STOCK = 'stockGraph/removeAvailableStock';
+export const EXPORT_STOCK_DATA = 'stockGraph/exportStockData';
 
 // Action Creators
 export const fetchAvailableStocks = () => ({ type: FETCH_AVAILABLE_STOCKS });
 export const fetchStocks = () => ({ type: FETCH_STOCKS });
 export const removeAvailableStock = (payload) => ({ type: REMOVE_AVAILABLE_STOCK, payload });
 export const fetchStockData = (payload) => ({ type: FETCH_STOCK_DATA, payload });
-
+export const exportStockData = () => ({ type: EXPORT_STOCK_DATA });
 // API calls
 const api = {
   fetchStocks: async () => {
@@ -46,8 +47,8 @@ const api = {
     }, getRequestConfig());
     return response.data;
   },
-  exportStockData: async (payload) => {
-    const response = await axios.post(API_STOCK_ENDPOINTS.exportStockData, payload, getRequestConfig());
+  exportStockData: async () => {
+    const response = await axios.get(API_STOCK_ENDPOINTS.exportStockData, getRequestConfig());
     return response.data;
   }
 };
@@ -59,6 +60,15 @@ function* removeAvailableStockSaga(action) {
     yield effects.call(fetchAvailableStocksSaga);
   } catch (error) {
     yield effects.put(setError('Failed to remove available stock'));
+  }
+    }
+
+function* exportStockDataSaga(action) {
+  try {
+    yield effects.call(api.exportStockData);
+  } catch (error) {
+    yield effects.put(setError('Failed to export stock data'));
+    yield effects.call(handleApiError, error, 'exportStockDataSaga');
   }
 }
 
@@ -110,4 +120,5 @@ export function* stockGraphSaga() {
   yield effects.takeLatest(FETCH_AVAILABLE_STOCKS, fetchAvailableStocksSaga);
   yield effects.takeLatest(FETCH_STOCK_DATA, fetchStockDataSaga);
   yield effects.takeLatest(REMOVE_AVAILABLE_STOCK, removeAvailableStockSaga);
+  yield effects.takeLatest(EXPORT_STOCK_DATA, exportStockDataSaga);
 }
