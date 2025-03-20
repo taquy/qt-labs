@@ -10,7 +10,7 @@ export const FETCH_EXCHANGES = 'stocks/fetchExchanges';
 
 // Action Creators
 export const fetchAvailableStocks = () => ({ type: FETCH_AVAILABLE_STOCKS });
-export const fetchStocks = () => ({ type: FETCH_STOCKS });
+export const fetchStocks = (payload) => ({ type: FETCH_STOCKS, payload });
 export const removeAvailableStock = (payload) => ({ type: REMOVE_AVAILABLE_STOCK, payload });
 export const fetchStockData = (payload) => ({ type: FETCH_STOCK_DATA, payload });
 export const exportCsv = () => ({ type: EXPORT_STOCK_DATA });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import {
   Paper,
   Typography,
@@ -13,24 +13,35 @@ import {
   Checkbox
 } from '@mui/material';
 
-import { fetchStocks, fetchStockData, pullStockList } from '../store/sagas/stockGraphSaga';
+import { fetchStocks, fetchStockData, pullStockList } from '../store/actions/stocks';
 import { useSelector, useDispatch } from 'react-redux';
-import { LoaderActions } from '../store/slices/stockGraphSlice';
-
+import { LoaderActions } from '../store/slices/stocks';
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [loadLatestData, setLoadLatestData] = useState(false);
+  const [selectedExchanges, setSelectedExchanges] = useState([]);
+  const [page, setPage] = useState(1);
+
   const [inputValue] = useState('');
   const dispatch = useDispatch();
   
   const {
     stocks,
-    loaders
-  } = useSelector(state => state.stockGraph);
+    loaders,
+    exchanges
+  } = useSelector(state => state.stocks);
+
+  useEffect(() => {
+    console.log('stocks', stocks);
+  }, [stocks]);
   
   useEffect(() => {
-    dispatch(fetchStocks());
-  }, [dispatch]);
+    dispatch(fetchStocks({page, per_page: 20}));
+  }, [dispatch, page]);
+
+  useEffect(() => {
+    console.log('selectedExchanges', selectedExchanges);
+  }, [selectedExchanges]);
 
   // Function to highlight matching text
   const highlightMatch = (text, search) => {
@@ -51,7 +62,7 @@ const StockSelector = () => {
   };
   
   const handleRemoveStock = (stockToRemove) => {
-    setSelectedStocks(selectedStocks.filter(stock => stock !== stockToRemove));
+    // setSelectedStocks(selectedStocks.filter(stock => stock !== stockToRemove));
   };
 
   return (
@@ -68,13 +79,14 @@ const StockSelector = () => {
         <FormControl sx={{ flex: 1 }}>
           <Autocomplete
             multiple
-            options={stocks}
+            options={stocks.items || []}
             getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
-            value={selectedStocks.map(symbol => stocks.find(s => s.symbol === symbol) || { symbol, name: '' })}
+            value={selectedStocks.map(symbol => (stocks.items || []).find(s => s.symbol === symbol) || { symbol, name: '' })}
             onChange={(event, newValue) => {
               setSelectedStocks(newValue.map(stock => stock.symbol));
             }}
             filterOptions={(options, { inputValue }) => {
+              if (!options || !Array.isArray(options)) return [];
               const input = inputValue.toLowerCase();
               return options.filter(option => 
                 option.symbol.toLowerCase().includes(input) || 
@@ -87,6 +99,7 @@ const StockSelector = () => {
                 variant="outlined"
                 label="Search Stocks"
                 placeholder={selectedStocks.length === 0 ? "Type to search..." : ""}
+                size="small"
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (
@@ -202,8 +215,30 @@ const StockSelector = () => {
               color="primary"
             />
           }
-          label="Load latest data"
+          label="Fetch latest data"
         />
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, ml: 2 }}>
+          {exchanges.map((exchange) => (
+            <FormControlLabel
+              key={exchange}
+              control={
+                <Checkbox
+                  checked={selectedExchanges.includes(exchange)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedExchanges([...selectedExchanges, exchange]);
+                    } else {
+                      setSelectedExchanges(selectedExchanges.filter(ex => ex !== exchange));
+                    }
+                  }}
+                  name={exchange}
+                  color="primary"
+                />
+              }
+              label={exchange}
+            />
+          ))}
+        </Box>
       </Box>
     </Paper>
   );

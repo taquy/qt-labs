@@ -4,8 +4,9 @@ import { getRequestConfig } from '../utils';
 
 // API calls
 const api = {
-  fetchStocks: async () => {
-    const response = await axios.get(API_STOCK_ENDPOINTS.stocks, getRequestConfig());
+  fetchStocks: async (page = 1, per_page = 20) => {
+    const endpoint = API_STOCK_ENDPOINTS.stocks + `?page=${page}&per_page=${per_page}`;
+    const response = await axios.get(endpoint, getRequestConfig());
     return response.data;
   },
   fetchExchanges: async () => {

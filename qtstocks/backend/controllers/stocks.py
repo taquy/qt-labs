@@ -36,6 +36,15 @@ def init_stock_routes(app, token_required, stocks_ns):
         'last_updated': fields.DateTime(readonly=True, description='Last update timestamp')
     })
 
+    paginated_stock_model = stocks_ns.model('PaginatedStock', {
+        'items': fields.List(fields.Nested(stock_model), description='List of stocks'),
+        'total': fields.Integer(description='Total number of stocks'),
+        'pages': fields.Integer(description='Total number of pages'),
+        'current_page': fields.Integer(description='Current page number'),
+        'has_next': fields.Boolean(description='Whether there is a next page'),
+        'has_prev': fields.Boolean(description='Whether there is a previous page')
+    })
+
     stock_stats_model = stocks_ns.model('StockStats', {
         'symbol': fields.String(required=True, description='Stock symbol'),
         'price': fields.Float(description='Current price'),
@@ -55,7 +64,7 @@ def init_stock_routes(app, token_required, stocks_ns):
         @stocks_ns.doc('list_stocks', security='Bearer')
         @stocks_ns.param('page', 'Page number (1-based)', type=int, default=1)
         @stocks_ns.param('per_page', 'Items per page', type=int, default=10)
-        @stocks_ns.marshal_with(stock_model)
+        @stocks_ns.marshal_with(paginated_stock_model)
         @token_required
         def get(self, current_user):
             """List all stocks with pagination"""

@@ -21,7 +21,9 @@ const MessageActions = {
 }
 
 const initialState = {
-  stocks: [],
+  stocks: {
+    items: [],
+  },
   availableStocks: [],
   metrics: METRICS,
   fetchingStockStats: false,
@@ -42,7 +44,9 @@ const stockGraphSlice = createSlice({
   initialState,
   reducers: {
     setStocks: (state, action) => {
-      state.stocks = action.payload ? action.payload : [];
+      state.stocks = action.payload ? action.payload : {
+        items: [],
+      };
     },
     setAvailableStocks: (state, action) => {
       state.availableStocks = action.payload ? action.payload : [];

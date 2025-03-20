@@ -107,11 +107,11 @@ function* fetchStockDataSaga(action) {
   }
 }
 
-function* fetchStocksSaga() {
+function* fetchStocksSaga(action) {
   try {
     yield effects.put(setLoading(true));
     yield effects.put(clearError());
-    const stocks = yield effects.call(api.fetchStocks);
+    const stocks = yield effects.call(api.fetchStocks, action.payload.page, action.payload.per_page);
     yield effects.put(setStocks(stocks));
     yield effects.call(fetchExchangesSaga);
   } catch (error) {
