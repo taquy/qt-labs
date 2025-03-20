@@ -16,12 +16,12 @@ import {
 import { fetchStocks, fetchStockData, pullStockList } from '../store/actions/stocks';
 import { useSelector, useDispatch } from 'react-redux';
 import { LoaderActions } from '../store/slices/stocks';
+
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [loadLatestData, setLoadLatestData] = useState(false);
   const [selectedExchanges, setSelectedExchanges] = useState([]);
   const [page, setPage] = useState(1);
-
   const [inputValue] = useState('');
   const dispatch = useDispatch();
   
@@ -32,16 +32,19 @@ const StockSelector = () => {
   } = useSelector(state => state.stocks);
 
   useEffect(() => {
-    console.log('stocks', stocks);
-  }, [stocks]);
-  
-  useEffect(() => {
+    console.log('fetching stocks', page);
     dispatch(fetchStocks({page, per_page: 20}));
   }, [dispatch, page]);
 
-  useEffect(() => {
-    console.log('selectedExchanges', selectedExchanges);
-  }, [selectedExchanges]);
+  const handleScroll = (event) => {
+    const listbox = event.target;
+    if (
+      !loaders[LoaderActions.FETCH_STOCKS] &&
+      listbox.scrollTop + listbox.clientHeight >= listbox.scrollHeight - 50
+    ) {
+      setPage(prevPage => prevPage + 1);
+    }
+  };
 
   // Function to highlight matching text
   const highlightMatch = (text, search) => {
@@ -104,6 +107,9 @@ const StockSelector = () => {
                   ...params.InputProps,
                   endAdornment: (
                     <>
+                      {loaders[LoaderActions.FETCH_STOCKS] && (
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                      )}
                       {params.InputProps.endAdornment}
                     </>
                   ),
@@ -142,7 +148,8 @@ const StockSelector = () => {
             ListboxProps={{
               style: {
                 maxHeight: '250px'
-              }
+              },
+              onScroll: handleScroll
             }}
           />
         </FormControl>

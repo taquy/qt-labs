@@ -23,6 +23,7 @@ const MessageActions = {
 const initialState = {
   stocks: {
     items: [],
+    has_next: true,
   },
   availableStocks: [],
   metrics: METRICS,
@@ -44,9 +45,15 @@ const stockGraphSlice = createSlice({
   initialState,
   reducers: {
     setStocks: (state, action) => {
-      state.stocks = action.payload ? action.payload : {
-        items: [],
-      };
+      if (action.payload) {
+        state.stocks.items = [...state.stocks.items, ...action.payload.items];
+        state.stocks.has_next = action.payload.has_next;
+      } else {
+        state.stocks = {
+          items: [],
+          has_next: true,
+        };
+      }
     },
     setAvailableStocks: (state, action) => {
       state.availableStocks = action.payload ? action.payload : [];
