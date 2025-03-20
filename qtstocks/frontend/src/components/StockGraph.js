@@ -36,6 +36,8 @@ import {
   saveSettings
 } from '../store/sagas/settingsSaga';
 
+import { LoaderActions } from '../store/slices/stockGraphSlice';
+
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -59,7 +61,7 @@ const StockGraph = () => {
     error,
     metrics,
     exportedGraphPdf,
-    loadingDownloadPdf
+    loaders
   } = useSelector(state => state.stockGraph);
 
   const { settings } = useSelector(state => state.settings);
@@ -196,10 +198,10 @@ const StockGraph = () => {
             variant="contained"
             color="primary"
             onClick={exportToPDF}
-            disabled={!currentChartData || Object.keys(currentChartData).length === 0 || loadingDownloadPdf}
-            startIcon={loadingDownloadPdf ? <CircularProgress size={20} color="inherit" /> : null}
+            disabled={!currentChartData || Object.keys(currentChartData).length === 0 || loaders[LoaderActions.EXPORT_GRAPH_PDF]}
+            startIcon={loaders[LoaderActions.EXPORT_GRAPH_PDF] ? <CircularProgress size={20} color="inherit" /> : null}
           >
-            {loadingDownloadPdf ? 'Exporting...' : 'Export PDF'}
+            {loaders[LoaderActions.EXPORT_GRAPH_PDF] ? 'Exporting...' : 'Export PDF'}
           </Button>
         </Stack>
       </Box>

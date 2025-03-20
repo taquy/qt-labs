@@ -10,7 +10,9 @@ import {
   setFetchingStockStats,
   setExportedCsv,
   setExportedGraphPdf,
-  setLoadingDownloadPdf,
+  setLoader,
+  setPullStocksLists,
+  LoaderActions
 } from '../slices/stockGraphSlice';
 import { handleApiError, getRequestConfig } from '../utils';
 
@@ -21,7 +23,7 @@ export const FETCH_STOCK_DATA = 'stockGraph/fetchStockData';
 export const REMOVE_AVAILABLE_STOCK = 'stockGraph/removeAvailableStock';
 export const EXPORT_STOCK_DATA = 'stockGraph/exportStockData';
 export const EXPORT_GRAPH_PDF = 'stockGraph/exportGraphPdf';
-
+export const PULL_STOCK_LIST = 'stockGraph/pullStockList';
 // Action Creators
 export const fetchAvailableStocks = () => ({ type: FETCH_AVAILABLE_STOCKS });
 export const fetchStocks = () => ({ type: FETCH_STOCKS });
@@ -29,6 +31,7 @@ export const removeAvailableStock = (payload) => ({ type: REMOVE_AVAILABLE_STOCK
 export const fetchStockData = (payload) => ({ type: FETCH_STOCK_DATA, payload });
 export const exportCsv = () => ({ type: EXPORT_STOCK_DATA });
 export const exportGraphPdf = () => ({ type: EXPORT_GRAPH_PDF });
+export const pullStockList = () => ({ type: PULL_STOCK_LIST });
 // API calls
 const api = {
   fetchStocks: async () => {
@@ -59,20 +62,37 @@ const api = {
   exportGraphPdf: async () => {
     const response = await axios.get(API_STOCK_ENDPOINTS.exportGraphPdf, getRequestConfig());
     return response.data;
+  },
+  pullStockList: async () => {
+    const response = await axios.get(API_STOCK_ENDPOINTS.pullStockList, getRequestConfig());
+    return response.data;
   }
 };
 
 // Sagas
+function* pullStockListSaga(action) {
+  try {
+    yield effects.put(setLoader({ action: LoaderActions.PULL_STOCK_LIST, value: true }));
+    const response = yield effects.call(api.pullStockList);
+    yield effects.put(setPullStocksLists(response));
+  } catch (error) {
+    yield effects.put(setError('Failed to pull stock list'));
+    yield effects.call(handleApiError, error, 'pullStockListSaga');
+  } finally {
+    yield effects.put(setLoader({ action: LoaderActions.PULL_STOCK_LIST, value: false }));
+  }
+}
+
 function* exportGraphPdfSaga(action) {
   try {
-    yield effects.put(setLoadingDownloadPdf(true));
+    yield effects.put(setLoader({ action: LoaderActions.EXPORT_GRAPH_PDF, value: true }));
     const response = yield effects.call(api.exportGraphPdf);
     yield effects.put(setExportedGraphPdf(response));
   } catch (error) {
     yield effects.put(setError('Failed to export graph PDF'));
     yield effects.call(handleApiError, error, 'exportGraphPdfSaga');
   } finally {
-    yield effects.put(setLoadingDownloadPdf(false));
+    yield effects.put(setLoader({ action: LoaderActions.EXPORT_GRAPH_PDF, value: false }));
   }
 }
 
@@ -145,4 +165,5 @@ export function* stockGraphSaga() {
   yield effects.takeLatest(REMOVE_AVAILABLE_STOCK, removeAvailableStockSaga);
   yield effects.takeLatest(EXPORT_STOCK_DATA, exportCsvSaga);
   yield effects.takeLatest(EXPORT_GRAPH_PDF, exportGraphPdfSaga);
+  yield effects.takeLatest(PULL_STOCK_LIST, pullStockListSaga);
 }

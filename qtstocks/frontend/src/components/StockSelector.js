@@ -13,8 +13,9 @@ import {
   Checkbox
 } from '@mui/material';
 
-import { fetchStocks, fetchStockData } from '../store/sagas/stockGraphSaga';
+import { fetchStocks, fetchStockData, pullStockList } from '../store/sagas/stockGraphSaga';
 import { useSelector, useDispatch } from 'react-redux';
+import { LoaderActions } from '../store/slices/stockGraphSlice';
 
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
@@ -24,7 +25,7 @@ const StockSelector = () => {
   
   const {
     stocks,
-    fetchingStockStats
+    loaders
   } = useSelector(state => state.stockGraph);
   
   useEffect(() => {
@@ -43,6 +44,10 @@ const StockSelector = () => {
 
   const handleFetchStockData = () => {
     dispatch(fetchStockData({selectedStocks, loadLatestData}));
+  };
+
+  const handlePullStockList = () => {
+    dispatch(pullStockList());
   };
   
   const handleRemoveStock = (stockToRemove) => {
@@ -133,14 +138,13 @@ const StockSelector = () => {
           variant="contained"
           color="primary"
           onClick={handleFetchStockData}
-          disabled={selectedStocks.length === 0 || fetchingStockStats}
+          disabled={selectedStocks.length === 0 || loaders[LoaderActions.FETCH_STOCK_DATA]}
           sx={{ 
-            minWidth: '200px',
             height: '56px',
             position: 'relative'
           }}
         >
-          {fetchingStockStats ? (
+          {loaders[LoaderActions.FETCH_STOCK_DATA] ? (
             <>
               <CircularProgress
                 size={24}
@@ -156,6 +160,35 @@ const StockSelector = () => {
             </>
           ) : (
             'Fetch Stock Data'
+          )}
+        </Button>
+
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handlePullStockList}
+          disabled={loaders[LoaderActions.PULL_STOCK_LIST]}
+          sx={{ 
+            height: '56px',
+            position: 'relative'
+          }}
+        >
+          {loaders[LoaderActions.PULL_STOCK_LIST] ? (
+            <>
+              <CircularProgress
+                size={24}
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  marginTop: '-12px',
+                  marginLeft: '-12px',
+                  color: 'white'
+                }}
+              />
+            </>
+          ) : (
+            'Pull Stock Lists'
           )}
         </Button>
       </Box>

@@ -9,13 +9,26 @@ const METRICS = {
   'pb': 'P/B'
 };
 
+const LoaderActions = {
+  'PULL_STOCK_LIST': 'pullStockList',
+  'FETCH_STOCK_DATA': 'fetchStockData',
+  'EXPORT_STOCK_DATA': 'exportStockData',
+  'EXPORT_GRAPH_PDF': 'exportGraphPdf'
+}
+
 const initialState = {
   stocks: [],
   availableStocks: [],
   metrics: METRICS,
   fetchingStockStats: false,
   exportedCsv: null,
-  loadingDownloadPdf: false,
+  loaders: {
+    [LoaderActions.PULL_STOCK_LIST]: false,
+    [LoaderActions.FETCH_STOCK_DATA]: false,
+    [LoaderActions.EXPORT_STOCK_DATA]: false,
+    [LoaderActions.EXPORT_GRAPH_PDF]: false,
+  },
+  pullStocksLists: [],
   ...sharedInitialState,
 };
 
@@ -35,11 +48,14 @@ const stockGraphSlice = createSlice({
     setExportedCsv: (state, action) => {
       state.exportedCsv = action.payload;
     },
+    setPullStocksLists: (state, action) => {
+      state.pullStocksLists = action.payload;
+    },
     setExportedGraphPdf: (state, action) => {
       state.exportedGraphPdf = action.payload;
     },
-    setLoadingDownloadPdf: (state, action) => {
-      state.loadingDownloadPdf = action.payload;
+    setLoader: (state, action) => {
+      state.loaders[action.payload.action] = action.payload.value;
     },
     ...sharedReducer,
   }
@@ -54,7 +70,10 @@ export const {
   clearError,
   setExportedCsv,
   setExportedGraphPdf,
-  setLoadingDownloadPdf,
+  setLoader,
+  setPullStocksLists,
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer;
+
+export { LoaderActions };
