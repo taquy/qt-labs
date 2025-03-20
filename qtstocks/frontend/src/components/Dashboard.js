@@ -11,7 +11,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import StockSelector from './StockSelector';
 import StockGraph from './StockGraph';
-import StockSelectionTable from './StockSelectionTable';
+import StockTable from './StockTable';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/actions/auth';
 
@@ -52,7 +52,7 @@ const Dashboard = () => {
           </Alert>
         )}
         <StockSelector/>
-        <StockSelectionTable />
+        <StockTable />
         <StockGraph />
         </Grid>
     </Container>

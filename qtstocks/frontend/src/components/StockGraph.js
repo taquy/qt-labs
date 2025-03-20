@@ -36,7 +36,7 @@ import {
   saveSettings
 } from '../store/actions/settings';
 
-import { LoaderActions } from '../store/slices/stocks';
+import { LoaderActions, ErrorActions } from '../store/slices/stocks';
 
 // Register Chart.js components
 ChartJS.register(
@@ -58,7 +58,7 @@ const StockGraph = () => {
   // Select state from Redux store
   const {
     availableStocks,
-    error,
+    errors,
     metrics,
     exportedGraphPdf,
     loaders,
@@ -167,11 +167,11 @@ const StockGraph = () => {
     dispatch(exportGraphPdf());
   };
 
-  if (error) {
+  if (errors[ErrorActions.STOCK_GRAPH]) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
         <Typography variant="body1" color="error">
-          {error}
+          {errors[ErrorActions.STOCK_GRAPH]}
         </Typography>
       </Box>
     );

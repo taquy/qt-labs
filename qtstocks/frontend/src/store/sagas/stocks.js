@@ -2,16 +2,15 @@ import * as effects from 'redux-saga/effects';
 import {
   setAvailableStocks,
   setError,
-  setLoading,
   clearError,
   setStocks,
-  setFetchingStockStats,
   setExportedCsv,
   setExportedGraphPdf,
   setLoader,
   setExchanges,
   LoaderActions,
   MessageActions,
+  ErrorActions,
   setMessages
 } from '../slices/stocks';
 
@@ -35,13 +34,19 @@ function* fetchExchangesSaga() {
     const response = yield effects.call(api.fetchExchanges);
     yield effects.put(setExchanges(response));
   } catch (error) {
-    yield effects.put(setError('Failed to fetch exchanges'));
+    yield effects.put(setError({
+      action: ErrorActions.STOCK_SELECTOR,
+      message: 'Failed to fetch exchanges',
+    }));
     yield effects.call(handleApiError, error, 'fetchExchangesSaga');
   }
 }
 
 function* pullStockListSaga() {
   try {
+    yield effects.put(clearError({
+      action: ErrorActions.STOCK_SELECTOR,
+    }));
     yield effects.put(setLoader({ action: LoaderActions.PULL_STOCK_LIST, value: true }));
     setMessages({
       action: MessageActions.PULL_STOCK_LIST,
@@ -54,7 +59,10 @@ function* pullStockListSaga() {
     }));
     yield effects.call(fetchStocksSaga);
   } catch (error) {
-    yield effects.put(setError('Failed to pull stock list'));
+    yield effects.put(setError({
+      action: ErrorActions.STOCK_SELECTOR,
+      message: 'Failed to pull stock list',
+    }));
     yield effects.call(handleApiError, error, 'pullStockListSaga');
   } finally {
     yield effects.put(setLoader({ action: LoaderActions.PULL_STOCK_LIST, value: false }));
@@ -63,11 +71,17 @@ function* pullStockListSaga() {
 
 function* exportGraphPdfSaga() {
   try {
+    yield effects.put(clearError({
+      action: ErrorActions.STOCK_GRAPH,
+    }));
     yield effects.put(setLoader({ action: LoaderActions.EXPORT_GRAPH_PDF, value: true }));
     const response = yield effects.call(api.exportGraphPdf);
     yield effects.put(setExportedGraphPdf(response));
   } catch (error) {
-    yield effects.put(setError('Failed to export graph PDF'));
+    yield effects.put(setError({
+      action: ErrorActions.STOCK_GRAPH,
+      message: 'Failed to export graph PDF',
+    }));
     yield effects.call(handleApiError, error, 'exportGraphPdfSaga');
   } finally {
     yield effects.put(setLoader({ action: LoaderActions.EXPORT_GRAPH_PDF, value: false }));
@@ -76,52 +90,74 @@ function* exportGraphPdfSaga() {
 
 function* removeAvailableStockSaga(action) {
   try {
+    yield effects.put(clearError({
+      action: ErrorActions.STOCK_TABLE,
+    } ));
+    yield effects.put(setLoader({ action: LoaderActions.REMOVE_AVAILABLE_STOCK, value: true }));
     yield effects.call(api.removeAvailableStock, action.payload);
     yield effects.call(fetchAvailableStocksSaga);
   } catch (error) {
-    yield effects.put(setError('Failed to remove available stock'));
+    yield effects.put(setError({
+      action: ErrorActions.STOCK_TABLE,
+      message: 'Failed to remove available stock',
+    }));
+  } finally {
+    yield effects.put(setLoader({ action: LoaderActions.REMOVE_AVAILABLE_STOCK, value: false }));
   }
-    }
+}
 
 function* exportCsvSaga() {
   try {
+    yield effects.put(clearError({
+      action: ErrorActions.STOCK_TABLE,
+    } ));
+    yield effects.put(setLoader({ action: LoaderActions.EXPORT_STOCK_DATA, value: true }));
     const response = yield effects.call(api.exportCsv);
     yield effects.put(setExportedCsv(response));
   } catch (error) {
-    yield effects.put(setError('Failed to export stock data'));
+    yield effects.put(setError({
+      action: ErrorActions.STOCK_TABLE,
+      message: 'Failed to export stock data',
+    }));
     yield effects.call(handleApiError, error, 'exportCsvSaga');
+  } finally {
+    yield effects.put(setLoader({ action: LoaderActions.EXPORT_STOCK_DATA, value: false }));
   }
 }
 
 function* fetchStockDataSaga(action) {
   try {
-    yield effects.put(setFetchingStockStats(true));
-    yield effects.put(clearError());
+    yield effects.put(setLoader({ action: LoaderActions.FETCH_STOCK_DATA, value: true }));
+    yield effects.put(clearError({
+      action: ErrorActions.STOCK_SELECTOR,
+    } ));
     yield effects.call(api.fetchStockData, action.payload);
     yield effects.call(fetchAvailableStocksSaga);
   } catch (error) {
-    yield effects.put(setError('Failed to fetch stocks'));
+    yield effects.put(setError({
+      action: ErrorActions.STOCK_SELECTOR,
+      message: 'Failed to fetch stocks',
+    }));
     yield effects.call(handleApiError, error, 'fetchStockDataSaga');
   } finally {
-    yield effects.put(setFetchingStockStats(false));
+    yield effects.put(setLoader({ action: LoaderActions.FETCH_STOCK_DATA, value: false }));
   }
 }
 
 function* fetchStocksSaga(action) {
   try {
-    yield effects.put(clearError());
+    yield effects.put(clearError({
+      action: ErrorActions.STOCK_SELECTOR,
+    }));
     yield effects.put(setLoader({ action: LoaderActions.FETCH_STOCKS, value: true }));
-    const payload = {
-      page: action.payload.page,
-      per_page: action.payload.per_page,
-      exchanges: action.payload.exchanges.join(','),
-      search: action.payload.search
-    };
-    const stocks = yield effects.call(api.fetchStocks, payload);
+    const stocks = yield effects.call(api.fetchStocks, action.payload);
     yield effects.put(setStocks(stocks));
     yield effects.call(fetchExchangesSaga);
   } catch (error) {
-    yield effects.put(setError('Failed to fetch stocks'));
+    yield effects.put(setError({
+      action: ErrorActions.STOCK_SELECTOR,
+      message: 'Failed to fetch stocks',
+    }));
     yield effects.call(handleApiError, error, 'fetchStocksSaga');
   } finally {
     yield effects.delay(1000);
@@ -131,15 +167,20 @@ function* fetchStocksSaga(action) {
 
 function* fetchAvailableStocksSaga() {
   try {
-    yield effects.put(setLoading(true));
-    yield effects.put(clearError());
+    yield effects.put(setLoader({ action: LoaderActions.FETCH_AVAILABLE_STOCKS, value: true }));
+    yield effects.put(clearError({
+      action: ErrorActions.STOCK_SELECTOR,
+    } ));
     const stocks = yield effects.call(api.fetchAvailableStocks);
     yield effects.put(setAvailableStocks(stocks));
   } catch (error) {
-    yield effects.put(setError('Failed to fetch available stocks'));
+    yield effects.put(setError({
+      action: ErrorActions.STOCK_SELECTOR,
+      message: 'Failed to fetch available stocks',
+    }));
     yield effects.call(handleApiError, error, 'fetchAvailableStocksSaga');
   } finally {
-    yield effects.put(setLoading(false));
+    yield effects.put(setLoader({ action: LoaderActions.FETCH_AVAILABLE_STOCKS, value: false }));
   }
 }
 

@@ -17,15 +17,17 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAvailableStocks, removeAvailableStock, exportCsv } from '../store/actions/stocks';
 import { Delete, Download } from '@mui/icons-material';
-
-const StockSelectionTable = () => {
+import { ErrorActions } from '../store/slices/stocks';
+const StockTable = () => {
   const dispatch = useDispatch();
 
   // Select state from Redux store
   const {
     availableStocks,
     metrics,
-    exportedCsv
+    exportedCsv,
+    errors,
+    
   } = useSelector(state => state.stocks);
 
   const [selected, setSelected] = React.useState([]);
@@ -142,6 +144,13 @@ const StockSelectionTable = () => {
             )}
           </Stack>
         </Stack>
+        {errors[ErrorActions.STOCK_TABLE] && (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body1" color="error">
+              {errors[ErrorActions.STOCK_TABLE]}
+            </Typography>
+          </Box>
+        )}  
         <TableContainer 
           component={Paper} 
           sx={{ 
@@ -231,4 +240,4 @@ const StockSelectionTable = () => {
   );
 };
 
-export default StockSelectionTable; 
+export default StockTable;

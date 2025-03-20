@@ -1,5 +1,4 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { sharedReducer, sharedInitialState } from './shared';
 
 const METRICS = {
   'market_cap': 'Market Cap',
@@ -14,11 +13,18 @@ const LoaderActions = {
   'PULL_STOCK_LIST': 'pullStockList',
   'FETCH_STOCK_DATA': 'fetchStockData',
   'EXPORT_STOCK_DATA': 'exportStockData',
-  'EXPORT_GRAPH_PDF': 'exportGraphPdf'
+  'EXPORT_GRAPH_PDF': 'exportGraphPdf',
+  'REMOVE_AVAILABLE_STOCK': 'removeAvailableStock',
 }
 
 const MessageActions = {
   'PULL_STOCK_LIST': 'pullStockList',
+}
+
+const ErrorActions = {
+  'STOCK_SELECTOR': 'stockSelector',
+  'STOCK_GRAPH': 'stockGraph',
+  'STOCK_TABLE': 'stockTable',
 }
 
 const initialState = {
@@ -29,7 +35,6 @@ const initialState = {
   },
   availableStocks: [],
   metrics: METRICS,
-  fetchingStockStats: false,
   exportedCsv: null,
   loaders: {
     [LoaderActions.FETCH_STOCKS]: false,
@@ -37,10 +42,15 @@ const initialState = {
     [LoaderActions.FETCH_STOCK_DATA]: false,
     [LoaderActions.EXPORT_STOCK_DATA]: false,
     [LoaderActions.EXPORT_GRAPH_PDF]: false,
+    [LoaderActions.REMOVE_AVAILABLE_STOCK]: false,
   },
   exchanges: [],
   messages: {},
-  ...sharedInitialState,
+  errors: {
+    [ErrorActions.STOCK_SELECTOR]: "",
+    [ErrorActions.STOCK_GRAPH]: "",
+    [ErrorActions.STOCK_TABLE]: "",
+  },
 };
 
 const stockGraphSlice = createSlice({
@@ -62,9 +72,6 @@ const stockGraphSlice = createSlice({
     setAvailableStocks: (state, action) => {
       state.availableStocks = action.payload ? action.payload : [];
     },
-    setFetchingStockStats: (state, action) => {
-      state.fetchingStockStats = action.payload;
-    },
     setExportedCsv: (state, action) => {
       state.exportedCsv = action.payload;
     },
@@ -80,16 +87,19 @@ const stockGraphSlice = createSlice({
     setMessages: (state, action) => {
       state.messages[action.payload.action] = action.payload.message;
     },
-    ...sharedReducer,
+    setError: (state, action) => {
+      state.errors[action.payload.action] = action.payload.message;
+    },
+    clearError: (state, action) => {
+      state.errors[action.payload.action] = "";
+    },
   }
 });
 
 export const {
   setAvailableStocks,
   setStocks,
-  setFetchingStockStats,
   setError,
-  setLoading,
   clearError,
   setExportedCsv,
   setExportedGraphPdf,
@@ -100,4 +110,4 @@ export const {
 
 export default stockGraphSlice.reducer;
 
-export { LoaderActions, MessageActions };
+export { LoaderActions, MessageActions, ErrorActions };
