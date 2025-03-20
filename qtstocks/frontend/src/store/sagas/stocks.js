@@ -150,8 +150,9 @@ function* fetchStocksSaga(action) {
       action: ErrorActions.STOCK_SELECTOR,
     }));
     yield effects.put(setLoader({ action: LoaderActions.FETCH_STOCKS, value: true }));
-    const stocks = yield effects.call(api.fetchStocks, action.payload);
-    yield effects.put(setStocks(stocks));
+    const results = yield effects.call(api.fetchStocks, action.payload);
+    const refresh = action.payload.search.trim() !== "" || action.payload.page === 1;
+    yield effects.put(setStocks({...results, refresh}));
     yield effects.call(fetchExchangesSaga);
   } catch (error) {
     yield effects.put(setError({

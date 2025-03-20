@@ -64,7 +64,7 @@ def init_stock_routes(app, token_required, stocks_ns):
         @stocks_ns.doc('list_stocks', security='Bearer')
         @stocks_ns.param('page', 'Page number (1-based)', type=int, default=1)
         @stocks_ns.param('per_page', 'Items per page', type=int, default=10)
-        @stocks_ns.param('search', 'Search by symbol or name (partial match)', type=str)
+        @stocks_ns.param('search', 'Search by symbol or name (partial match, UTF-8 supported)', type=str)
         @stocks_ns.param('exchanges', 'Filter by exchanges (comma-separated list)', type=str)
         @stocks_ns.marshal_with(paginated_stock_model)
         @token_required
@@ -82,10 +82,11 @@ def init_stock_routes(app, token_required, stocks_ns):
                 # Apply search filter if provided
                 if search:
                     search_term = f"%{search}%"
+                    # Use unaccent for better UTF-8 support
                     query = query.filter(
                         db.or_(
                             Stock.symbol.ilike(search_term),
-                            Stock.name.ilike(search_term)
+                            db.func.unaccent(Stock.name).ilike(db.func.unaccent(search_term))
                         )
                     )
                 

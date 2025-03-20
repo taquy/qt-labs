@@ -21,11 +21,12 @@ const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [loadLatestData, setLoadLatestData] = useState(false);
   const [selectedExchanges, setSelectedExchanges] = useState([]);
-  const [isAllowedToFetchMoreStocks, setIsAllowedToFetchMoreStocks] = useState(true);
-  const [page, setPage] = useState(1);
-  const [inputValue] = useState('');
   const dispatch = useDispatch();
 
+  // Add UUID generator function
+  const generateUniqueId = () => {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  };
 
   const [query, setQuery] = useState({
     page: 1,
@@ -43,25 +44,32 @@ const StockSelector = () => {
   } = useSelector(state => state.stocks);
 
   useEffect(() => {
-    setIsAllowedToFetchMoreStocks(!loaders[LoaderActions.FETCH_STOCKS] && stocks.has_next);
-  }, [stocks.current_page, loaders, stocks.has_next]);
-
-  useEffect(() => {
-    if (isAllowedToFetchMoreStocks && query.page !== stocks.current_page) {
+    if (query.page !== stocks.current_page) {
       dispatch(fetchStocks(query));
     }
-  }, [dispatch, query, isAllowedToFetchMoreStocks, stocks.current_page]);
+  }, [dispatch, query, stocks.current_page]);
 
+  // Add debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      dispatch(fetchStocks({ ...query, page: 1 }));
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [query, dispatch]);
 
   const handleScroll = (event) => {
     const listbox = event.target;
     if (
-      isAllowedToFetchMoreStocks && query.page === stocks.current_page &&
+      query.page === stocks.current_page &&
       listbox.scrollTop + listbox.clientHeight >= listbox.scrollHeight - 10
     ) {
       setQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
     }
   };
+
+  useEffect(() => {
+    console.log('stocks', stocks.items);
+  }, [stocks]);
 
   // Function to highlight matching text
   const highlightMatch = (text, search) => {
@@ -69,7 +77,7 @@ const StockSelector = () => {
     const parts = text.split(new RegExp(`(${search})`, 'gi'));
     return parts.map((part, index) =>
       part.toLowerCase() === search.toLowerCase() ? 
-        <span key={index} style={{ backgroundColor: '#fff59d' }}>{part}</span> : part
+        <span key={generateUniqueId()} style={{ backgroundColor: '#fff59d' }}>{part}</span> : part
     );
   };
 
@@ -99,11 +107,18 @@ const StockSelector = () => {
         <FormControl sx={{ flex: 1 }}>
           <Autocomplete
             multiple
+            freeSolo
             options={stocks.items || []}
-            getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
+            getOptionLabel={(option) => {
+              if (typeof option === 'string') return option;
+              return `${option.symbol} - ${option.name}`;
+            }}
             value={selectedStocks.map(symbol => (stocks.items || []).find(s => s.symbol === symbol) || { symbol, name: '' })}
             onChange={(event, newValue) => {
-              setSelectedStocks(newValue.map(stock => stock.symbol));
+              setSelectedStocks(newValue.map(stock => typeof stock === 'string' ? stock : stock.symbol));
+            }}
+            onInputChange={(event, newInputValue) => {
+              setQuery(prevQuery => ({ ...prevQuery, search: newInputValue }));
             }}
             renderInput={(params) => (
               <TextField
@@ -128,13 +143,13 @@ const StockSelector = () => {
             renderOption={(props, option) => {
               const { key, ...otherProps } = props;
               return (
-                <Box component="li" key={key} {...otherProps}>
+                <Box component="li" key={generateUniqueId()} {...otherProps}>
                   <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                     <Typography variant="body1">
-                      {highlightMatch(option.symbol, inputValue)}
+                      {highlightMatch(option.symbol, query.search)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {highlightMatch(option.name, inputValue)}
+                      {highlightMatch(option.name, query.search)}
                     </Typography>
                   </Box>
                 </Box>
