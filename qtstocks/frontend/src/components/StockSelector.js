@@ -26,6 +26,7 @@ const StockSelector = () => {
   const [inputValue] = useState('');
   const dispatch = useDispatch();
 
+
   const [query, setQuery] = useState({
     page: 1,
     per_page: 20,
@@ -45,18 +46,17 @@ const StockSelector = () => {
     setIsAllowedToFetchMoreStocks(!loaders[LoaderActions.FETCH_STOCKS] && stocks.has_next);
   }, [stocks.current_page, loaders, stocks.has_next]);
 
-  // Combined effect for both pagination and search
   useEffect(() => {
     if (isAllowedToFetchMoreStocks && query.page !== stocks.current_page) {
       dispatch(fetchStocks(query));
     }
   }, [dispatch, query, isAllowedToFetchMoreStocks, stocks.current_page]);
 
+
   const handleScroll = (event) => {
     const listbox = event.target;
     if (
-      isAllowedToFetchMoreStocks && 
-      query.page === stocks.current_page &&
+      isAllowedToFetchMoreStocks && query.page === stocks.current_page &&
       listbox.scrollTop + listbox.clientHeight >= listbox.scrollHeight - 10
     ) {
       setQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
@@ -104,14 +104,6 @@ const StockSelector = () => {
             value={selectedStocks.map(symbol => (stocks.items || []).find(s => s.symbol === symbol) || { symbol, name: '' })}
             onChange={(event, newValue) => {
               setSelectedStocks(newValue.map(stock => stock.symbol));
-            }}
-            filterOptions={(options, { inputValue }) => {
-              if (!options || !Array.isArray(options)) return [];
-              const input = inputValue.toLowerCase();
-              return options.filter(option => 
-                option.symbol.toLowerCase().includes(input) || 
-                option.name.toLowerCase().includes(input)
-              );
             }}
             renderInput={(params) => (
               <TextField
