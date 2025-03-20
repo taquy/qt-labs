@@ -21,6 +21,7 @@ const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [loadLatestData, setLoadLatestData] = useState(false);
   const [selectedExchanges, setSelectedExchanges] = useState([]);
+  const [isAllowedToFetchMoreStocks, setIsAllowedToFetchMoreStocks] = useState(true);
   const [page, setPage] = useState(1);
   const [inputValue] = useState('');
   const dispatch = useDispatch();
@@ -32,15 +33,20 @@ const StockSelector = () => {
   } = useSelector(state => state.stocks);
 
   useEffect(() => {
-    console.log('fetching stocks', page);
-    dispatch(fetchStocks({page, per_page: 20}));
-  }, [dispatch, page]);
+    setIsAllowedToFetchMoreStocks(!loaders[LoaderActions.FETCH_STOCKS] && stocks.has_next);
+  }, [page, stocks.current_page, loaders, stocks.has_next]);
+
+  useEffect(() => {
+    if (isAllowedToFetchMoreStocks && page !== stocks.current_page) {
+      dispatch(fetchStocks({page, per_page: 20}));
+    }
+  }, [dispatch, page, isAllowedToFetchMoreStocks, stocks.current_page]);
 
   const handleScroll = (event) => {
     const listbox = event.target;
     if (
-      !loaders[LoaderActions.FETCH_STOCKS] &&
-      listbox.scrollTop + listbox.clientHeight >= listbox.scrollHeight - 50
+      isAllowedToFetchMoreStocks && page === stocks.current_page &&
+      listbox.scrollTop + listbox.clientHeight >= listbox.scrollHeight - 10
     ) {
       setPage(prevPage => prevPage + 1);
     }

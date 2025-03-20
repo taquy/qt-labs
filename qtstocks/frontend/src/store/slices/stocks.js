@@ -10,6 +10,7 @@ const METRICS = {
 };
 
 const LoaderActions = {
+  'FETCH_STOCKS': 'fetchStocks',
   'PULL_STOCK_LIST': 'pullStockList',
   'FETCH_STOCK_DATA': 'fetchStockData',
   'EXPORT_STOCK_DATA': 'exportStockData',
@@ -23,6 +24,7 @@ const MessageActions = {
 const initialState = {
   stocks: {
     items: [],
+    current_page: 0,
     has_next: true,
   },
   availableStocks: [],
@@ -30,6 +32,7 @@ const initialState = {
   fetchingStockStats: false,
   exportedCsv: null,
   loaders: {
+    [LoaderActions.FETCH_STOCKS]: false,
     [LoaderActions.PULL_STOCK_LIST]: false,
     [LoaderActions.FETCH_STOCK_DATA]: false,
     [LoaderActions.EXPORT_STOCK_DATA]: false,
@@ -48,6 +51,7 @@ const stockGraphSlice = createSlice({
       if (action.payload) {
         state.stocks.items = [...state.stocks.items, ...action.payload.items];
         state.stocks.has_next = action.payload.has_next;
+        state.stocks.current_page = action.payload.current_page;
       } else {
         state.stocks = {
           items: [],
