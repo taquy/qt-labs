@@ -27,7 +27,7 @@ const stockGraphSlice = createSlice({
       state.stocks = action.payload ? action.payload : [];
     },
     setAvailableStocks: (state, action) => {
-      state.availableStocks = action.payload;
+      state.availableStocks = action.payload ? action.payload : [];
     },
     setFetchingStockStats: (state, action) => {
       state.fetchingStockStats = action.payload;

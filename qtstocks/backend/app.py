@@ -86,12 +86,6 @@ def create_app(config_class=Config):
     
     # Initialize database
     with app.app_context():
-        # Drop all tables
-        db.drop_all()
-        
-        # Create all tables
-        db.create_all()
-        
         # Create admin user if it doesn't exist
         admin = User.query.filter_by(username=Config.ADMIN_USERNAME).first()
         if not admin:

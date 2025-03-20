@@ -1,5 +1,5 @@
 from flask import jsonify, request, current_app, send_file
-from models import Stock, StockStats, db, user_stock_stats
+from models import Stock, StockStats, db, User
 from datetime import datetime, timezone
 from functools import wraps
 from flask_restx import Resource, fields
@@ -72,10 +72,10 @@ def init_stock_routes(app, token_required, stocks_ns):
             """Get stats for all stocks in user's portfolio"""
             try:
                 # Query stocks that have stats
+                user_stock_symbols = [stock.symbol for stock in current_user.stock_stats]
                 stocks_with_stats = db.session.query(Stock)\
-                    .join(StockStats)\
-                    .join(user_stock_stats)\
-                    .filter(user_stock_stats.c.user_id == current_user.id)\
+                    .join(StockStats, Stock.symbol == StockStats.symbol)\
+                    .filter(Stock.symbol.in_(user_stock_symbols))\
                     .all()
                 return jsonify({
                     'stocks': [
