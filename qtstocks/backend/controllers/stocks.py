@@ -64,16 +64,37 @@ def init_stock_routes(app, token_required, stocks_ns):
         @stocks_ns.doc('list_stocks', security='Bearer')
         @stocks_ns.param('page', 'Page number (1-based)', type=int, default=1)
         @stocks_ns.param('per_page', 'Items per page', type=int, default=10)
+        @stocks_ns.param('search', 'Search by symbol or name (partial match)', type=str)
+        @stocks_ns.param('exchanges', 'Filter by exchanges (comma-separated list)', type=str)
         @stocks_ns.marshal_with(paginated_stock_model)
         @token_required
         def get(self, current_user):
-            """List all stocks with pagination"""
+            """List all stocks with pagination, search and filter"""
             try:
                 page = request.args.get('page', 1, type=int)
                 per_page = request.args.get('per_page', 10, type=int)
+                search = request.args.get('search', '').strip()
+                exchanges = [ex.strip() for ex in request.args.get('exchanges', '').split(',') if ex.strip()]
+                
+                # Build query
+                query = Stock.query
+                
+                # Apply search filter if provided
+                if search:
+                    search_term = f"%{search}%"
+                    query = query.filter(
+                        db.or_(
+                            Stock.symbol.ilike(search_term),
+                            Stock.name.ilike(search_term)
+                        )
+                    )
+                
+                # Apply exchanges filter if provided
+                if exchanges:
+                    query = query.filter(Stock.exchange.in_(exchanges))
                 
                 # Query with pagination
-                pagination = Stock.query.paginate(
+                pagination = query.paginate(
                     page=page,
                     per_page=per_page,
                     error_out=False

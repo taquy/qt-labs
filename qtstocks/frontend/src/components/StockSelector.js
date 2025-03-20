@@ -71,7 +71,7 @@ const StockSelector = () => {
   };
   
   const handleRemoveStock = (stockToRemove) => {
-    // setSelectedStocks(selectedStocks.filter(stock => stock !== stockToRemove));
+    setSelectedStocks(selectedStocks.filter(stock => stock !== stockToRemove));
   };
 
   return (
@@ -166,7 +166,7 @@ const StockSelector = () => {
           onClick={handleFetchStockData}
           disabled={selectedStocks.length === 0 || loaders[LoaderActions.FETCH_STOCK_DATA]}
           sx={{ 
-            height: '56px',
+            minHeight: '40px',
             position: 'relative'
           }}
         >
@@ -195,7 +195,7 @@ const StockSelector = () => {
           onClick={handlePullStockList}
           disabled={loaders[LoaderActions.PULL_STOCK_LIST]}
           sx={{ 
-            height: '56px',
+            minHeight: '40px',
             position: 'relative'
           }}
         >

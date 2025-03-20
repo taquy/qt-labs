@@ -111,7 +111,13 @@ function* fetchStocksSaga(action) {
   try {
     yield effects.put(clearError());
     yield effects.put(setLoader({ action: LoaderActions.FETCH_STOCKS, value: true }));
-    const stocks = yield effects.call(api.fetchStocks, action.payload.page, action.payload.per_page);
+    const payload = {
+      page: action.payload.page,
+      per_page: action.payload.per_page,
+      exchanges: action.payload.exchanges.join(','),
+      search: action.payload.search
+    };
+    const stocks = yield effects.call(api.fetchStocks, payload);
     yield effects.put(setStocks(stocks));
     yield effects.call(fetchExchangesSaga);
   } catch (error) {
