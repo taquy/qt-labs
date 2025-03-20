@@ -29,14 +29,14 @@ import {
 import {
   fetchAvailableStocks,
   exportGraphPdf
-} from '../store/sagas/stockGraphSaga';
+} from '../store/actions/stocks';
 
 import {
   fetchSettings,
   saveSettings
-} from '../store/sagas/settingsSaga';
+} from '../store/actions/settings';
 
-import { LoaderActions } from '../store/slices/stockGraphSlice';
+import { LoaderActions } from '../store/slices/stocks';
 
 // Register Chart.js components
 ChartJS.register(
@@ -61,8 +61,8 @@ const StockGraph = () => {
     error,
     metrics,
     exportedGraphPdf,
-    loaders
-  } = useSelector(state => state.stockGraph);
+    loaders,
+  } = useSelector(state => state.stocks);
 
   const { settings } = useSelector(state => state.settings);
 
@@ -110,8 +110,8 @@ const StockGraph = () => {
 
   // Load settings when available
   useEffect(() => {
-    if (settings?.stockGraph && availableStocks.length > 0) {
-      const { selectedSymbols, selectedMetric: savedMetric } = settings.stockGraph;
+    if (settings?.stocks && availableStocks.length > 0) {
+      const { selectedSymbols, selectedMetric: savedMetric } = settings.stocks;
       // Find and set selected stocks
       const selectedStocksData = availableStocks.filter(stock =>
         selectedSymbols.includes(stock.symbol)

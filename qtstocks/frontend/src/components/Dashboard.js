@@ -13,7 +13,7 @@ import StockSelector from './StockSelector';
 import StockGraph from './StockGraph';
 import StockSelectionTable from './StockSelectionTable';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../store/sagas/authSaga';
+import { logout } from '../store/actions/auth';
 
 
 // Configure axios to include credentials

@@ -15,7 +15,7 @@ import {
   TableSortLabel
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAvailableStocks, removeAvailableStock, exportCsv } from '../store/sagas/stockGraphSaga';
+import { fetchAvailableStocks, removeAvailableStock, exportCsv } from '../store/actions/stocks';
 import { Delete, Download } from '@mui/icons-material';
 
 const StockSelectionTable = () => {
@@ -26,7 +26,7 @@ const StockSelectionTable = () => {
     availableStocks,
     metrics,
     exportedCsv
-  } = useSelector(state => state.stockGraph);
+  } = useSelector(state => state.stocks);
 
   const [selected, setSelected] = React.useState([]);
   const [orderBy, setOrderBy] = React.useState('symbol');

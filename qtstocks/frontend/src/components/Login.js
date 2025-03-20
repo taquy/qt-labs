@@ -10,7 +10,7 @@ import {
   Link as RouterLink
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { login, googleLogin } from '../store/sagas/authSaga';
+import { login, googleLogin } from '../store/actions/auth';
 
 const Login = () => {
   const [email, setEmail] = useState('');
