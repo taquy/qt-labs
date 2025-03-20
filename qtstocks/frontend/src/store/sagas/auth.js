@@ -1,34 +1,15 @@
 import * as effects from 'redux-saga/effects';
-import { setIsLoggedIn, setAuthToken, setCheckingLogin, setError } from '../slices/authSlice';
+import { setIsLoggedIn, setAuthToken, setCheckingLogin, setError } from '../slices/auth';
 import { handleApiError } from '../utils';
 import axios from 'axios';
-import { API_AUTH_ENDPOINTS } from '../../config';
-import { getRequestConfig } from '../utils';
+import {
+  LOGOUT,
+  LOGIN,
+  GOOGLE_LOGIN,
+  CHECK_IS_LOGGED_IN
+} from '../actions/auth';
 
-export const LOGOUT = 'auth/logout';
-export const LOGIN = 'auth/login';
-export const GOOGLE_LOGIN = 'auth/googleLogin';
-export const CHECK_IS_LOGGED_IN = 'auth/checkIsLoggedIn';
-
-export const login = (email, password) => ({ type: LOGIN, payload: { email, password } });
-export const logout = () => ({ type: LOGOUT });
-export const googleLogin = (token) => ({ type: GOOGLE_LOGIN, payload: { token } });
-export const checkIsLoggedIn = () => ({ type: CHECK_IS_LOGGED_IN });
-
-const api = {
-  logout: async () => {
-    const response = await axios.post(API_AUTH_ENDPOINTS.logout, {}, getRequestConfig());
-    return response.data;
-  },
-  login: async (payload) => {
-    const response = await axios.post(API_AUTH_ENDPOINTS.login, payload);
-    return response.data;
-  },
-  googleLogin: async (token) => {
-    const response = await axios.post(API_AUTH_ENDPOINTS.googleLogin, token);
-    return response.data;
-  },
-};
+import api from '../apis/auth';
 
 function* checkIsLoggedInSaga() {
   const isLoggedIn = localStorage.getItem('isLoggedIn');

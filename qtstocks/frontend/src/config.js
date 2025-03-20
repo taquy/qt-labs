@@ -21,4 +21,5 @@ export const API_STOCK_ENDPOINTS = {
     removeAvailableStock: `${API_BASE_URL}/remove_stock_stats`,
     exportCsv: `${API_BASE_URL}/export_csv`,
     exportGraphPdf: `${API_BASE_URL}/export_graph_pdf`,
+    exchanges: `${API_BASE_URL}/stocks/exchanges`,
 };

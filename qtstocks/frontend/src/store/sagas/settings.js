@@ -1,33 +1,10 @@
-import axios from 'axios';
-import { API_SETTINGS_ENDPOINTS } from '../../config';
-import { getRequestConfig } from '../utils';
 import * as effects from 'redux-saga/effects';
-import { setError, setSettings, setLoading, clearError } from '../slices/settingsSlice';
+import { setError, setSettings, setLoading, clearError } from '../slices/settings';
 import { handleApiError } from '../utils';
 
-export const FETCH_SETTINGS = 'settings/fetchSettings';
-export const SAVE_SETTINGS = 'settings/saveSettings';
+import { FETCH_SETTINGS, SAVE_SETTINGS } from '../actions/settings';
 
-export const fetchSettings = () => ({ type: FETCH_SETTINGS });
-export const saveSettings = (stocks, metric) => ({ type: SAVE_SETTINGS, payload: { stocks, metric } });
-
-const api = {
-  fetchSettings: async () => {
-    const response = await axios.get(API_SETTINGS_ENDPOINTS.settings, getRequestConfig());
-    return response.data.settings;
-  },
-  saveSettings: async (stocks, metric) => {
-    const payload = {
-      value: {
-        selectedSymbols: stocks.map(stock => stock.symbol),
-        selectedMetric: metric
-      }
-    };
-    await axios.put(
-      API_SETTINGS_ENDPOINTS.updateSetting('stockGraph'), payload, getRequestConfig()
-    );
-  },
-};
+import api from '../apis/settings';
 
 function* fetchSettingsSaga() {
   try {

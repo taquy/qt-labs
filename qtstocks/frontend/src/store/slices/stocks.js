@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { sharedReducer, sharedInitialState } from './sharedSlice';
+import { sharedReducer, sharedInitialState } from './shared';
 
 const METRICS = {
   'market_cap': 'Market Cap',
@@ -16,6 +16,10 @@ const LoaderActions = {
   'EXPORT_GRAPH_PDF': 'exportGraphPdf'
 }
 
+const MessageActions = {
+  'PULL_STOCK_LIST': 'pullStockList',
+}
+
 const initialState = {
   stocks: [],
   availableStocks: [],
@@ -28,12 +32,13 @@ const initialState = {
     [LoaderActions.EXPORT_STOCK_DATA]: false,
     [LoaderActions.EXPORT_GRAPH_PDF]: false,
   },
-  pullStocksLists: [],
+  exchanges: [],
+  messages: {},
   ...sharedInitialState,
 };
 
 const stockGraphSlice = createSlice({
-  name: 'stockGraph',
+  name: 'stocks',
   initialState,
   reducers: {
     setStocks: (state, action) => {
@@ -48,14 +53,17 @@ const stockGraphSlice = createSlice({
     setExportedCsv: (state, action) => {
       state.exportedCsv = action.payload;
     },
-    setPullStocksLists: (state, action) => {
-      state.pullStocksLists = action.payload;
-    },
     setExportedGraphPdf: (state, action) => {
       state.exportedGraphPdf = action.payload;
     },
     setLoader: (state, action) => {
       state.loaders[action.payload.action] = action.payload.value;
+    },
+    setExchanges: (state, action) => {
+      state.exchanges = action.payload ? action.payload : [];
+    },
+    setMessages: (state, action) => {
+      state.messages[action.payload.action] = action.payload.message;
     },
     ...sharedReducer,
   }
@@ -71,9 +79,10 @@ export const {
   setExportedCsv,
   setExportedGraphPdf,
   setLoader,
-  setPullStocksLists,
+  setExchanges,
+  setMessages,
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer;
 
-export { LoaderActions };
+export { LoaderActions, MessageActions };

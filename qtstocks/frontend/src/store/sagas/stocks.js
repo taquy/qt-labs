@@ -1,6 +1,4 @@
 import * as effects from 'redux-saga/effects';
-import axios from 'axios';
-import { API_STOCK_ENDPOINTS } from '../../config';
 import {
   setAvailableStocks,
   setError,
@@ -11,70 +9,49 @@ import {
   setExportedCsv,
   setExportedGraphPdf,
   setLoader,
-  setPullStocksLists,
-  LoaderActions
-} from '../slices/stockGraphSlice';
-import { handleApiError, getRequestConfig } from '../utils';
+  setExchanges,
+  LoaderActions,
+  MessageActions,
+  setMessages
+} from '../slices/stocks';
 
-// Action Types
-export const FETCH_STOCKS = 'stockGraph/fetchStocks';
-export const FETCH_AVAILABLE_STOCKS = 'stockGraph/fetchAvailableStocks';
-export const FETCH_STOCK_DATA = 'stockGraph/fetchStockData';
-export const REMOVE_AVAILABLE_STOCK = 'stockGraph/removeAvailableStock';
-export const EXPORT_STOCK_DATA = 'stockGraph/exportStockData';
-export const EXPORT_GRAPH_PDF = 'stockGraph/exportGraphPdf';
-export const PULL_STOCK_LIST = 'stockGraph/pullStockList';
-// Action Creators
-export const fetchAvailableStocks = () => ({ type: FETCH_AVAILABLE_STOCKS });
-export const fetchStocks = () => ({ type: FETCH_STOCKS });
-export const removeAvailableStock = (payload) => ({ type: REMOVE_AVAILABLE_STOCK, payload });
-export const fetchStockData = (payload) => ({ type: FETCH_STOCK_DATA, payload });
-export const exportCsv = () => ({ type: EXPORT_STOCK_DATA });
-export const exportGraphPdf = () => ({ type: EXPORT_GRAPH_PDF });
-export const pullStockList = () => ({ type: PULL_STOCK_LIST });
-// API calls
-const api = {
-  fetchStocks: async () => {
-    const response = await axios.get(API_STOCK_ENDPOINTS.stocks, getRequestConfig());
-    return response.data;
-  },
-  fetchAvailableStocks: async () => {
-    const response = await axios.get(API_STOCK_ENDPOINTS.stocksWithStats, getRequestConfig());
-    return response.data.stocks;
-  },
-  fetchStockData: async (payload) => {
-    const response = await axios.post(API_STOCK_ENDPOINTS.fetchStockData, {
-      symbols: payload.selectedStocks,
-      loadLatestData: payload.loadLatestData
-    }, getRequestConfig());
-    return response.data.data;
-  },
-  removeAvailableStock: async (symbols) => {
-    const response = await axios.post(API_STOCK_ENDPOINTS.removeAvailableStock, {
-      symbols: symbols
-    }, getRequestConfig());
-    return response.data;
-  },
-  exportCsv: async () => {
-    const response = await axios.get(API_STOCK_ENDPOINTS.exportCsv, getRequestConfig());
-    return response.data;
-  },
-  exportGraphPdf: async () => {
-    const response = await axios.get(API_STOCK_ENDPOINTS.exportGraphPdf, getRequestConfig());
-    return response.data;
-  },
-  pullStockList: async () => {
-    const response = await axios.get(API_STOCK_ENDPOINTS.pullStockList, getRequestConfig());
-    return response.data;
-  }
-};
+import { handleApiError } from '../utils';
 
+import {
+  FETCH_STOCKS,
+  FETCH_AVAILABLE_STOCKS,
+  FETCH_STOCK_DATA,
+  REMOVE_AVAILABLE_STOCK,
+  EXPORT_STOCK_DATA,
+  EXPORT_GRAPH_PDF,
+  PULL_STOCK_LIST,
+  FETCH_EXCHANGES
+} from '../actions/stocks';
+
+import api from '../apis/stocks';
 // Sagas
-function* pullStockListSaga(action) {
+function* fetchExchangesSaga() {
+  try {
+    const response = yield effects.call(api.fetchExchanges);
+    yield effects.put(setExchanges(response));
+  } catch (error) {
+    yield effects.put(setError('Failed to fetch exchanges'));
+    yield effects.call(handleApiError, error, 'fetchExchangesSaga');
+  }
+}
+
+function* pullStockListSaga() {
   try {
     yield effects.put(setLoader({ action: LoaderActions.PULL_STOCK_LIST, value: true }));
+    setMessages({
+      action: MessageActions.PULL_STOCK_LIST,
+      message: 'Pulling stock list...',
+    });
     const response = yield effects.call(api.pullStockList);
-    yield effects.put(setPullStocksLists(response));
+    yield effects.put(setMessages({
+      action: MessageActions.PULL_STOCK_LIST,
+      message: response,
+    }));
     yield effects.call(fetchStocksSaga);
   } catch (error) {
     yield effects.put(setError('Failed to pull stock list'));
@@ -84,7 +61,7 @@ function* pullStockListSaga(action) {
   }
 }
 
-function* exportGraphPdfSaga(action) {
+function* exportGraphPdfSaga() {
   try {
     yield effects.put(setLoader({ action: LoaderActions.EXPORT_GRAPH_PDF, value: true }));
     const response = yield effects.call(api.exportGraphPdf);
@@ -106,7 +83,7 @@ function* removeAvailableStockSaga(action) {
   }
     }
 
-function* exportCsvSaga(action) {
+function* exportCsvSaga() {
   try {
     const response = yield effects.call(api.exportCsv);
     yield effects.put(setExportedCsv(response));
@@ -136,6 +113,7 @@ function* fetchStocksSaga() {
     yield effects.put(clearError());
     const stocks = yield effects.call(api.fetchStocks);
     yield effects.put(setStocks(stocks));
+    yield effects.call(fetchExchangesSaga);
   } catch (error) {
     yield effects.put(setError('Failed to fetch stocks'));
     yield effects.call(handleApiError, error, 'fetchStocksSaga');
@@ -159,7 +137,7 @@ function* fetchAvailableStocksSaga() {
 }
 
 // Root Saga
-export function* stockGraphSaga() {
+export function* stocksSaga() {
   yield effects.takeLatest(FETCH_STOCKS, fetchStocksSaga);
   yield effects.takeLatest(FETCH_AVAILABLE_STOCKS, fetchAvailableStocksSaga);
   yield effects.takeLatest(FETCH_STOCK_DATA, fetchStockDataSaga);
@@ -167,4 +145,5 @@ export function* stockGraphSaga() {
   yield effects.takeLatest(EXPORT_STOCK_DATA, exportCsvSaga);
   yield effects.takeLatest(EXPORT_GRAPH_PDF, exportGraphPdfSaga);
   yield effects.takeLatest(PULL_STOCK_LIST, pullStockListSaga);
+  yield effects.takeLatest(FETCH_EXCHANGES, fetchExchangesSaga);
 }

@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { sharedReducer, sharedInitialState } from './sharedSlice';
+import { sharedReducer, sharedInitialState } from './shared';
 const initialState = {
   isLoggedIn: false,
   authToken: null,

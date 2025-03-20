@@ -1,5 +1,5 @@
 from flask import jsonify, request, current_app, send_file
-from models import Stock, StockStats, db, User
+from models import Stock, StockStats, db, User, StockExchanges
 from datetime import datetime, timezone
 from functools import wraps
 from flask_restx import Resource, fields
@@ -25,11 +25,14 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 from services.get_stock_data import process_stock_list
 from services.get_stock_lists import pull_stock_list
+
 def init_stock_routes(app, token_required, stocks_ns):
     # Define models for Swagger documentation
     stock_model = stocks_ns.model('Stock', {
         'symbol': fields.String(required=True, description='Stock symbol'),
-        'name': fields.String(description='Stock name'),
+        'name': fields.String(required=True, description='Stock name'),
+        'icon': fields.String(description='Stock icon URL'),
+        'exchange': fields.String(description='Stock exchange'),
         'last_updated': fields.DateTime(readonly=True, description='Last update timestamp')
     })
 
@@ -43,14 +46,40 @@ def init_stock_routes(app, token_required, stocks_ns):
         'last_updated': fields.DateTime(readonly=True, description='Last update timestamp')
     })
 
+    stock_exchange_model = stocks_ns.model('StockExchange', {
+        'exchange': fields.String(required=True, description='Stock exchange name')
+    })
+
     @stocks_ns.route('')
     class StockList(Resource):
         @stocks_ns.doc('list_stocks', security='Bearer')
-        @stocks_ns.marshal_list_with(stock_model)
+        @stocks_ns.param('page', 'Page number (1-based)', type=int, default=1)
+        @stocks_ns.param('per_page', 'Items per page', type=int, default=10)
+        @stocks_ns.marshal_with(stock_model)
         @token_required
         def get(self, current_user):
-            """List all stocks"""
-            return Stock.query.all()
+            """List all stocks with pagination"""
+            try:
+                page = request.args.get('page', 1, type=int)
+                per_page = request.args.get('per_page', 10, type=int)
+                
+                # Query with pagination
+                pagination = Stock.query.paginate(
+                    page=page,
+                    per_page=per_page,
+                    error_out=False
+                )
+                
+                return {
+                    'items': pagination.items,
+                    'total': pagination.total,
+                    'pages': pagination.pages,
+                    'current_page': page,
+                    'has_next': pagination.has_next,
+                    'has_prev': pagination.has_prev
+                }
+            except Exception as e:
+                stocks_ns.abort(500, message=str(e))
 
     @stocks_ns.route('/pull_stock_list')
     class PullStockLists(Resource):
@@ -408,4 +437,16 @@ def init_stock_routes(app, token_required, stocks_ns):
                 return {'message': 'All stock statistics removed successfully'}
             except Exception as e:
                 db.session.rollback()
-                stocks_ns.abort(500, f"Error removing stock statistics: {str(e)}") 
+                stocks_ns.abort(500, f"Error removing stock statistics: {str(e)}")
+
+    @stocks_ns.route('/exchanges')
+    class StockExchangesResource(Resource):
+        @stocks_ns.doc('get_exchanges', security='bearer')
+        @token_required
+        def get(self, current_user):
+            """Get all distinct stock exchanges"""
+            try:
+                exchanges = [exchange.exchange for exchange in StockExchanges.query.all()]
+                return exchanges
+            except Exception as e:
+                stocks_ns.abort(500, message=str(e)) 

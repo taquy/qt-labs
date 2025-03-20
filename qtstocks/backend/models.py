@@ -152,4 +152,15 @@ class UserJWT(db.Model):
     is_active = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
-        return f'<UserJWT {self.user_id}>' 
+        return f'<UserJWT {self.user_id}>'
+
+class StockExchanges(db.Model):
+    __tablename__ = 'stock_exchanges'
+    __table_args__ = {'info': {'is_view': True}}
+    
+    exchange = db.Column(db.String(50), primary_key=True)
+
+    def to_dict(self):
+        return {
+            'exchange': self.exchange
+        } 
