@@ -3,9 +3,9 @@ import json
 import pandas as pd
 import odf
 from datetime import datetime
-
+from models import Stock, db
 def get_stock_list():
-    url = 'https://scanner.tradingview.com/global/scan?label-product=symbols-components'
+    url = 'https://scanner.tradingview.com/vietnam/scan?label-product=markets-screener'
     
     headers = {
         'accept': 'application/json',
@@ -14,19 +14,13 @@ def get_stock_list():
     
     data = {
         "columns": [
-            "name", "description", "logoid", "update_mode", "type", "typespecs",
-            "market_cap_basic", "fundamental_currency_code", "close", "pricescale",
-            "minmov", "fractional", "minmove2", "currency", "change", "volume",
-            "relative_volume_10d_calc", "price_earnings_ttm", "earnings_per_share_diluted_ttm",
-            "earnings_per_share_diluted_yoy_growth_ttm", "dividends_yield_current",
-            "sector.tr", "market", "sector", "recommendation_mark"
+            "name", "description", "logoid", "update_mode", "type"
         ],
         "ignore_unknown_fields": False,
-        "options": {"lang": "en"},
-        "range": [0, 1000],
+        "options": {"lang": "vi"},
+        "range": [0, 2000],
         "sort": {"sortBy": "name", "sortOrder": "desc"},
-        "symbols": {"symbolset": ["SYML:HOSE;VNINDEX"]},
-        "preset": "index_components_market_pages"
+        "preset": "all_stocks"
     }
     
     try:
@@ -44,8 +38,10 @@ def get_stock_list():
                 # Only include regular stocks (exclude ETFs and funds)
                 if d[4] == 'stock':
                     stock_info = {
-                        'Symbol': d[0],
-                        'Name': d[1],
+                        'symbol': d[0],
+                        'name': d[1],
+                        'icon': f'https://s3-symbol-logo.tradingview.com/{d[2]}.svg',
+                        'exchange': item['s'].split(':')[0]
                     }
                     stocks_data.append(stock_info)
             return stocks_data
@@ -62,33 +58,29 @@ def get_stock_list():
 
 def save_to_database(stocks_data):
     try:
-        from app import app, db
-        from models import Stock
-        from datetime import datetime
-        
-        with app.app_context():
-            # Process each stock
-            for stock_info in stocks_data:
-                # Check if stock already exists
-                stock = Stock.query.filter_by(symbol=stock_info['Symbol']).first()
-                
-                if stock:
-                    # Update existing stock
-                    stock.name = stock_info['Name']
-                    stock.last_updated = datetime.strptime(stock_info['Last Updated'], '%Y-%m-%d %H:%M:%S')
-                else:
-                    # Create new stock
-                    stock = Stock(
-                        symbol=stock_info['Symbol'],
-                        name=stock_info['Name'],
-                        last_updated=datetime.strptime(stock_info['Last Updated'], '%Y-%m-%d %H:%M:%S')
-                    )
-                    db.session.add(stock)
+        # Process each stock
+        for stock_info in stocks_data:
+            # Check if stock already exists
+            stock = Stock.query.filter_by(symbol=stock_info['symbol']).first()
+            if stock:
+                # Update existing stock
+                stock.name = stock_info['name']
+                stock.last_updated = datetime.now()
+            else:
+                # Create new stock
+                stock = Stock(
+                    symbol=stock_info['symbol'],
+                    name=stock_info['name'],
+                    icon=stock_info['icon'],
+                    exchange=stock_info['exchange'],
+                    last_updated=datetime.now()
+                )
+                db.session.add(stock)
             
-            # Commit all changes
-            db.session.commit()
-            print(f"Successfully saved {len(stocks_data)} stocks to database")
-            return True
+        # Commit all changes
+        db.session.commit()
+        print(f"Successfully saved {len(stocks_data)} stocks to database")
+        return True
             
     except Exception as e:
         print(f"Error saving to database: {e}")

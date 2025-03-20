@@ -54,14 +54,20 @@ user_stock_stats = db.Table('user_stock_stats',
 )
 
 class Stock(db.Model):
+    __tablename__ = 'stock'
     symbol = db.Column(db.String(10), primary_key=True)
-    name = db.Column(db.String(100))
-    last_updated = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    name = db.Column(db.String(100), nullable=False)
+    icon = db.Column(db.String(255), nullable=True)
+    exchange = db.Column(db.String(50), nullable=True)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    stats = db.relationship('StockStats', backref='stock', uselist=False)
 
     def to_dict(self):
         return {
             'symbol': self.symbol,
             'name': self.name,
+            'icon': self.icon,
+            'exchange': self.exchange,
             'last_updated': self.last_updated.strftime('%Y-%m-%d %H:%M:%S')
         }
 
@@ -70,17 +76,20 @@ class Stock(db.Model):
         return Stock(
             symbol=data['symbol'],
             name=data['name'],
+            icon=data['icon'],
+            exchange=data['exchange'],
             last_updated=datetime.strptime(data['last_updated'], '%Y-%m-%d %H:%M:%S')
         )
 
 class StockStats(db.Model):
-    symbol = db.Column(db.String(10), primary_key=True)
+    __tablename__ = 'stock_stats'
+    symbol = db.Column(db.String(10), db.ForeignKey('stock.symbol'), primary_key=True)
     price = db.Column(db.Float)
     market_cap = db.Column(db.Float)
     eps = db.Column(db.Float)
     pe = db.Column(db.Float)
     pb = db.Column(db.Float)
-    last_updated = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return {

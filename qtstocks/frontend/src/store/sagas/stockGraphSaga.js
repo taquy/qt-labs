@@ -36,7 +36,7 @@ export const pullStockList = () => ({ type: PULL_STOCK_LIST });
 const api = {
   fetchStocks: async () => {
     const response = await axios.get(API_STOCK_ENDPOINTS.stocks, getRequestConfig());
-    return response.data.stocks;
+    return response.data;
   },
   fetchAvailableStocks: async () => {
     const response = await axios.get(API_STOCK_ENDPOINTS.stocksWithStats, getRequestConfig());
@@ -75,6 +75,7 @@ function* pullStockListSaga(action) {
     yield effects.put(setLoader({ action: LoaderActions.PULL_STOCK_LIST, value: true }));
     const response = yield effects.call(api.pullStockList);
     yield effects.put(setPullStocksLists(response));
+    yield effects.call(fetchStocksSaga);
   } catch (error) {
     yield effects.put(setError('Failed to pull stock list'));
     yield effects.call(handleApiError, error, 'pullStockListSaga');
