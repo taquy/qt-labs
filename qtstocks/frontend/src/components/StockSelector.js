@@ -15,7 +15,7 @@ import {
 
 import { fetchStocks, fetchStockData, pullStockList } from '../store/actions/stocks';
 import { useSelector, useDispatch } from 'react-redux';
-import { LoaderActions } from '../store/slices/stocks';
+import { LoaderActions, ErrorActions, MessageActions } from '../store/slices/stocks';
 
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
@@ -25,30 +25,41 @@ const StockSelector = () => {
   const [page, setPage] = useState(1);
   const [inputValue] = useState('');
   const dispatch = useDispatch();
+
+  const [query, setQuery] = useState({
+    page: 1,
+    per_page: 20,
+    exchanges: '',
+    search: ''
+  });
   
   const {
     stocks,
     loaders,
-    exchanges
+    exchanges,
+    errors,
+    messages
   } = useSelector(state => state.stocks);
 
   useEffect(() => {
     setIsAllowedToFetchMoreStocks(!loaders[LoaderActions.FETCH_STOCKS] && stocks.has_next);
-  }, [page, stocks.current_page, loaders, stocks.has_next]);
+  }, [stocks.current_page, loaders, stocks.has_next]);
 
+  // Combined effect for both pagination and search
   useEffect(() => {
-    if (isAllowedToFetchMoreStocks && page !== stocks.current_page) {
-      dispatch(fetchStocks({page, per_page: 20}));
+    if (isAllowedToFetchMoreStocks && query.page !== stocks.current_page) {
+      dispatch(fetchStocks(query));
     }
-  }, [dispatch, page, isAllowedToFetchMoreStocks, stocks.current_page]);
+  }, [dispatch, query, isAllowedToFetchMoreStocks, stocks.current_page]);
 
   const handleScroll = (event) => {
     const listbox = event.target;
     if (
-      isAllowedToFetchMoreStocks && page === stocks.current_page &&
+      isAllowedToFetchMoreStocks && 
+      query.page === stocks.current_page &&
       listbox.scrollTop + listbox.clientHeight >= listbox.scrollHeight - 10
     ) {
-      setPage(prevPage => prevPage + 1);
+      setQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
     }
   };
 
@@ -252,6 +263,20 @@ const StockSelector = () => {
             />
           ))}
         </Box>
+        {messages[MessageActions.PULL_STOCK_LIST] && (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body1" color="success">
+              {messages[MessageActions.PULL_STOCK_LIST]}
+            </Typography>
+          </Box>
+        )}
+         {errors[ErrorActions.STOCK_SELECTOR] && (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body1" color="error">
+              {errors[ErrorActions.STOCK_SELECTOR]}
+            </Typography>
+          </Box>
+        )}
       </Box>
     </Paper>
   );
