@@ -96,13 +96,16 @@ def save_to_database(stocks_data):
             db.session.rollback()
         return False
 
-if __name__ == "__main__":
+def pull_stock_list():
     # Get the stock list
     stocks_data = get_stock_list()
     
+    error = False
     if stocks_data:
-        print(f"Found {len(stocks_data)} stocks")
+        message = f"Found {len(stocks_data)} stocks"
         # Save to database
         save_to_database(stocks_data)
-    else:
-        print("No stocks data to save")
+    else:   
+        message = "No stocks data to save"
+        error = True
+    return message, error

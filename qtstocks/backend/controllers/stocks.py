@@ -24,7 +24,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 from services.get_stock_data import process_stock_list
-
+from services.get_stock_lists import pull_stock_list
 def init_stock_routes(app, token_required, stocks_ns):
     # Define models for Swagger documentation
     stock_model = stocks_ns.model('Stock', {
@@ -52,6 +52,17 @@ def init_stock_routes(app, token_required, stocks_ns):
             """List all stocks"""
             return Stock.query.all()
 
+    @stocks_ns.route('/pull_stock_list')
+    class PullStockLists(Resource):
+        @stocks_ns.doc('pull_stock_list', security='Bearer')
+        @token_required
+        def get(self, current_user):
+            """Pull stock lists"""
+            message, error = pull_stock_list()
+            if error:
+                stocks_ns.abort(500, message)
+            return {'message': message}
+            
     @stocks_ns.route('/<string:symbol>')
     @stocks_ns.param('symbol', 'The stock symbol')
     class StockResource(Resource):
