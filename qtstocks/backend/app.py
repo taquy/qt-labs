@@ -1,6 +1,7 @@
 from flask import Flask, current_app, render_template, jsonify, request, Response, send_file, redirect, url_for, flash, session, send_from_directory
-from flask_login import login_user, login_required, logout_user, current_user
+from flask_login import login_user, login_required, logout_user, current_user, LoginManager
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_restx import Api, Resource, fields, Namespace
 import pandas as pd
 import plotly
 import plotly.express as px
@@ -16,7 +17,7 @@ from config import Config
 import requests
 from bs4 import BeautifulSoup
 from services.get_stock_lists import get_stock_list
-from extensions import db, login_manager, cors, init_extensions
+from extensions import db, login_manager, cors, init_extensions, ma, migrate
 import os
 import jwt as PyJWT
 from functools import wraps
@@ -26,13 +27,33 @@ import csv
 from controllers.auth import init_auth_routes
 from controllers.settings import init_settings_routes
 from controllers.stocks import init_stock_routes
+from controllers.users import init_user_routes
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
     # Initialize extensions
-    db = init_extensions(app)
+    db.init_app(app)
+    ma.init_app(app)
+    migrate.init_app(app, db)
+    
+    # Initialize Swagger
+    api = Api(app, version='1.0', title='QT Stocks API',
+              description='API for QT Stocks application',
+              doc='/api/docs')
+    
+    # Create namespaces
+    auth_ns = Namespace('auth', description='Authentication operations')
+    users_ns = Namespace('users', description='User management operations')
+    stocks_ns = Namespace('stocks', description='Stock operations')
+    settings_ns = Namespace('settings', description='User settings operations')
+    
+    # Add namespaces to API
+    api.add_namespace(auth_ns)
+    api.add_namespace(users_ns)
+    api.add_namespace(stocks_ns)
+    api.add_namespace(settings_ns)
     
     # Configure login manager
     login_manager.login_view = 'login'
@@ -58,25 +79,28 @@ def create_app(config_class=Config):
         return db.session.get(User, int(user_id))
     
     # Initialize routes and get token_required decorator
-    token_required = init_auth_routes(app)
-    init_settings_routes(app, token_required)
-    init_stock_routes(app, token_required)
+    token_required = init_auth_routes(app, auth_ns)
+    init_settings_routes(app, token_required, settings_ns)
+    init_stock_routes(app, token_required, stocks_ns)
+    init_user_routes(app, token_required, users_ns)
     
-    # Serve React app
-    @app.route('/', defaults={'path': ''})
-    @app.route('/<path:path>')
-    def serve(path):
-        if path != "" and os.path.exists(app.static_folder + '/' + path):
-            return send_from_directory(app.static_folder, path)
-        else:
-            return send_from_directory(app.static_folder, 'index.html')
-    
-    # Initialize database and create admin user
+    # Initialize database
     with app.app_context():
+        # Drop all tables
+        db.drop_all()
+        
+        # Create all tables
         db.create_all()
+        
+        # Create admin user if it doesn't exist
         admin = User.query.filter_by(username=Config.ADMIN_USERNAME).first()
         if not admin:
-            admin = User(username=Config.ADMIN_USERNAME)
+            admin = User(
+                username=Config.ADMIN_USERNAME,
+                email='admin@example.com',
+                name='Admin',
+                is_admin=True
+            )
             admin.set_password(Config.ADMIN_PASSWORD)
             db.session.add(admin)
             db.session.commit()

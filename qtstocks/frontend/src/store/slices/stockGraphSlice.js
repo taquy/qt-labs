@@ -24,7 +24,7 @@ const stockGraphSlice = createSlice({
   initialState,
   reducers: {
     setStocks: (state, action) => {
-      state.stocks = action.payload;
+      state.stocks = action.payload ? action.payload : [];
     },
     setAvailableStocks: (state, action) => {
       state.availableStocks = action.payload;

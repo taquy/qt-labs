@@ -4,18 +4,23 @@ from datetime import datetime, timezone
 from extensions import db
 
 class User(UserMixin, db.Model):
+    __tablename__ = 'user'
+    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=True)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     google_id = db.Column(db.String(255), unique=True, nullable=True)
+    name = db.Column(db.String(64), nullable=True)
+    is_admin = db.Column(db.Boolean, default=False, server_default='false')
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    last_login = db.Column(db.DateTime)
     
     # Many-to-many relationship with StockStats
     stock_stats = db.relationship('StockStats', secondary='user_stock_stats', backref=db.backref('users', lazy='dynamic'))
     user_settings = db.relationship('UserSettings', backref='owner', lazy=True, uselist=False)
-    jwt_tokens = db.relationship('UserJWT', backref='owner', lazy=True)
+    jwt_tokens = db.relationship('UserJWT', backref='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -31,9 +36,11 @@ class User(UserMixin, db.Model):
             'id': self.id,
             'username': self.username,
             'email': self.email,
-            'google_id': self.google_id,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+            'name': self.name,
+            'is_admin': self.is_admin,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None,
+            'last_login': self.last_login.strftime('%Y-%m-%d %H:%M:%S') if self.last_login else None
         }
 
     def __repr__(self):
@@ -67,17 +74,14 @@ class Stock(db.Model):
         )
 
 class StockStats(db.Model):
-    symbol = db.Column(db.String(10), db.ForeignKey('stock.symbol'), primary_key=True)
+    symbol = db.Column(db.String(10), primary_key=True)
     price = db.Column(db.Float)
     market_cap = db.Column(db.Float)
     eps = db.Column(db.Float)
     pe = db.Column(db.Float)
     pb = db.Column(db.Float)
     last_updated = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    
-    # Relationship with Stock model
-    stock = db.relationship('Stock', backref=db.backref('stats', lazy=True, uselist=False))
-    
+
     def to_dict(self):
         return {
             'symbol': self.symbol,
@@ -88,7 +92,7 @@ class StockStats(db.Model):
             'pb': self.pb,
             'last_updated': self.last_updated.strftime('%Y-%m-%d %H:%M:%S')
         }
-    
+
     @staticmethod
     def from_dict(data):
         return StockStats(

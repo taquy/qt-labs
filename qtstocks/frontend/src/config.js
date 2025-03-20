@@ -1,7 +1,7 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5555/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export const API_AUTH_ENDPOINTS = {
-    login: `${API_BASE_URL}/login`,
+    login: `${API_BASE_URL}/auth/login`,
     googleLogin: `${API_BASE_URL}/login/google`,
     register: `${API_BASE_URL}/auth/register`,
     logout: `${API_BASE_URL}/logout`,
@@ -14,7 +14,7 @@ export const API_SETTINGS_ENDPOINTS = {
 }
 
 export const API_STOCK_ENDPOINTS = {
-    stocksWithStats: `${API_BASE_URL}/stocks_with_stats`,
+    stocksWithStats: `${API_BASE_URL}/stocks/stats`,
     stocks: `${API_BASE_URL}/stocks`,
     downloadStockList: `${API_BASE_URL}/download_stock_list`,
     fetchStockData: `${API_BASE_URL}/fetch_stock_data`,

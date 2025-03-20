@@ -1,56 +1,71 @@
-from flask import jsonify, request
-from datetime import datetime, UTC
-from models import UserSettings
-from extensions import db
+from flask import jsonify, request, current_app
+from models import UserSettings, db
+from datetime import datetime, timezone
+from functools import wraps
+from flask_restx import Resource, fields
 
-def init_settings_routes(app, token_required):
-    @app.route('/api/settings', methods=['GET'])
-    @token_required
-    def get_settings(current_user):
-        try:
-            # Get all settings for the current user
-            settings = UserSettings.query.filter_by(user_id=current_user.id).all()
-            return jsonify({
-                'settings': {setting.setting_key: setting.setting_value for setting in settings}
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+def init_settings_routes(app, token_required, settings_ns):
+    # Define models for Swagger documentation
+    settings_model = settings_ns.model('Settings', {
+        'id': fields.Integer(readonly=True, description='Settings ID'),
+        'user_id': fields.Integer(readonly=True, description='User ID'),
+        'setting_key': fields.String(required=True, description='Setting key'),
+        'setting_value': fields.String(description='Setting value'),
+        'created_at': fields.DateTime(readonly=True, description='Creation timestamp'),
+        'updated_at': fields.DateTime(readonly=True, description='Last update timestamp')
+    })
 
-    @app.route('/api/settings/<setting_key>', methods=['PUT'])
-    @token_required
-    def update_setting(current_user, setting_key):
-        try:
+    settings_update_model = settings_ns.model('SettingsUpdate', {
+        'setting_key': fields.String(required=True, description='Setting key'),
+        'setting_value': fields.String(description='Setting value')
+    })
+
+    @settings_ns.route('')
+    class SettingsResource(Resource):
+        @settings_ns.doc('get_settings', security='Bearer')
+        @settings_ns.marshal_list_with(settings_model)
+        @token_required
+        def get(self, current_user):
+            """Get user settings"""
+            return UserSettings.query.filter_by(user_id=current_user.id).all()
+
+        @settings_ns.doc('update_settings', security='Bearer')
+        @settings_ns.expect(settings_update_model)
+        @settings_ns.marshal_with(settings_model)
+        @token_required
+        def put(self, current_user):
+            """Update user settings"""
             data = request.get_json()
-            if not data or 'value' not in data:
-                return jsonify({'error': 'No data received'}), 400
+            if not data or 'setting_key' not in data:
+                settings_ns.abort(400, "Setting key is required")
 
             # Find existing setting or create new one
             setting = UserSettings.query.filter_by(
                 user_id=current_user.id,
-                setting_key=setting_key
+                setting_key=data['setting_key']
             ).first()
 
-            if setting:
-                setting.setting_value = data['value']
-                setting.updated_at = datetime.now(UTC)
-            else:
+            if not setting:
                 setting = UserSettings(
                     user_id=current_user.id,
-                    setting_key=setting_key,
-                    setting_value=data['value']
+                    setting_key=data['setting_key']
                 )
                 db.session.add(setting)
 
+            # Update setting value
+            setting.setting_value = data.get('setting_value')
+            setting.updated_at = datetime.now(timezone.utc)
+            
             db.session.commit()
-            return jsonify(setting.to_dict())
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': str(e)}), 500
+            return setting
 
-    @app.route('/api/settings/<setting_key>', methods=['DELETE'])
-    @token_required
-    def delete_setting(current_user, setting_key):
-        try:
+    @settings_ns.route('/<string:setting_key>')
+    @settings_ns.param('setting_key', 'The setting key')
+    class SettingResource(Resource):
+        @settings_ns.doc('delete_setting', security='Bearer')
+        @token_required
+        def delete(self, current_user, setting_key):
+            """Delete a specific setting"""
             setting = UserSettings.query.filter_by(
                 user_id=current_user.id,
                 setting_key=setting_key
@@ -59,8 +74,5 @@ def init_settings_routes(app, token_required):
             if setting:
                 db.session.delete(setting)
                 db.session.commit()
-                return jsonify({'message': 'Setting deleted successfully'})
-            return jsonify({'message': 'Setting not found'}), 404
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': str(e)}), 500 
+                return {'message': 'Setting deleted successfully'}
+            return {'message': 'Setting not found'}, 404 

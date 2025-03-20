@@ -10,7 +10,7 @@ export const LOGIN = 'auth/login';
 export const GOOGLE_LOGIN = 'auth/googleLogin';
 export const CHECK_IS_LOGGED_IN = 'auth/checkIsLoggedIn';
 
-export const login = (username, password) => ({ type: LOGIN, payload: { username, password } });
+export const login = (email, password) => ({ type: LOGIN, payload: { email, password } });
 export const logout = () => ({ type: LOGOUT });
 export const googleLogin = (token) => ({ type: GOOGLE_LOGIN, payload: { token } });
 export const checkIsLoggedIn = () => ({ type: CHECK_IS_LOGGED_IN });

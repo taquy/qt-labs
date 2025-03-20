@@ -1,458 +1,400 @@
-from flask import jsonify, request, Response
+from flask import jsonify, request, current_app, send_file
+from models import Stock, StockStats, db, user_stock_stats
 from datetime import datetime, timezone
+from functools import wraps
+from flask_restx import Resource, fields
+import pandas as pd
+import plotly
+import plotly.express as px
+import json
+import threading
+import queue
 import io
-import csv
-from models import Stock, StockStats, user_stock_stats
-from extensions import db
-from services.get_stock_lists import get_stock_list
-from services.get_stock_data import process_stock_list
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak, Frame, PageTemplate
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
 import numpy as np
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak, Frame, PageTemplate
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from services.get_stock_data import process_stock_list
 
-def init_stock_routes(app, token_required):
-    @app.route('/api/stocks')
-    @token_required
-    def get_stocks(current_user):
-        try:
-            stocks = Stock.query.all()
-            return jsonify({
-                'stocks': [
-                    {
-                        'symbol': stock.symbol,
-                        'name': stock.name,
-                        'last_updated': stock.last_updated.strftime('%Y-%m-%d %H:%M:%S')
-                    }
-                    for stock in stocks
-                ]
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
+def init_stock_routes(app, token_required, stocks_ns):
+    # Define models for Swagger documentation
+    stock_model = stocks_ns.model('Stock', {
+        'symbol': fields.String(required=True, description='Stock symbol'),
+        'name': fields.String(description='Stock name'),
+        'last_updated': fields.DateTime(readonly=True, description='Last update timestamp')
+    })
+
+    stock_stats_model = stocks_ns.model('StockStats', {
+        'symbol': fields.String(required=True, description='Stock symbol'),
+        'price': fields.Float(description='Current price'),
+        'market_cap': fields.Float(description='Market capitalization'),
+        'eps': fields.Float(description='Earnings per share'),
+        'pe': fields.Float(description='Price-to-earnings ratio'),
+        'pb': fields.Float(description='Price-to-book ratio'),
+        'last_updated': fields.DateTime(readonly=True, description='Last update timestamp')
+    })
+
+    @stocks_ns.route('')
+    class StockList(Resource):
+        @stocks_ns.doc('list_stocks', security='Bearer')
+        @stocks_ns.marshal_list_with(stock_model)
+        @token_required
+        def get(self, current_user):
+            """List all stocks"""
+            return Stock.query.all()
+
+    @stocks_ns.route('/<string:symbol>')
+    @stocks_ns.param('symbol', 'The stock symbol')
+    class StockResource(Resource):
+        @stocks_ns.doc('get_stock', security='Bearer')
+        @stocks_ns.marshal_with(stock_model)
+        @token_required
+        def get(self, current_user, symbol):
+            """Get a stock by symbol"""
+            return Stock.query.get_or_404(symbol)
+
+    @stocks_ns.route('/stats')
+    @stocks_ns.param('symbol', 'The stock symbol')
+    class StockStatsResource(Resource):
+        @stocks_ns.doc('get_stock_stats', security='Bearer')
+        @stocks_ns.marshal_with(stock_stats_model)
+        @token_required
+        def get(self, current_user):
+            """Get stats for all stocks in user's portfolio"""
+            try:
+                # Query stocks that have stats
+                stocks_with_stats = db.session.query(Stock)\
+                    .join(StockStats)\
+                    .join(user_stock_stats)\
+                    .filter(user_stock_stats.c.user_id == current_user.id)\
+                    .all()
+                return jsonify({
+                    'stocks': [
+                        {
+                            'symbol': stock.symbol,
+                            'name': stock.name,
+                            'last_updated': stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S'),
+                            'price': stock.stats.price,
+                            'market_cap': stock.stats.market_cap,
+                            'eps': stock.stats.eps,
+                            'pe': stock.stats.pe,
+                            'pb': stock.stats.pb
+                        }
+                        for stock in stocks_with_stats
+                    ]
+                })
+            except Exception as e:
+                print(e)
+                return jsonify({'error': str(e)}), 500
     
-    @app.route('/api/stocks_with_stats')
-    @token_required
-    def get_stocks_with_stats(current_user):
-        try:
-            # Query stocks that have stats
-            stocks_with_stats = db.session.query(Stock).join(StockStats).join(user_stock_stats).filter(user_stock_stats.c.user_id == current_user.id).all()
-            return jsonify({
-                'stocks': [
-                    {
-                        'symbol': stock.symbol,
-                        'name': stock.name,
-                        'last_updated': stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S'),
-                        'price': stock.stats.price,
-                        'market_cap': stock.stats.market_cap,
-                        'eps': stock.stats.eps,
-                        'pe': stock.stats.pe,
-                        'pb': stock.stats.pb
-                    }
-                    for stock in stocks_with_stats
-                ]
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-    
-    @app.route('/api/download_stock_list', methods=['POST'])
-    @token_required
-    def download_stock_list(current_user):
-        try:
-            stocks = get_stock_list()
-            
-            for stock_data in stocks:
-                existing_stock = Stock.query.filter_by(symbol=stock_data['Symbol']).first()
-                if existing_stock:
-                    continue
-                stock = Stock(
-                    symbol=stock_data['Symbol'],
-                    name=stock_data['Name'],
-                    last_updated=datetime.now(timezone.utc)
+
+    @stocks_ns.route('/update')
+    class UpdateStockStats(Resource):
+        @stocks_ns.doc('update_stock_stats', security='Bearer')
+        @token_required
+        def post(self, current_user):
+            """Update stock statistics"""
+            try:
+                # Get all stock symbols
+                stocks = Stock.query.all()
+                symbols = [stock.symbol for stock in stocks]
+                
+                # Process stock list
+                process_stock_list(symbols, current_user)
+                
+                return {'message': 'Stock statistics updated successfully'}
+            except Exception as e:
+                db.session.rollback()
+                stocks_ns.abort(500, f"Error updating stock statistics: {str(e)}")
+
+    @stocks_ns.route('/export')
+    class StockExport(Resource):
+        @stocks_ns.doc('export_stocks', security='Bearer')
+        @token_required
+        def get(self, current_user):
+            """Export stock data to CSV"""
+            try:
+                stocks = Stock.query.all()
+                data = []
+                for stock in stocks:
+                    stats = StockStats.query.get(stock.symbol)
+                    if stats:
+                        data.append({
+                            'Symbol': stock.symbol,
+                            'Name': stock.name,
+                            'Price': stats.price,
+                            'Market Cap': stats.market_cap,
+                            'EPS': stats.eps,
+                            'P/E': stats.pe,
+                            'P/B': stats.pb
+                        })
+                
+                df = pd.DataFrame(data)
+                output = io.StringIO()
+                df.to_csv(output, index=False)
+                output.seek(0)
+                
+                return send_file(
+                    io.BytesIO(output.getvalue().encode('utf-8')),
+                    mimetype='text/csv',
+                    as_attachment=True,
+                    download_name='stocks.csv'
                 )
-                db.session.add(stock)
-            
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': f'Successfully downloaded {len(stocks)} stocks'
-            })
-            
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'error': str(e)}), 500
-    
-    @app.route('/api/fetch_stock_data', methods=['POST'])
-    @token_required
-    def fetch_stock_data(current_user):
-        try:
-            data = request.get_json()
-            if not data or 'symbols' not in data:
-                return jsonify({'error': 'No stock symbols provided'}), 400
+            except Exception as e:
+                stocks_ns.abort(500, f"Error exporting stocks: {str(e)}")
+
+    @stocks_ns.route('/export/pdf')
+    class StockPDFExport(Resource):
+        @stocks_ns.doc('export_stocks_pdf', security='Bearer')
+        @token_required
+        def get(self, current_user):
+            """Export stock data to PDF with charts"""
+            try:
+                # Get all stocks with their stats
+                stocks = Stock.query.all()
+                stocks_with_stats = []
+                for stock in stocks:
+                    stats = StockStats.query.get(stock.symbol)
+                    if stats:
+                        stocks_with_stats.append((stock, stats))
                 
-            symbols = data['symbols']
-            if not symbols:
-                return jsonify({'error': 'Empty stock symbols list'}), 400
-            
-            fetching_latest = data.get('loadLatestData', False)
-            
-            # Verify all symbols exist in database
-            for symbol in symbols:
-                stock = Stock.query.filter_by(symbol=symbol).first()
-                if not stock:
-                    return jsonify({'error': f'Stock {symbol} not found in database'}), 404
+                # Create PDF document
+                output = io.BytesIO()
+                doc = SimpleDocTemplate(output, pagesize=letter)
+                elements = []
                 
-            if fetching_latest:
-                new_symbols = symbols
-            else:
-                # reuse existing stock stats if already available in stock_stats table
-                new_symbols = []
-                for symbol in symbols:
-                    stock_stat = StockStats.query.filter_by(symbol=symbol).first()
-                    if stock_stat:
-                        if stock_stat not in current_user.stock_stats:
-                            current_user.stock_stats.append(stock_stat)
-                    else:
-                        new_symbols.append(symbol)
-                db.session.commit()
-            
-            # scrape data for any new symbols
-            if len(new_symbols) > 0:
-                process_stock_list(new_symbols, current_user)
-            
-            return jsonify({
-                'success': True,
-                'message': f'Successfully fetched data for {len(new_symbols)} stocks {", ".join(new_symbols)}'
-            })
-            
-        except Exception as e:
-            print(f"Error in fetch_stock_data: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-    
-    @app.route('/api/remove_stock_stats', methods=['POST'])
-    @token_required
-    def remove_stock_stats(current_user):
-        try:
-            data = request.get_json()
-            if not data or 'symbols' not in data:
-                return jsonify({'error': 'No stock symbols provided'}), 400
+                # Create styles
+                styles = getSampleStyleSheet()
+                centered_title_style = ParagraphStyle(
+                    'CenteredTitle',
+                    parent=styles['Heading1'],
+                    fontSize=24,
+                    alignment=TA_CENTER,
+                    spaceAfter=30
+                )
+                centered_heading_style = ParagraphStyle(
+                    'CenteredHeading',
+                    parent=styles['Heading2'],
+                    fontSize=18,
+                    alignment=TA_CENTER,
+                    spaceAfter=10
+                )
+                date_style = ParagraphStyle(
+                    'Date',
+                    parent=styles['Normal'],
+                    fontSize=12,
+                    alignment=TA_CENTER,
+                    spaceAfter=30
+                )
                 
-            symbols = data['symbols']
-            if not symbols:
-                return jsonify({'error': 'Empty stock symbols list'}), 400
-            
-            # Delete stats for each symbol
-            for symbol in symbols:
-                stats = StockStats.query.filter_by(symbol=symbol).first()
-                if stats:
-                    db.session.delete(stats)
-            
-            # Delete user_stock_stats for each symbol
-            for symbol in symbols:
-                user_stock_stat = db.session.query(user_stock_stats).filter_by(stock_symbol=symbol, user_id=current_user.id).first()
-                if user_stock_stat:
-                    db.session.delete(user_stock_stat)
-            
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': f'Successfully removed stats for {len(symbols)} stocks'
-            })
-            
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error in remove_stock_stats: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-    
-    @app.route('/api/export_csv')
-    @token_required
-    def export_stocks(current_user):
-        try:
-            # Create CSV data
-            output = io.StringIO()
-            writer = csv.writer(output)
-            
-            # Write header
-            writer.writerow(['Symbol', 'Name', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B', 'Last Updated'])
-            
-            stocks_with_stats = db.session.query(Stock)\
-                .join(StockStats)\
-                .join(user_stock_stats)\
-                .filter(user_stock_stats.c.user_id == current_user.id)\
-                .all()
-                        
-            for stock in stocks_with_stats:
-                writer.writerow([
-                    stock.symbol,
-                    stock.name,
-                    stock.stats.price,
-                    stock.stats.market_cap,
-                    stock.stats.eps,
-                    stock.stats.pe,
-                    stock.stats.pb,
-                    stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')
-                ])
-            
-            # Create response
-            output.seek(0)
-            return Response(
-                output.getvalue(),
-                mimetype='text/csv',
-                headers={
-                    'Content-Disposition': f'attachment; filename=stocks_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.csv'
-                }
-            )
-            
-        except Exception as e:
-            print(f"Error exporting stocks: {str(e)}")
-            return {'error': str(e)}, 500
-    
-    @app.route('/api/export_graph_pdf')
-    @token_required
-    def export_stocks_pdf(current_user):
-        try:
-            # Get stocks with stats for current user
-            stocks_with_stats = db.session.query(Stock).join(StockStats).join(user_stock_stats).filter(user_stock_stats.c.user_id == current_user.id).all()
-            
-            if not stocks_with_stats:
-                return jsonify({'error': 'No stock stats found for export'}), 404
-
-            # Create PDF buffer
-            buffer = io.BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=letter)
-            styles = getSampleStyleSheet()
-            elements = []
-
-            # Create centered title style
-            centered_title_style = ParagraphStyle(
-                'CenteredTitle',
-                parent=styles['Heading1'],
-                fontSize=24,
-                spaceAfter=10,  # Reduced space after title
-                alignment=1  # 1 = center alignment
-            )
-
-            # Create date style
-            date_style = ParagraphStyle(
-                'DateStyle',
-                parent=styles['Normal'],
-                fontSize=12,
-                spaceAfter=30,  # Space after date
-                alignment=1  # 1 = center alignment
-            )
-
-            centered_heading_style = ParagraphStyle(
-                'CenteredHeading',
-                parent=styles['Heading2'],
-                fontSize=18,
-                spaceAfter=10,
-                alignment=1  # 1 = center alignment
-            )
-
-            # Add title and date
-            elements.append(Paragraph("Stock Statistics Report", centered_title_style))
-            elements.append(Paragraph(f"Generated on {datetime.now(timezone.utc).strftime('%B %d, %Y at %I:%M %p %Z')}", date_style))
-
-            # Add detailed table first
-            elements.append(Paragraph("Stock Statistics", centered_heading_style))
-            elements.append(Spacer(1, 10))
-            table_style = TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 14),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 12),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ])            
-            table_data = [['Symbol', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B', 'Last Updated']]
-            for stock in stocks_with_stats:
-                table_data.append([
-                    stock.symbol,
-                    f"{stock.stats.price:,.2f}",
-                    f"{stock.stats.market_cap:,.0f}",
-                    f"{stock.stats.eps:,.2f}",
-                    f"{stock.stats.pe:,.2f}",
-                    f"{stock.stats.pb:,.2f}",
-                    stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S')
-                ])
-
-            table = Table(table_data)
-            table.setStyle(table_style)
-            elements.append(table)
-            
-            # Add spacer    
-            elements.append(Spacer(1, 20))
-            
-            # Add table for symbol and name
-            elements.append(Paragraph("Stock Information", centered_heading_style))
-            elements.append(Spacer(1, 10))
-            table_data = [['Symbol', 'Name']]
-            for stock in stocks_with_stats:
-                table_data.append([
-                    stock.symbol,
-                    stock.name,
-                ])
-            table = Table(table_data)
-            table.setStyle(table_style)
-            elements.append(table)
-
-            # Create bar charts with larger text and better styling
-            plt.rcParams.update({
-                'font.size': 16,
-                'axes.titlesize': 20,
-                'axes.labelsize': 16,
-                'xtick.labelsize': 14,
-                'ytick.labelsize': 14,
-                'figure.facecolor': 'white',
-                'axes.facecolor': 'white',
-                'axes.grid': True,
-                'grid.color': '#E0E0E0',
-                'grid.linestyle': '--',
-                'grid.alpha': 0.7
-            })
-
-            # Define a color palette for charts
-            chart_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD']
-
-            # Define chart configurations
-            chart_configs = [
-                {
-                    'data': [stock.stats.price for stock in stocks_with_stats],
-                    'title': 'Stock Prices',
-                    'format': '{:,.2f}',
-                    'ylabel': 'Price (x1000 VND)'
-                },
-                {
-                    'data': [stock.stats.market_cap for stock in stocks_with_stats],
-                    'title': 'Market Capitalization',
-                    'format': '{:,.2f}',
-                    'ylabel': 'Market Cap (Billion VND)'
-                },
-                {
-                    'data': [stock.stats.eps for stock in stocks_with_stats],
-                    'title': 'Earnings Per Share (EPS)',
-                    'format': '{:,.2f}',
-                    'ylabel': 'EPS (x1000 VND)'
-                },
-                {
-                    'data': [stock.stats.pe for stock in stocks_with_stats],
-                    'title': 'Price-to-Earnings Ratio (P/E)',
-                    'format': '{:,.2f}',
-                    'ylabel': 'P/E Ratio'
-                },
-                {
-                    'data': [stock.stats.pb for stock in stocks_with_stats],
-                    'title': 'Price-to-Book Ratio (P/B)',
-                    'format': '{:,.2f}',
-                    'ylabel': 'P/B Ratio'
-                }
-            ]
-
-            # Create charts
-            charts = []
-            for i, config in enumerate(chart_configs):
-                plt.figure(figsize=(12, 7))
+                # Add title and date
+                elements.append(Paragraph("Stock Statistics Report", centered_title_style))
+                elements.append(Paragraph(f"Generated on {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}", date_style))
                 
-                # Create 3D-like effect with shadow
-                bars = plt.bar([stock.symbol for stock in stocks_with_stats], config['data'],
-                             color=chart_colors[i % len(chart_colors)],
-                             edgecolor='white',
-                             linewidth=1.5,
-                             alpha=0.8)
-                
-                # Add shadow effect
-                for bar in bars:
-                    bar.set_path_effects([
-                        path_effects.withSimplePatchShadow(),
-                        path_effects.Normal()
+                # Create tables
+                table_data = [['Symbol', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B']]
+                for stock, stats in stocks_with_stats:
+                    table_data.append([
+                        stock.symbol,
+                        f"{stats.price:,.2f}",
+                        f"{stats.market_cap:,.0f}",
+                        f"{stats.eps:,.2f}",
+                        f"{stats.pe:,.2f}",
+                        f"{stats.pb:,.2f}"
                     ])
                 
-                plt.title(config['title'], pad=20, fontweight='bold')
-                plt.xlabel('')  # Remove x-axis label
-                plt.ylabel(config['ylabel'], fontweight='bold')
-                plt.xticks(rotation=45, ha='right')
+                # Create tables with titles
+                for i in range(0, len(table_data), 15):  # Split into chunks of 15 rows
+                    elements.append(Paragraph("Stock Statistics", centered_heading_style))
+                    table = Table(table_data[i:i+15])
+                    table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 12),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                        ('FONTSIZE', (0, 1), (-1, -1), 10),
+                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                    ]))
+                    elements.append(table)
+                    elements.append(Spacer(1, 20))
                 
-                # Add value labels on top of bars with improved visibility
-                for bar in bars:
-                    height = bar.get_height()
-                    plt.text(bar.get_x() + bar.get_width()/2., height,
-                            config['format'].format(height),
-                            ha='center', va='bottom',
-                            fontsize=12,
-                            fontweight='bold',
-                            color='#2C3E50')
+                # Create bar charts with larger text and better styling
+                plt.rcParams.update({
+                    'font.size': 16,
+                    'axes.titlesize': 20,
+                    'axes.labelsize': 16,
+                    'xtick.labelsize': 14,
+                    'ytick.labelsize': 14,
+                    'figure.facecolor': 'white',
+                    'axes.facecolor': 'white',
+                    'axes.grid': True,
+                    'grid.color': '#E0E0E0',
+                    'grid.linestyle': '--',
+                    'grid.alpha': 0.7
+                })
+
+                # Define a color palette for charts
+                chart_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD']
+
+                # Define chart configurations
+                chart_configs = [
+                    {
+                        'data': [stats.price / 1000 for _, stats in stocks_with_stats],  # Convert to thousands
+                        'title': 'Stock Prices',
+                        'format': '{:,.2f}',
+                        'ylabel': 'Price (x1000 VND)'
+                    },
+                    {
+                        'data': [stats.market_cap / 1_000_000_000 for _, stats in stocks_with_stats],  # Convert to billions
+                        'title': 'Market Capitalization',
+                        'format': '{:,.2f}',
+                        'ylabel': 'Market Cap (Billion VND)'
+                    },
+                    {
+                        'data': [stats.eps / 1000 for _, stats in stocks_with_stats],  # Convert to thousands
+                        'title': 'Earnings Per Share (EPS)',
+                        'format': '{:,.2f}',
+                        'ylabel': 'EPS (x1000 VND)'
+                    },
+                    {
+                        'data': [stats.pe for _, stats in stocks_with_stats],
+                        'title': 'Price-to-Earnings Ratio (P/E)',
+                        'format': '{:,.2f}',
+                        'ylabel': 'P/E Ratio'
+                    },
+                    {
+                        'data': [stats.pb for _, stats in stocks_with_stats],
+                        'title': 'Price-to-Book Ratio (P/B)',
+                        'format': '{:,.2f}',
+                        'ylabel': 'P/B Ratio'
+                    }
+                ]
+
+                # Create charts
+                charts = []
+                for i, config in enumerate(chart_configs):
+                    fig = plt.figure(figsize=(12, 7))
+                    ax = fig.add_subplot(111, projection='3d')
+                    
+                    # Create 3D bars
+                    x = np.arange(len([stock.symbol for stock, _ in stocks_with_stats]))
+                    y = np.ones_like(x)
+                    z = config['data']
+                    
+                    dx = dy = 0.8
+                    bars = ax.bar3d(x, y, np.zeros_like(z), dx, dy, z,
+                                  color=chart_colors[i % len(chart_colors)],
+                                  alpha=0.8,
+                                  edgecolor='white',
+                                  linewidth=1.5)
+                    
+                    # Customize the 3D view
+                    ax.view_init(elev=20, azim=45)
+                    
+                    # Set labels and title
+                    ax.set_title(config['title'], pad=20, fontweight='bold')
+                    ax.set_xlabel('')
+                    ax.set_ylabel('')
+                    ax.set_zlabel(config['ylabel'], fontweight='bold')
+                    
+                    # Set x-axis ticks
+                    ax.set_xticks(x)
+                    ax.set_xticklabels([stock.symbol for stock, _ in stocks_with_stats], rotation=45, ha='right')
+                    
+                    # Add value labels on top of bars
+                    for j, height in enumerate(z):
+                        ax.text(x[j] + dx/2,
+                               1 + dy/2,
+                               height + 0.1,
+                               config['format'].format(height),
+                               ha='center', va='bottom',
+                               fontsize=12,
+                               fontweight='bold',
+                               color='#2C3E50')
+                    
+                    # Add subtle background color
+                    ax.set_facecolor('#F8F9FA')
+                    
+                    # Adjust layout to prevent label cutoff
+                    plt.tight_layout()
+                    
+                    # Add padding around the plot
+                    plt.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95)
+                    
+                    chart_buffer = io.BytesIO()
+                    plt.savefig(chart_buffer, format='png', dpi=300, bbox_inches='tight')
+                    plt.close()
+                    chart_buffer.seek(0)
+                    charts.append((chart_buffer, config['title']))
+
+                # Create a frame for centered content
+                frame = Frame(
+                    doc.leftMargin,
+                    doc.bottomMargin,
+                    doc.width,
+                    doc.height,
+                    id='normal'
+                )
+
+                # Create a page template with the centered frame
+                template = PageTemplate(id='centered', frames=[frame])
+                doc.addPageTemplates([template])
+
+                # Add page break before first chart to ensure it starts on a new page
+                elements.append(PageBreak())
+
+                # Add charts to PDF (1 per page)
+                for i, (chart_data, title) in enumerate(charts):
+                    if i > 0:  # Add page break before each chart except the first one
+                        elements.append(PageBreak())
+                    elements.append(Paragraph(title, centered_heading_style))
+                    elements.append(Spacer(1, 5))  # Reduced space between title and chart
+                    
+                    # Calculate center position for the chart
+                    img = Image(chart_data, width=7*inch, height=4*inch)
+                    # Add spacer before chart to center it vertically
+                    elements.append(Spacer(1, 2*inch))  # Add space to push chart down
+                    elements.append(img)
+                    elements.append(Spacer(1, 2*inch))  # Add space after chart to maintain vertical centering
+
+                # Build PDF
+                doc.build(elements)
+                output.seek(0)
                 
-                # Add subtle background color
-                plt.gca().set_facecolor('#F8F9FA')
-                
-                # Adjust layout to prevent label cutoff
-                plt.tight_layout()
-                
-                # Add padding around the plot
-                plt.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95)
-                
-                chart_buffer = io.BytesIO()
-                plt.savefig(chart_buffer, format='png', dpi=300, bbox_inches='tight')
-                plt.close()
-                chart_buffer.seek(0)
-                charts.append((chart_buffer, config['title']))
+                return send_file(
+                    output,
+                    mimetype='application/pdf',
+                    as_attachment=True,
+                    download_name='stocks_report.pdf'
+                )
+            except Exception as e:
+                stocks_ns.abort(500, f"Error generating PDF: {str(e)}")
 
-            # Create a frame for centered content
-            frame = Frame(
-                doc.leftMargin,
-                doc.bottomMargin,
-                doc.width,
-                doc.height,
-                id='normal'
-            )
-
-            # Create a page template with the centered frame
-            template = PageTemplate(id='centered', frames=[frame])
-            doc.addPageTemplates([template])
-
-            # Add page break before first chart to ensure it starts on a new page
-            elements.append(PageBreak())
-
-            for i, (chart_data, title) in enumerate(charts):
-                if i > 0:  # Add page break before each chart except the first one
-                    elements.append(PageBreak())
-                elements.append(Paragraph(title, centered_heading_style))
-                elements.append(Spacer(1, 5))  # Reduced space between title and chart
-                
-                # Calculate center position for the chart
-                img = Image(chart_data, width=7*inch, height=4*inch)
-                # Add spacer before chart to center it vertically
-                elements.append(Spacer(1, 2*inch))  # Add space to push chart down
-                elements.append(img)
-                elements.append(Spacer(1, 2*inch))  # Add space after chart to maintain vertical centering
-
-            # Build PDF
-            doc.build(elements)
-
-            # Create response
-            buffer.seek(0)
-            return Response(
-                buffer.getvalue(),
-                mimetype='application/pdf',
-                headers={
-                    'Content-Disposition': f'attachment; filename=stock_stats_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}.pdf'
-                }
-            )
-
-        except Exception as e:
-            print(f"Error exporting stocks to PDF: {str(e)}")
-            return jsonify({'error': str(e)}), 500 
-    
+    @stocks_ns.route('/remove_stats')
+    class RemoveStockStats(Resource):
+        @stocks_ns.doc('remove_stock_stats', security='Bearer')
+        @token_required
+        def post(self, current_user):
+            """Remove all stock statistics"""
+            try:
+                StockStats.query.delete()
+                db.session.commit()
+                return {'message': 'All stock statistics removed successfully'}
+            except Exception as e:
+                db.session.rollback()
+                stocks_ns.abort(500, f"Error removing stock statistics: {str(e)}") 

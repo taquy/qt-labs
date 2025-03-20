@@ -10,7 +10,7 @@ import sys
 import platform
 import requests
 import json
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from models import Stock, StockStats
 from extensions import db
 from bs4 import BeautifulSoup
@@ -245,7 +245,7 @@ class StockDataScraper:
                         stats.eps = self.clean_number(eps_str)
                         stats.pe = self.clean_number(pe_str)
                         stats.pb = self.clean_number(pb_str)
-                        stats.last_updated = datetime.now(UTC)
+                        stats.last_updated = datetime.now(timezone.utc)
                         
                         # Add the stock to the user's stock_stats relationship
                         current_user.stock_stats.append(stats)

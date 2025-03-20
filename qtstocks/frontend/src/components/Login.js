@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { login, googleLogin } from '../store/sagas/authSaga';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const googleButtonRef = useRef(null);
   const dispatch = useDispatch();
@@ -65,7 +65,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(login(username, password));
+    dispatch(login(email, password));
   };
 
   return (
@@ -100,10 +100,10 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <TextField
-            label="Username"
-            name="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            label="Email"
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
             fullWidth
           />

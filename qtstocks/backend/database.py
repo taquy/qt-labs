@@ -1,12 +1,16 @@
 from extensions import init_extensions
 from models import User
 from config import Config
+from flask_migrate import upgrade
 
 def init_db(app):
     """Initialize database with Flask app"""
     db = init_extensions(app)
     
     with app.app_context():
+        # Drop all tables
+        db.drop_all()
+        
         # Create all tables
         db.create_all()
         
@@ -15,7 +19,12 @@ def init_db(app):
         
         if not admin:
             # Create admin user
-            admin = User(username=Config.ADMIN_USERNAME)
+            admin = User(
+                username=Config.ADMIN_USERNAME,
+                email='admin@example.com',
+                name='Admin',
+                is_admin=True
+            )
             admin.set_password(Config.ADMIN_PASSWORD)
             db.session.add(admin)
             db.session.commit()
