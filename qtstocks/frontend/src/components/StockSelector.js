@@ -193,13 +193,13 @@ const StockSelector = () => {
           variant="contained"
           color="primary"
           onClick={handleFetchStockData}
-          disabled={selectedStocks.length === 0 || loaders[LoaderActions.FETCH_STOCK_DATA]}
+          disabled={selectedStocks.length === 0 || loaders[LoaderActions.PULL_STOCK_STATS]}
           sx={{ 
             minHeight: '40px',
             position: 'relative'
           }}
         >
-          {loaders[LoaderActions.FETCH_STOCK_DATA] ? (
+          {loaders[LoaderActions.PULL_STOCK_STATS] ? (
             <>
               <CircularProgress
                 size={24}
@@ -214,7 +214,7 @@ const StockSelector = () => {
               />
             </>
           ) : (
-            'Fetch Stock Data'
+            'Fetch Stock Stats'
           )}
         </Button>
 
