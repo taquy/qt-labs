@@ -7,11 +7,11 @@ const api = {
     const response = await axios.get(API_SETTINGS_ENDPOINTS.settings, getRequestConfig());
     return response.data.settings;
   },
-  saveSettings: async (stocks, metric) => {
+  saveSettings: async (stocks, settings) => {
     const payload = {
       value: {
         selectedSymbols: stocks.map(stock => stock.symbol),
-        selectedMetric: metric
+        ...settings
       }
     };
     await axios.put(

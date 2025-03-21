@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStats, removeStats, exportCsv } from '../store/actions/stocks';
+import { fetchSettings, saveSettings } from '../store/actions/settings';
 import { Delete, Download, ViewColumn } from '@mui/icons-material';
 import { ErrorActions } from '../store/slices/stocks';
 
@@ -41,12 +42,15 @@ const StockTable = () => {
     errors,
   } = useSelector(state => state.stocks);
 
+  const { settings } = useSelector(state => state.settings);
+
   const [selected, setSelected] = React.useState([]);
   const [orderBy, setOrderBy] = React.useState('symbol');
   const [order, setOrder] = React.useState('asc');
 
   useEffect(() => {
     dispatch(fetchStats());
+    dispatch(fetchSettings());
   }, [dispatch]);
 
   // Initialize visibleColumns when metrics becomes available
@@ -59,9 +63,23 @@ const StockTable = () => {
     }
   }, [metrics]);
 
+  // Load saved column visibility settings
+  useEffect(() => {
+    if (settings?.tableColumns) {
+      setVisibleColumns(settings.tableColumns);
+    }
+  }, [settings]);
+
   useEffect(() => {
     setSelected([]);
   }, [stats]);
+
+  // Save column visibility settings when they change
+  useEffect(() => {
+    if (settings && Object.keys(visibleColumns).length > 3) { // Only save when we have metrics
+      dispatch(saveSettings(stats, { tableColumns: visibleColumns }));
+    }
+  }, [visibleColumns, dispatch, stats, settings]);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';

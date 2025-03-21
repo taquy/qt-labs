@@ -1,41 +1,28 @@
-import * as effects from 'redux-saga/effects';
-import { setError, setSettings, setLoading, clearError } from '../slices/settings';
-import { handleApiError } from '../utils';
-
+import { call, put, takeLatest } from 'redux-saga/effects';
 import { FETCH_SETTINGS, SAVE_SETTINGS } from '../actions/settings';
-
 import api from '../apis/settings';
+import { setSettings, setError } from '../slices/settings';
 
-function* fetchSettingsSaga() {
+function* fetchSettingsSaga(action) {
   try {
-    yield effects.put(setLoading(true));
-    yield effects.put(clearError());
-    const settings = yield effects.call(api.fetchSettings);
-    yield effects.put(setSettings(settings));
+    yield put(setError(""))
+    const response = yield call(api.fetchSettings);
+    yield put(setSettings(action.payload.type, response));
   } catch (error) {
-    yield effects.put(setError('Failed to fetch settings'));
-    yield effects.call(handleApiError, error, 'fetchSettingsSaga');
-  } finally {
-    yield effects.put(setLoading(false));
+    yield put(setError( error.message));
   }
 }
 
 function* saveSettingsSaga(action) {
   try {
-    yield effects.put(setLoading(true));
-    yield effects.put(clearError());
-    const { stocks, metric } = action.payload;
-    yield effects.call(api.saveSettings, stocks, metric);
-    yield effects.call(fetchSettingsSaga);
+    yield put(setError(""))
+    yield call(api.saveSettingsSaga, action.payload);
   } catch (error) {
-    yield effects.put(setError('Failed to save settings'));
-    yield effects.call(handleApiError, error, 'saveSettingsSaga');
-  } finally {
-    yield effects.put(setLoading(false));
+    yield put(setError( error.message));
   }
 }
 
-export function* settingsSaga() {
-  yield effects.takeLatest(FETCH_SETTINGS, fetchSettingsSaga);
-  yield effects.takeLatest(SAVE_SETTINGS, saveSettingsSaga);
+export default function* settingsSaga() {
+  yield takeLatest(FETCH_SETTINGS, fetchSettingsSaga);
+  yield takeLatest(SAVE_SETTINGS, saveSettingsSaga);
 }

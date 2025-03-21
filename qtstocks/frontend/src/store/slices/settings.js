@@ -1,9 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { sharedReducer, sharedInitialState } from './shared';
+
+const settingsTypes = {
+  STOCK_TABLE: 'stockTable',
+  STOCK_GRAPH: 'stockGraph',
+  STOCK_SELECTOR: 'stockSelector',
+}
 
 const initialState = {
-  settings: null,
-  ...sharedInitialState,
+  settings: {},
+  error: null,
 };
 
 const settingsSlice = createSlice({
@@ -11,17 +16,16 @@ const settingsSlice = createSlice({
   initialState,
   reducers: {
     setSettings: (state, action) => {
-      state.settings = action.payload;
+      state.settings[action.payload.type] = action.payload.settings;
     },
-    ...sharedReducer,
+    setError: (state, action) => {
+      state.error = action.payload.error;
+    },
   }
 });
 
-export const {
-  setSettings,
+export const { 
+  setSettings ,
   setError,
-  setLoading,
-  clearError,
 } = settingsSlice.actions;
-
 export default settingsSlice.reducer;
