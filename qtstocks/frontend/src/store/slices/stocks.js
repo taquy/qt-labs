@@ -14,7 +14,7 @@ const LoaderActions = {
   'PULL_STOCK_STATS': 'pullStockStats',
   'EXPORT_STOCK_DATA': 'exportStockData',
   'EXPORT_GRAPH_PDF': 'exportGraphPdf',
-  'REMOVE_AVAILABLE_STOCK': 'removeAvailableStock',
+  'REMOVE_STATS': 'removeStats',
 }
 
 const MessageActions = {
@@ -42,7 +42,7 @@ const initialState = {
     [LoaderActions.PULL_STOCK_STATS]: false,
     [LoaderActions.EXPORT_STOCK_DATA]: false,
     [LoaderActions.EXPORT_GRAPH_PDF]: false,
-    [LoaderActions.REMOVE_AVAILABLE_STOCK]: false,
+    [LoaderActions.REMOVE_STATS]: false,
   },
   exchanges: [],
   messages: {},
@@ -106,6 +106,7 @@ export const {
   setLoader,
   setExchanges,
   setMessages,
+  removeStats,
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer;

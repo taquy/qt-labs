@@ -18,7 +18,7 @@ export const API_STOCK_ENDPOINTS = {
     stocks: `${API_BASE_URL}/stocks`,
     pullStockList: `${API_BASE_URL}/stocks/pull_stock_list`,
     pullStockStats: `${API_BASE_URL}/stocks/pull_stock_stats`,
-    removeAvailableStock: `${API_BASE_URL}/remove_stock_stats`,
+    removeStats: `${API_BASE_URL}/stocks/remove_stats`,
     exportCsv: `${API_BASE_URL}/export_csv`,
     exportGraphPdf: `${API_BASE_URL}/export_graph_pdf`,
     exchanges: `${API_BASE_URL}/stocks/exchanges`,

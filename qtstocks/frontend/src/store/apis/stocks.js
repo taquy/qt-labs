@@ -22,8 +22,8 @@ const api = {
     const response = await axios.post(API_STOCK_ENDPOINTS.pullStockStats, payload, getRequestConfig());
     return response.data.data;
   },
-  removeAvailableStock: async (symbols) => {
-    const response = await axios.post(API_STOCK_ENDPOINTS.removeAvailableStock, {
+  removeStats: async (symbols) => {
+    const response = await axios.post(API_STOCK_ENDPOINTS.removeStats, {
       symbols: symbols
     }, getRequestConfig());
     return response.data;

@@ -20,7 +20,7 @@ import {
   Tooltip
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchStats, removeAvailableStock, exportCsv } from '../store/actions/stocks';
+import { fetchStats, removeStats, exportCsv } from '../store/actions/stocks';
 import { Delete, Download, ViewColumn } from '@mui/icons-material';
 import { ErrorActions } from '../store/slices/stocks';
 
@@ -58,6 +58,10 @@ const StockTable = () => {
       }));
     }
   }, [metrics]);
+
+  useEffect(() => {
+    setSelected([]);
+  }, [stats]);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -102,7 +106,7 @@ const StockTable = () => {
   const handleRemoveSelected = () => {
     const newSelected = selected.filter(id => !stats.includes(id));
     setSelected(newSelected);
-    dispatch(removeAvailableStock(newSelected));
+    dispatch(removeStats(newSelected));
   };
 
   const handleExportCSV = () => {

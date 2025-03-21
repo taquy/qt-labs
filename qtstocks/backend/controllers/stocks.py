@@ -67,6 +67,10 @@ def init_stock_routes(app, token_required, stocks_ns):
         'loadLatestData': fields.Boolean(required=True, description='Whether to load latest data')
     })
 
+    remove_stats_request_model = stocks_ns.model('RemoveStatsRequest', {
+        'symbols': fields.List(fields.String, required=True, description='List of stock symbols to remove')
+    })
+
     @stocks_ns.route('')
     class StockList(Resource):
         @stocks_ns.doc('list_stocks', security='Bearer')
@@ -484,13 +488,25 @@ def init_stock_routes(app, token_required, stocks_ns):
     @stocks_ns.route('/remove_stats')
     class RemoveStockStats(Resource):
         @stocks_ns.doc('remove_stock_stats', security='Bearer')
+        @stocks_ns.expect(remove_stats_request_model)
         @token_required
         def post(self, current_user):
-            """Remove all stock statistics"""
+            """Remove stocks from user's portfolio"""
             try:
-                StockStats.query.delete()
+                data = request.get_json()
+                symbols = data.get('symbols', [])
+
+                if not symbols:
+                    stocks_ns.abort(400, message="No symbols provided")
+
+                # Remove stocks from user's portfolio
+                for symbol in symbols:
+                    stock_stats = StockStats.query.get(symbol)
+                    if stock_stats and current_user in stock_stats.users:
+                        current_user.stock_stats.remove(stock_stats)
+
                 db.session.commit()
-                return {'message': 'All stock statistics removed successfully'}
+                return {'message': 'Stocks removed successfully'}
             except Exception as e:
                 db.session.rollback()
                 stocks_ns.abort(500, f"Error removing stock statistics: {str(e)}")

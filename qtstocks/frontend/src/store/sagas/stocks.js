@@ -20,7 +20,7 @@ import {
   FETCH_STOCKS,
   FETCH_STATS,
   PULL_STOCK_STATS,
-  REMOVE_AVAILABLE_STOCK,
+  REMOVE_STATS,
   EXPORT_STOCK_DATA,
   EXPORT_GRAPH_PDF,
   PULL_STOCK_LIST,
@@ -88,13 +88,13 @@ function* exportGraphPdfSaga() {
   }
 }
 
-function* removeAvailableStockSaga(action) {
+function* removeStatsSaga(action) {
   try {
     yield effects.put(clearError({
       action: ErrorActions.STOCK_TABLE,
     } ));
-    yield effects.put(setLoader({ action: LoaderActions.REMOVE_AVAILABLE_STOCK, value: true }));
-    yield effects.call(api.removeAvailableStock, action.payload);
+    yield effects.put(setLoader({ action: LoaderActions.REMOVE_STATS, value: true }));
+    yield effects.call(api.removeStats, action.payload);
     yield effects.call(fetchStatsSaga);
   } catch (error) {
     yield effects.put(setError({
@@ -102,7 +102,7 @@ function* removeAvailableStockSaga(action) {
       message: 'Failed to remove available stock',
     }));
   } finally {
-    yield effects.put(setLoader({ action: LoaderActions.REMOVE_AVAILABLE_STOCK, value: false }));
+    yield effects.put(setLoader({ action: LoaderActions.REMOVE_STATS, value: false }));
   }
 }
 
@@ -192,7 +192,7 @@ export function* stocksSaga() {
   yield effects.takeLatest(FETCH_STOCKS, fetchStocksSaga);
   yield effects.takeLatest(FETCH_STATS, fetchStatsSaga);
   yield effects.takeLatest(PULL_STOCK_STATS, pullStockStatsSaga);
-  yield effects.takeLatest(REMOVE_AVAILABLE_STOCK, removeAvailableStockSaga);
+  yield effects.takeLatest(REMOVE_STATS, removeStatsSaga);
   yield effects.takeLatest(EXPORT_STOCK_DATA, exportCsvSaga);
   yield effects.takeLatest(EXPORT_GRAPH_PDF, exportGraphPdfSaga);
   yield effects.takeLatest(PULL_STOCK_LIST, pullStockListSaga);
