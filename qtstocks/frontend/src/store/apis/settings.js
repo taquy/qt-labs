@@ -3,16 +3,15 @@ import { API_SETTINGS_ENDPOINTS } from '../../config';
 import { getRequestConfig } from '../utils';
 
 const api = {
-  fetchSettings: async () => {
-    const response = await axios.get(API_SETTINGS_ENDPOINTS.settings, getRequestConfig());
-    return response.data.settings;
+  fetchSettings: async ({ type }) => {
+    const response = await axios.get(API_SETTINGS_ENDPOINTS.settings(type), getRequestConfig());
+    return response.data;
   },
-  saveSettings: async ({ type, settings_value }) => {
-    console.log(type, settings_value)
+  saveSettings: async ({ type, setting_value }) => {
     const response = await axios.put(
-      API_SETTINGS_ENDPOINTS.updateSetting(type), { settings_value }, getRequestConfig()
+      API_SETTINGS_ENDPOINTS.updateSetting(type), { setting_value }, getRequestConfig()
     );
-    console.log(response.data)
+    // console.log(response.data)
     return response.data;
   },
 };

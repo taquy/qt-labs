@@ -1,5 +1,5 @@
 export const FETCH_SETTINGS = 'settings/fetchSettings';
 export const SAVE_SETTINGS = 'settings/saveSettings';
 
-export const fetchSettings = () => ({ type: FETCH_SETTINGS });
-export const saveSettings = (type, settings_value) => ({ type: SAVE_SETTINGS, payload: { type, settings_value } });
+export const fetchSettings = (type) => ({ type: FETCH_SETTINGS, payload: { type } });
+export const saveSettings = (type, setting_value) => ({ type: SAVE_SETTINGS, payload: { type, setting_value } });

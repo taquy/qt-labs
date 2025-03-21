@@ -8,7 +8,7 @@ export const API_AUTH_ENDPOINTS = {
 }
 
 export const API_SETTINGS_ENDPOINTS = {
-    settings: `${API_BASE_URL}/settings`,
+    settings: (type) => `${API_BASE_URL}/settings/${type}`,
     deleteSetting: (key) => `${API_BASE_URL}/settings/${key}`,
     updateSetting: (key) => `${API_BASE_URL}/settings/${key}`,
 }
