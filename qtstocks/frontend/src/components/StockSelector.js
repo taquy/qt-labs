@@ -14,8 +14,11 @@ import {
 } from '@mui/material';
 
 import { fetchStocks, pullStockStats, pullStockList } from '../store/actions/stocks';
+import { fetchSettings } from '../store/actions/settings';
 import { useSelector, useDispatch } from 'react-redux';
 import { LoaderActions, ErrorActions, MessageActions } from '../store/slices/stocks';
+import { SettingsTypes } from '../store/slices/settings';
+import { saveSettings } from '../store/actions/settings';
 
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
@@ -43,8 +46,14 @@ const StockSelector = () => {
     loaders,
     exchanges,
     errors,
-    messages
+    messages,
   } = useSelector(state => state.stocks);
+
+  const { settings } = useSelector(state => state.settings);
+
+  useEffect(() => {
+    dispatch(fetchSettings(SettingsTypes.STOCK_SELECTOR));
+  }, [dispatch]);
 
   // Add debounced search effect
   useEffect(() => {
@@ -62,6 +71,19 @@ const StockSelector = () => {
     }, 500);
     return () => clearTimeout(timer);
   }, [query, dispatch, forceFetchStocks, stocks.current_page, firstLoad, fetchNextPage]);
+
+  useEffect(() => {
+    if (firstLoad) return;
+    dispatch(saveSettings(SettingsTypes.STOCK_SELECTOR, { exchanges: query.exchanges, loadLatestData }));
+  }, [query.exchanges, loadLatestData, dispatch, firstLoad]);
+
+  useEffect(() => {
+    if (settings && settings[SettingsTypes.STOCK_SELECTOR]) {
+      const currentSettings = settings[SettingsTypes.STOCK_SELECTOR];
+      setLoadLatestData(currentSettings.loadLatestData);
+      setQuery(prevQuery => ({ ...prevQuery, exchanges: currentSettings.exchanges, loadLatestData: currentSettings.loadLatestData }));
+    }
+  }, [settings]);
 
   const handleScroll = (event) => {
     const listbox = event.target;
@@ -85,7 +107,6 @@ const StockSelector = () => {
   };
 
   const handleFetchStockData = () => {
-    console.log(selectedStocks, loadLatestData);
     dispatch(pullStockStats({selectedStocks, loadLatestData}));
   };
 

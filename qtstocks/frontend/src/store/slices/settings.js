@@ -16,7 +16,8 @@ const settingsSlice = createSlice({
   initialState,
   reducers: {
     setSettings: (state, action) => {
-      state.settings[action.payload.type] = action.payload.settings;
+      const { setting_key, setting_value } = action.payload;
+      state.settings[setting_key] = setting_value;
     },
     setError: (state, action) => {
       state.error = action.payload.error;
