@@ -7,16 +7,13 @@ const api = {
     const response = await axios.get(API_SETTINGS_ENDPOINTS.settings, getRequestConfig());
     return response.data.settings;
   },
-  saveSettings: async (stocks, settings) => {
-    const payload = {
-      value: {
-        selectedSymbols: stocks.map(stock => stock.symbol),
-        ...settings
-      }
-    };
-    await axios.put(
-      API_SETTINGS_ENDPOINTS.updateSetting('stocks'), payload, getRequestConfig()
+  saveSettings: async ({ type, settings_value }) => {
+    console.log(type, settings_value)
+    const response = await axios.put(
+      API_SETTINGS_ENDPOINTS.updateSetting(type), { settings_value }, getRequestConfig()
     );
+    console.log(response.data)
+    return response.data;
   },
 };
 

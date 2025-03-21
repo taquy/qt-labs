@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const settingsTypes = {
+const SettingsTypes = {
   STOCK_TABLE: 'stockTable',
   STOCK_GRAPH: 'stockGraph',
   STOCK_SELECTOR: 'stockSelector',
@@ -24,8 +24,10 @@ const settingsSlice = createSlice({
   }
 });
 
-export const { 
+export const {
   setSettings ,
   setError,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;
+
+export { SettingsTypes };

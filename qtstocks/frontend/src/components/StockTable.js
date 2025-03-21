@@ -24,7 +24,7 @@ import { fetchStats, removeStats, exportCsv } from '../store/actions/stocks';
 import { fetchSettings, saveSettings } from '../store/actions/settings';
 import { Delete, Download, ViewColumn } from '@mui/icons-material';
 import { ErrorActions } from '../store/slices/stocks';
-
+import { SettingsTypes } from '../store/slices/settings';
 const StockTable = () => {
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -77,7 +77,7 @@ const StockTable = () => {
   // Save column visibility settings when they change
   useEffect(() => {
     if (settings && Object.keys(visibleColumns).length > 3) { // Only save when we have metrics
-      dispatch(saveSettings(stats, { tableColumns: visibleColumns }));
+      dispatch(saveSettings(SettingsTypes.STOCK_TABLE, { tableColumns: visibleColumns }));
     }
   }, [visibleColumns, dispatch, stats, settings]);
 

@@ -16,7 +16,6 @@ def init_settings_routes(app, token_required, settings_ns):
     })
 
     settings_update_model = settings_ns.model('SettingsUpdate', {
-        'setting_key': fields.String(required=True, description='Setting key'),
         'setting_value': fields.String(description='Setting value')
     })
 
@@ -29,31 +28,31 @@ def init_settings_routes(app, token_required, settings_ns):
             """Get user settings"""
             return UserSettings.query.filter_by(user_id=current_user.id).all()
 
-        @settings_ns.doc('update_settings', security='Bearer')
+        @settings_ns.doc('/<string:setting_key>', security='Bearer')
+        @settings_ns.param('setting_key', 'The setting key')
         @settings_ns.expect(settings_update_model)
         @settings_ns.marshal_with(settings_model)
         @token_required
-        def put(self, current_user):
+        def put(self, current_user, setting_key):
             """Update user settings"""
-            data = request.get_json()
-            if not data or 'setting_key' not in data:
+            if not setting_key:
                 settings_ns.abort(400, "Setting key is required")
 
             # Find existing setting or create new one
             setting = UserSettings.query.filter_by(
                 user_id=current_user.id,
-                setting_key=data['setting_key']
+                setting_key=setting_key
             ).first()
 
             if not setting:
                 setting = UserSettings(
                     user_id=current_user.id,
-                    setting_key=data['setting_key']
+                    setting_key=setting_key
                 )
                 db.session.add(setting)
 
             # Update setting value
-            setting.setting_value = data.get('setting_value')
+            setting.setting_value = settings_ns.payload['setting_value']
             setting.updated_at = datetime.now(timezone.utc)
             
             db.session.commit()
