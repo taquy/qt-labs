@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Paper,
   Typography,
@@ -268,6 +268,7 @@ const StockSelector = () => {
                   onChange={(e) => {
                     const newExchanges = e.target.checked ? [...query.exchanges, exchange] : query.exchanges.filter(ex => ex !== exchange);
                     setQuery(prevQuery => ({ ...prevQuery, exchanges: newExchanges, page: 1 }));
+                    setForceFetchStocks(true);
                   }}
                   name={exchange}
                   color="primary"
