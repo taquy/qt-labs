@@ -61,7 +61,7 @@ const stockGraphSlice = createSlice({
       if (action.payload) {
         state.stocks.items = action.payload.refresh ? action.payload.items : [...state.stocks.items, ...action.payload.items];
         state.stocks.has_next = action.payload.refresh ? true : action.payload.has_next;
-        state.stocks.current_page = action.payload.refresh ? 1 : action.payload.current_page;
+        state.stocks.current_page = action.payload.current_page;
       } else {
         state.stocks = {
           items: [],

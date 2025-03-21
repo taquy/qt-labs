@@ -43,14 +43,9 @@ const StockSelector = () => {
     messages
   } = useSelector(state => state.stocks);
 
-  useEffect(() => {
-    if (query.page !== stocks.current_page) {
-      dispatch(fetchStocks(query));
-    }
-  }, [dispatch, query, stocks.current_page]);
-
   // Add debounced search effect
   useEffect(() => {
+    if (query.search === '') return;
     const timer = setTimeout(() => {
       dispatch(fetchStocks({ ...query, page: 1 }));
     }, 500);
@@ -62,14 +57,8 @@ const StockSelector = () => {
     if (
       query.page === stocks.current_page &&
       listbox.scrollTop + listbox.clientHeight >= listbox.scrollHeight - 10
-    ) {
-      setQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
-    }
+    ) setQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
   };
-
-  useEffect(() => {
-    console.log('stocks', stocks.items);
-  }, [stocks]);
 
   // Function to highlight matching text
   const highlightMatch = (text, search) => {
@@ -93,6 +82,18 @@ const StockSelector = () => {
     setSelectedStocks(selectedStocks.filter(stock => stock !== stockToRemove));
   };
 
+  const handleOnChange = (event, newValue) => {
+    setSelectedStocks(newValue.map(stock => typeof stock === 'string' ? stock : stock.symbol));
+  };
+
+  const handleOnInputChange = (event, newInputValue) => {
+    setQuery(prevQuery => ({ ...prevQuery, search: newInputValue }));
+    if (!newInputValue.trim()) {
+      // force fetch stocks
+      dispatch(fetchStocks({ ...query, page: 1 }));
+    }
+  }; 
+
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
@@ -114,12 +115,8 @@ const StockSelector = () => {
               return `${option.symbol} - ${option.name}`;
             }}
             value={selectedStocks.map(symbol => (stocks.items || []).find(s => s.symbol === symbol) || { symbol, name: '' })}
-            onChange={(event, newValue) => {
-              setSelectedStocks(newValue.map(stock => typeof stock === 'string' ? stock : stock.symbol));
-            }}
-            onInputChange={(event, newInputValue) => {
-              setQuery(prevQuery => ({ ...prevQuery, search: newInputValue }));
-            }}
+            onChange={handleOnChange}
+            onInputChange={handleOnInputChange}
             renderInput={(params) => (
               <TextField
                 {...params}
