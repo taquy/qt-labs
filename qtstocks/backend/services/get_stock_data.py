@@ -73,9 +73,6 @@ class StockDataScraper:
             # Visit the stock URL using the new Selenium WebDriver session
             driver.get(stock_url)
             
-            # Give the page a moment to load dynamic content
-            time.sleep(2)
-            
             # Get the stock price
             try:
                 price_element = driver.find_element(By.ID, 'price__0')
@@ -263,9 +260,6 @@ class StockDataScraper:
                         print(f"Error converting metrics for {symbol}: {str(ve)}")
                         db.session.rollback()
                         continue
-
-                    # Add a delay between requests
-                    time.sleep(2)
 
                 except Exception as e:
                     print(f"Error processing stock {symbol}: {str(e)}")

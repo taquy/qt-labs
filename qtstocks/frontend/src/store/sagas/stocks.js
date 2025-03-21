@@ -19,7 +19,7 @@ import { handleApiError } from '../utils';
 import {
   FETCH_STOCKS,
   FETCH_AVAILABLE_STOCKS,
-  FETCH_STOCK_DATA,
+  PULL_STOCK_STATS,
   REMOVE_AVAILABLE_STOCK,
   EXPORT_STOCK_DATA,
   EXPORT_GRAPH_PDF,
@@ -125,22 +125,22 @@ function* exportCsvSaga() {
   }
 }
 
-function* fetchStockDataSaga(action) {
+function* pullStockStatsSaga(action) {
   try {
-    yield effects.put(setLoader({ action: LoaderActions.FETCH_STOCK_DATA, value: true }));
+    yield effects.put(setLoader({ action: LoaderActions.PULL_STOCK_STATS, value: true }));
     yield effects.put(clearError({
       action: ErrorActions.STOCK_SELECTOR,
-    } ));
-    yield effects.call(api.fetchStockData, action.payload);
+    }));
+    yield effects.call(api.pullStockStats, action.payload);
     yield effects.call(fetchAvailableStocksSaga);
   } catch (error) {
     yield effects.put(setError({
       action: ErrorActions.STOCK_SELECTOR,
-      message: 'Failed to fetch stocks',
+      message: 'Failed to pull stock stats',
     }));
-    yield effects.call(handleApiError, error, 'fetchStockDataSaga');
+    yield effects.call(handleApiError, error, 'pullStockStatsSaga');
   } finally {
-    yield effects.put(setLoader({ action: LoaderActions.FETCH_STOCK_DATA, value: false }));
+    yield effects.put(setLoader({ action: LoaderActions.PULL_STOCK_STATS, value: false }));
   }
 }
 
@@ -191,7 +191,7 @@ function* fetchAvailableStocksSaga() {
 export function* stocksSaga() {
   yield effects.takeLatest(FETCH_STOCKS, fetchStocksSaga);
   yield effects.takeLatest(FETCH_AVAILABLE_STOCKS, fetchAvailableStocksSaga);
-  yield effects.takeLatest(FETCH_STOCK_DATA, fetchStockDataSaga);
+  yield effects.takeLatest(PULL_STOCK_STATS, pullStockStatsSaga);
   yield effects.takeLatest(REMOVE_AVAILABLE_STOCK, removeAvailableStockSaga);
   yield effects.takeLatest(EXPORT_STOCK_DATA, exportCsvSaga);
   yield effects.takeLatest(EXPORT_GRAPH_PDF, exportGraphPdfSaga);

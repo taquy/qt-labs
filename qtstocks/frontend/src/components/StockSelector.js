@@ -13,7 +13,7 @@ import {
   Checkbox
 } from '@mui/material';
 
-import { fetchStocks, fetchStockData, pullStockList } from '../store/actions/stocks';
+import { fetchStocks, pullStockStats, pullStockList } from '../store/actions/stocks';
 import { useSelector, useDispatch } from 'react-redux';
 import { LoaderActions, ErrorActions, MessageActions } from '../store/slices/stocks';
 
@@ -85,7 +85,8 @@ const StockSelector = () => {
   };
 
   const handleFetchStockData = () => {
-    dispatch(fetchStockData({selectedStocks, loadLatestData}));
+    console.log(selectedStocks, loadLatestData);
+    dispatch(pullStockStats({selectedStocks, loadLatestData}));
   };
 
   const handlePullStockList = () => {

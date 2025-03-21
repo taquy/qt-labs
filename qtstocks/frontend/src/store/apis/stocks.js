@@ -18,11 +18,8 @@ const api = {
     const response = await axios.get(API_STOCK_ENDPOINTS.stocksWithStats, getRequestConfig());
     return response.data.stocks;
   },
-  fetchStockData: async (payload) => {
-    const response = await axios.post(API_STOCK_ENDPOINTS.fetchStockData, {
-      symbols: payload.selectedStocks,
-      loadLatestData: payload.loadLatestData
-    }, getRequestConfig());
+  pullStockStats: async (payload) => {
+    const response = await axios.post(API_STOCK_ENDPOINTS.pullStockStats, payload, getRequestConfig());
     return response.data.data;
   },
   removeAvailableStock: async (symbols) => {

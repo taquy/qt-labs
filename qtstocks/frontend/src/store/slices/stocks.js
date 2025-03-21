@@ -11,7 +11,7 @@ const METRICS = {
 const LoaderActions = {
   'FETCH_STOCKS': 'fetchStocks',
   'PULL_STOCK_LIST': 'pullStockList',
-  'FETCH_STOCK_DATA': 'fetchStockData',
+  'PULL_STOCK_STATS': 'pullStockStats',
   'EXPORT_STOCK_DATA': 'exportStockData',
   'EXPORT_GRAPH_PDF': 'exportGraphPdf',
   'REMOVE_AVAILABLE_STOCK': 'removeAvailableStock',
@@ -39,7 +39,7 @@ const initialState = {
   loaders: {
     [LoaderActions.FETCH_STOCKS]: false,
     [LoaderActions.PULL_STOCK_LIST]: false,
-    [LoaderActions.FETCH_STOCK_DATA]: false,
+    [LoaderActions.PULL_STOCK_STATS]: false,
     [LoaderActions.EXPORT_STOCK_DATA]: false,
     [LoaderActions.EXPORT_GRAPH_PDF]: false,
     [LoaderActions.REMOVE_AVAILABLE_STOCK]: false,

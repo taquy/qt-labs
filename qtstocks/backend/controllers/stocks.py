@@ -59,6 +59,11 @@ def init_stock_routes(app, token_required, stocks_ns):
         'exchange': fields.String(required=True, description='Stock exchange name')
     })
 
+    pull_stats_request_model = stocks_ns.model('PullStatsRequest', {
+        'selectedStocks': fields.List(fields.String, required=True, description='List of stock symbols to update'),
+        'loadLatestData': fields.Boolean(required=True, description='Whether to load latest data')
+    })
+
     @stocks_ns.route('')
     class StockList(Resource):
         @stocks_ns.doc('list_stocks', security='Bearer')
@@ -168,20 +173,33 @@ def init_stock_routes(app, token_required, stocks_ns):
                 return jsonify({'error': str(e)}), 500
     
 
-    @stocks_ns.route('/update')
+    @stocks_ns.route('/pull_stock_stats')
     class UpdateStockStats(Resource):
-        @stocks_ns.doc('update_stock_stats', security='Bearer')
+        @stocks_ns.doc('pull_stock_stats', security='Bearer')
+        @stocks_ns.expect(pull_stats_request_model)
         @token_required
         def post(self, current_user):
-            """Update stock statistics"""
+            """Pull stock statistics for selected stocks"""
             try:
-                # Get all stock symbols
-                stocks = Stock.query.all()
-                symbols = [stock.symbol for stock in stocks]
-                
-                # Process stock list
-                process_stock_list(symbols, current_user)
-                
+                data = request.get_json()
+                selected_stocks = data.get('selectedStocks', [])
+                load_latest_data = data.get('loadLatestData', False)
+
+                if not selected_stocks:
+                    stocks_ns.abort(400, message="No stocks selected")
+                    
+                if not load_latest_data:
+                    stock_stats = db.session.query(StockStats.symbol).all();
+                    existed_symbols = [stock_stat.symbol for stock_stat in stock_stats]
+                    selected_stocks = [symbol for symbol in selected_stocks if symbol not in existed_symbols]
+                    # Add any existing symbols to user's stock_stats if not already present
+                    for symbol in existed_symbols:
+                        # Get the existing stats
+                        stats = StockStats.query.filter_by(symbol=symbol).first()
+                        if stats and stats not in current_user.stock_stats:
+                            current_user.stock_stats.append(stats)
+                    db.session.commit()
+                process_stock_list(selected_stocks, current_user)
                 return {'message': 'Stock statistics updated successfully'}
             except Exception as e:
                 db.session.rollback()
