@@ -151,7 +151,7 @@ const StockTable = () => {
 
       // Set link properties
       link.setAttribute('href', url);
-      link.setAttribute('download', `stocks-report-${Date.now()}.csv`);
+      link.setAttribute('download', `stocks-report-${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
       link.style.visibility = 'hidden';
 
       // Append to body, click, and remove

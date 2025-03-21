@@ -37,7 +37,7 @@ import {
 } from '../store/actions/settings';
 
 import { LoaderActions, ErrorActions } from '../store/slices/stocks';
-
+import { SettingsTypes } from '../store/slices/settings';
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -57,7 +57,7 @@ const StockGraph = () => {
 
   // Select state from Redux store
   const {
-    availableStocks,
+    stats,
     errors,
     metrics,
     exportedGraphPdf,
@@ -68,7 +68,7 @@ const StockGraph = () => {
 
   // Initial data loading
   useEffect(() => {
-    dispatch(fetchSettings());
+    dispatch(fetchSettings(SettingsTypes.STOCK_GRAPH));
     dispatch(fetchStats());
   }, [dispatch]);
 
@@ -110,27 +110,27 @@ const StockGraph = () => {
 
   // Load settings when available
   useEffect(() => {
-    if (settings?.stocks && availableStocks.length > 0) {
-      const { selectedSymbols, selectedMetric: savedMetric } = settings.stocks;
-      // Find and set selected stocks
-      const selectedStocksData = availableStocks.filter(stock =>
-        selectedSymbols.includes(stock.symbol)
-      )
-      if (selectedStocksData.length > 0) {
-        setSelectedStocks(selectedStocksData);
-      }
-      setSelectedMetric(savedMetric);
-    }
-  }, [settings, availableStocks, dispatch]);
+    // if (settings?.stocks && stocks.length > 0) {
+    //   const { selectedSymbols, selectedMetric: savedMetric } = settings.stocks;
+    //   // Find and set selected stocks
+    //   const selectedStocksData = stocks.filter(stock =>
+    //     selectedSymbols.includes(stock.symbol)
+    //   )
+    //   if (selectedStocksData.length > 0) {
+    //     setSelectedStocks(selectedStocksData);
+    //   }
+    //   setSelectedMetric(savedMetric);
+    // }
+  }, [settings, stats, dispatch]);
 
   const handleStockChange = (event, newValue) => {
-    setSelectedStocks(newValue);
-    if (newValue.length > 0) {
-      dispatch(saveSettings(newValue, selectedMetric));
-    } else {
-      setCurrentChartData(null);
-      dispatch(saveSettings([], selectedMetric));
-    }
+    // setSelectedStocks(newValue);
+    // if (newValue.length > 0) {
+    //   dispatch(saveSettings(newValue, selectedMetric));
+    // } else {
+    //   setCurrentChartData(null);
+    //   dispatch(saveSettings([], selectedMetric));
+    // }
   };
 
   useEffect(() => {
@@ -210,7 +210,7 @@ const StockGraph = () => {
         <FormControl sx={{ minWidth: 300 }}>
           <Autocomplete
             multiple
-            options={availableStocks}
+            options={stats}
             getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
             value={selectedStocks}
             onChange={handleStockChange}
@@ -232,9 +232,20 @@ const StockGraph = () => {
                 >
                   <Box component="li" {...otherProps}>
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                      <Typography variant="body1">
-                        {option.symbol}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <img 
+                          src={option.icon} 
+                          alt={`${option.symbol} icon`}
+                          style={{ width: 20, height: 20 }}
+                          onError={(e) => {
+                            e.target.onerror = null; // Prevent infinite loop
+                            e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                          }}
+                        />
+                        <Typography variant="body1">
+                          {option.symbol}
+                        </Typography>
+                      </Box>
                       <Typography variant="caption" color="text.secondary">
                         {option.name}
                       </Typography>
