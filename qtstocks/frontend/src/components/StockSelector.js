@@ -20,7 +20,6 @@ import { LoaderActions, ErrorActions, MessageActions } from '../store/slices/sto
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [loadLatestData, setLoadLatestData] = useState(false);
-  const [selectedExchanges, setSelectedExchanges] = useState([]);
   const [forceFetchStocks, setForceFetchStocks] = useState(false);
   const [fetchNextPage, setFetchNextPage] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
@@ -34,7 +33,7 @@ const StockSelector = () => {
   const [query, setQuery] = useState({
     page: 1,
     per_page: 20,
-    exchanges: '',
+    exchanges: [],
     search: ''
   });
   
@@ -48,8 +47,9 @@ const StockSelector = () => {
 
   // Add debounced search effect
   useEffect(() => {
-    const allowFetch = query.search === '' && !forceFetchStocks && !firstLoad && !fetchNextPage;
-    if (allowFetch) return;
+    const notAllowFetch = query.search === '' && !forceFetchStocks && !firstLoad && !fetchNextPage;
+    console.log(JSON.stringify(query));
+    if (notAllowFetch) return;
     const timer = setTimeout(() => {
       if (firstLoad) {
         dispatch(fetchStocks({ ...query, page: 1 }));
