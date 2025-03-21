@@ -149,6 +149,7 @@ function* fetchStocksSaga(action) {
     yield effects.put(clearError({
       action: ErrorActions.STOCK_SELECTOR,
     }));
+    action.payload.exchanges = action.payload.exchanges.join(',');
     yield effects.put(setLoader({ action: LoaderActions.FETCH_STOCKS, value: true }));
     const results = yield effects.call(api.fetchStocks, action.payload);
     let refresh = action.payload.search.trim() !== "" || action.payload.page === 1;
