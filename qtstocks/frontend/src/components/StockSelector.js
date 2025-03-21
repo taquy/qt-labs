@@ -34,7 +34,8 @@ const StockSelector = () => {
     page: 1,
     per_page: 20,
     exchanges: [],
-    search: ''
+    search: '',
+    refresh: false
   });
   
   const {
@@ -48,13 +49,12 @@ const StockSelector = () => {
   // Add debounced search effect
   useEffect(() => {
     const notAllowFetch = query.search === '' && !forceFetchStocks && !firstLoad && !fetchNextPage;
-    console.log(JSON.stringify(query));
     if (notAllowFetch) return;
     const timer = setTimeout(() => {
-      if (firstLoad) {
-        dispatch(fetchStocks({ ...query, page: 1 }));
+      if (firstLoad || forceFetchStocks) {
+        dispatch(fetchStocks({ ...query, page: 1, refresh: true }));
       } else {
-        dispatch(fetchStocks({ ...query }));
+        dispatch(fetchStocks({ ...query, refresh: false }));
       }
       setForceFetchStocks(false);
       setFirstLoad(false);
@@ -101,7 +101,7 @@ const StockSelector = () => {
   };
 
   const handleOnInputChange = (event, newInputValue) => {
-    setQuery(prevQuery => ({ ...prevQuery, search: newInputValue }));
+    setQuery(prevQuery => ({ ...prevQuery, search: newInputValue, refresh: true }));
     if (!newInputValue.trim()) {
      setForceFetchStocks(true);     
     }
@@ -264,13 +264,10 @@ const StockSelector = () => {
               key={exchange}
               control={
                 <Checkbox
-                  checked={selectedExchanges.includes(exchange)}
+                  checked={query.exchanges.includes(exchange)}
                   onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedExchanges([...selectedExchanges, exchange]);
-                    } else {
-                      setSelectedExchanges(selectedExchanges.filter(ex => ex !== exchange));
-                    }
+                    const newExchanges = e.target.checked ? [...query.exchanges, exchange] : query.exchanges.filter(ex => ex !== exchange);
+                    setQuery(prevQuery => ({ ...prevQuery, exchanges: newExchanges, page: 1 }));
                   }}
                   name={exchange}
                   color="primary"
