@@ -41,16 +41,14 @@ const StockTable = () => {
     exportedCsv,
     errors,
   } = useSelector(state => state.stocks);
-
   const { settings } = useSelector(state => state.settings);
-
   const [selected, setSelected] = React.useState([]);
   const [orderBy, setOrderBy] = React.useState('symbol');
   const [order, setOrder] = React.useState('asc');
 
   useEffect(() => {
     dispatch(fetchStats());
-    dispatch(fetchSettings());
+    dispatch(fetchSettings(SettingsTypes.STOCK_TABLE));
   }, [dispatch]);
 
   // Initialize visibleColumns when metrics becomes available
@@ -65,8 +63,15 @@ const StockTable = () => {
 
   // Load saved column visibility settings
   useEffect(() => {
-    if (settings?.tableColumns) {
-      setVisibleColumns(settings.tableColumns);
+    if (settings && settings[SettingsTypes.STOCK_TABLE]?.tableColumns) {
+      const savedColumns = settings[SettingsTypes.STOCK_TABLE].tableColumns;
+      setVisibleColumns(prev => ({
+        ...prev,
+        ...Object.keys(prev).reduce((acc, key) => ({
+          ...acc,
+          [key]: savedColumns[key] ?? prev[key]
+        }), {})
+      }));
     }
   }, [settings]);
 
@@ -76,10 +81,10 @@ const StockTable = () => {
 
   // Save column visibility settings when they change
   useEffect(() => {
-    if (settings && Object.keys(visibleColumns).length > 3) { // Only save when we have metrics
+    if (Object.keys(visibleColumns).length > 3) { // Only save when we have metrics
       dispatch(saveSettings(SettingsTypes.STOCK_TABLE, { tableColumns: visibleColumns }));
     }
-  }, [visibleColumns, dispatch, stats, settings]);
+  }, [visibleColumns, dispatch]);
 
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
