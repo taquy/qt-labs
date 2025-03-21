@@ -124,7 +124,7 @@ const StockGraph = () => {
   }, [settings, stats, dispatch]);
 
   const handleStockChange = (event, newValue) => {
-    // setSelectedStocks(newValue);
+    setSelectedStocks(newValue);
     // if (newValue.length > 0) {
     //   dispatch(saveSettings(newValue, selectedMetric));
     // } else {
@@ -256,7 +256,7 @@ const StockGraph = () => {
             }}
             renderTags={(tagValue, getTagProps) =>
               tagValue.map((option, index) => {
-                const { key, ...chipProps } = getTagProps({ index });
+                const { key, onDelete, ...chipProps } = getTagProps({ index });
                 return (
                   <Tooltip 
                     key={`tag-tooltip-${option.symbol}-${index}`}
@@ -264,8 +264,21 @@ const StockGraph = () => {
                     placement="top"
                   >
                     <Chip
-                      label={option.symbol}
+                      key={key}
                       {...chipProps}
+                      icon={
+                        <img 
+                          src={option.icon} 
+                          alt={`${option.symbol} icon`}
+                          style={{ width: 16, height: 16 }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                          }}
+                        />
+                      }
+                      label={option.symbol}
+                      onDelete={onDelete}
                       size="small"
                     />
                   </Tooltip>
