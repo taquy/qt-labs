@@ -21,6 +21,9 @@ const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [loadLatestData, setLoadLatestData] = useState(false);
   const [selectedExchanges, setSelectedExchanges] = useState([]);
+  const [forceFetchStocks, setForceFetchStocks] = useState(false);
+  const [fetchNextPage, setFetchNextPage] = useState(false);
+  const [firstLoad, setFirstLoad] = useState(true);
   const dispatch = useDispatch();
 
   // Add UUID generator function
@@ -45,19 +48,30 @@ const StockSelector = () => {
 
   // Add debounced search effect
   useEffect(() => {
-    if (query.search === '') return;
+    const allowFetch = query.search === '' && !forceFetchStocks && !firstLoad && !fetchNextPage;
+    if (allowFetch) return;
     const timer = setTimeout(() => {
-      dispatch(fetchStocks({ ...query, page: 1 }));
+      if (firstLoad) {
+        dispatch(fetchStocks({ ...query, page: 1 }));
+      } else {
+        dispatch(fetchStocks({ ...query }));
+      }
+      setForceFetchStocks(false);
+      setFirstLoad(false);
+      setFetchNextPage(false);
     }, 500);
     return () => clearTimeout(timer);
-  }, [query, dispatch]);
+  }, [query, dispatch, forceFetchStocks, stocks.current_page, firstLoad, fetchNextPage]);
 
   const handleScroll = (event) => {
     const listbox = event.target;
     if (
-      query.page === stocks.current_page &&
+      query.page === stocks.current_page && stocks.has_next && !fetchNextPage &&
       listbox.scrollTop + listbox.clientHeight >= listbox.scrollHeight - 10
-    ) setQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
+    ) {
+      setQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
+      setFetchNextPage(true);
+    }
   };
 
   // Function to highlight matching text
@@ -65,7 +79,7 @@ const StockSelector = () => {
     if (!search) return text;
     const parts = text.split(new RegExp(`(${search})`, 'gi'));
     return parts.map((part, index) =>
-      part.toLowerCase() === search.toLowerCase() ? 
+      part.toLowerCase() === search.toLowerCase() ?
         <span key={generateUniqueId()} style={{ backgroundColor: '#fff59d' }}>{part}</span> : part
     );
   };
@@ -89,8 +103,7 @@ const StockSelector = () => {
   const handleOnInputChange = (event, newInputValue) => {
     setQuery(prevQuery => ({ ...prevQuery, search: newInputValue }));
     if (!newInputValue.trim()) {
-      // force fetch stocks
-      dispatch(fetchStocks({ ...query, page: 1 }));
+     setForceFetchStocks(true);     
     }
   }; 
 
@@ -112,7 +125,7 @@ const StockSelector = () => {
             options={stocks.items || []}
             getOptionLabel={(option) => {
               if (typeof option === 'string') return option;
-              return `${option.symbol} - ${option.name}`;
+              return `${option.symbol} - ${option.name} (${option.exchange})`;
             }}
             value={selectedStocks.map(symbol => (stocks.items || []).find(s => s.symbol === symbol) || { symbol, name: '' })}
             onChange={handleOnChange}
@@ -146,7 +159,7 @@ const StockSelector = () => {
                       {highlightMatch(option.symbol, query.search)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {highlightMatch(option.name, query.search)}
+                      {highlightMatch(option.name + ' (' + option.exchange + ')', query.search)}
                     </Typography>
                   </Box>
                 </Box>
