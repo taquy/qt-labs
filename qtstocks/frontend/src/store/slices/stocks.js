@@ -33,7 +33,7 @@ const initialState = {
     current_page: 0,
     has_next: true,
   },
-  availableStocks: [],
+  stats: [],
   metrics: METRICS,
   exportedCsv: null,
   loaders: {
@@ -69,8 +69,8 @@ const stockGraphSlice = createSlice({
         };
       }
     },
-    setAvailableStocks: (state, action) => {
-      state.availableStocks = action.payload ? action.payload : [];
+    setStats: (state, action) => {
+      state.stats = action.payload ? action.payload : [];
     },
     setExportedCsv: (state, action) => {
       state.exportedCsv = action.payload;
@@ -97,7 +97,7 @@ const stockGraphSlice = createSlice({
 });
 
 export const {
-  setAvailableStocks,
+  setStats,
   setStocks,
   setError,
   clearError,

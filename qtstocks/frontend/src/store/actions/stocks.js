@@ -1,6 +1,6 @@
 // Action Types
 export const FETCH_STOCKS = 'stocks/fetchStocks';
-export const FETCH_AVAILABLE_STOCKS = 'stocks/fetchAvailableStocks';
+export const FETCH_STATS = 'stocks/fetchStats';
 export const PULL_STOCK_STATS = 'stocks/pullStockStats';
 export const REMOVE_AVAILABLE_STOCK = 'stocks/removeAvailableStock';
 export const EXPORT_STOCK_DATA = 'stocks/exportStockData';
@@ -9,7 +9,7 @@ export const PULL_STOCK_LIST = 'stocks/pullStockList';
 export const FETCH_EXCHANGES = 'stocks/fetchExchanges';
 
 // Action Creators
-export const fetchAvailableStocks = () => ({ type: FETCH_AVAILABLE_STOCKS });
+export const fetchStats = () => ({ type: FETCH_STATS });
 export const fetchStocks = (payload) => ({ type: FETCH_STOCKS, payload });
 export const removeAvailableStock = (payload) => ({ type: REMOVE_AVAILABLE_STOCK, payload });
 export const pullStockStats = (payload) => ({ type: PULL_STOCK_STATS, payload });

@@ -14,9 +14,9 @@ const api = {
     const response = await axios.get(API_STOCK_ENDPOINTS.exchanges, getRequestConfig());
     return response.data;
   },
-  fetchAvailableStocks: async () => {
-    const response = await axios.get(API_STOCK_ENDPOINTS.stocksWithStats, getRequestConfig());
-    return response.data.stocks;
+  fetchStats: async () => {
+    const response = await axios.get(API_STOCK_ENDPOINTS.stats, getRequestConfig());
+    return response.data;
   },
   pullStockStats: async (payload) => {
     const response = await axios.post(API_STOCK_ENDPOINTS.pullStockStats, payload, getRequestConfig());

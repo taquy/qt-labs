@@ -59,6 +59,7 @@ class Stock(db.Model):
     name = db.Column(db.String(100), nullable=False)
     icon = db.Column(db.String(255), nullable=True)
     exchange = db.Column(db.String(50), nullable=True)
+    market_cap = db.Column(db.Float, nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     stats = db.relationship('StockStats', backref='stock', uselist=False)
 
@@ -68,7 +69,8 @@ class Stock(db.Model):
             'name': self.name,
             'icon': self.icon,
             'exchange': self.exchange,
-            'last_updated': self.last_updated.strftime('%Y-%m-%d %H:%M:%S')
+            'market_cap': self.market_cap,
+            'last_updated': self.last_updated.strftime('%Y-%m-%d %H:%M:%S') if self.last_updated else None
         }
 
     @staticmethod
@@ -78,6 +80,7 @@ class Stock(db.Model):
             name=data['name'],
             icon=data['icon'],
             exchange=data['exchange'],
+            market_cap=data['market_cap'],
             last_updated=datetime.strptime(data['last_updated'], '%Y-%m-%d %H:%M:%S')
         )
 

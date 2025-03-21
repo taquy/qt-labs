@@ -14,7 +14,7 @@ def get_stock_list():
     
     data = {
         "columns": [
-            "name", "description", "logoid", "update_mode", "type"
+            "name", "description", "logoid", "update_mode", "type", "market_cap_basic"
         ],
         "ignore_unknown_fields": False,
         "options": {"lang": "vi"},
@@ -26,10 +26,8 @@ def get_stock_list():
     try:
         response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()  # Raise an exception for bad status codes
-        
         # Parse the JSON response
         result = response.json()
-        
         # Extract stock data from the response
         if 'data' in result:
             stocks_data = []
@@ -41,7 +39,8 @@ def get_stock_list():
                         'symbol': d[0],
                         'name': d[1],
                         'icon': f'https://s3-symbol-logo.tradingview.com/{d[2]}.svg',
-                        'exchange': item['s'].split(':')[0]
+                        'exchange': item['s'].split(':')[0],
+                        'market_cap': int(d[5] / 1000000) if d[5] else 0
                     }
                     stocks_data.append(stock_info)
             return stocks_data
@@ -65,6 +64,9 @@ def save_to_database(stocks_data):
             if stock:
                 # Update existing stock
                 stock.name = stock_info['name']
+                stock.icon = stock_info['icon']
+                stock.exchange = stock_info['exchange']
+                stock.market_cap = stock_info['market_cap']
                 stock.last_updated = datetime.now()
             else:
                 # Create new stock
@@ -73,6 +75,7 @@ def save_to_database(stocks_data):
                     name=stock_info['name'],
                     icon=stock_info['icon'],
                     exchange=stock_info['exchange'],
+                    market_cap=stock_info['market_cap'],
                     last_updated=datetime.now()
                 )
                 db.session.add(stock)

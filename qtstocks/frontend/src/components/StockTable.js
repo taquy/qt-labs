@@ -15,7 +15,7 @@ import {
   TableSortLabel
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAvailableStocks, removeAvailableStock, exportCsv } from '../store/actions/stocks';
+import { fetchStats, removeAvailableStock, exportCsv } from '../store/actions/stocks';
 import { Delete, Download } from '@mui/icons-material';
 import { ErrorActions } from '../store/slices/stocks';
 const StockTable = () => {
@@ -23,11 +23,10 @@ const StockTable = () => {
 
   // Select state from Redux store
   const {
-    availableStocks,
+    stats,
     metrics,
     exportedCsv,
     errors,
-    
   } = useSelector(state => state.stocks);
 
   const [selected, setSelected] = React.useState([]);
@@ -35,7 +34,7 @@ const StockTable = () => {
   const [order, setOrder] = React.useState('asc');
 
   useEffect(() => {
-    dispatch(fetchAvailableStocks());
+    dispatch(fetchStats());
   }, [dispatch]);
 
   const handleRequestSort = (property) => {
@@ -63,7 +62,7 @@ const StockTable = () => {
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      setSelected(availableStocks.map((stock) => stock.symbol));
+      setSelected(stats.map((stock) => stock.symbol));
     } else {
       setSelected([]);
     }
@@ -79,7 +78,7 @@ const StockTable = () => {
   };
 
   const handleRemoveSelected = () => {
-    const newSelected = selected.filter(id => !availableStocks.includes(id));
+    const newSelected = selected.filter(id => !stats.includes(id));
     setSelected(newSelected);
     dispatch(removeAvailableStock(newSelected));
   };
@@ -96,21 +95,21 @@ const StockTable = () => {
     if (exportedCsv) {
       // Create a blob from the CSV data
       const blob = new Blob([exportedCsv], { type: 'text/csv;charset=utf-8;' });
-      
+
       // Create a link element
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
-      
+
       // Set link properties
       link.setAttribute('href', url);
       link.setAttribute('download', `stocks-report-${Date.now()}.csv`);
       link.style.visibility = 'hidden';
-      
+
       // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up the URL object
       URL.revokeObjectURL(url);
     }
@@ -172,8 +171,8 @@ const StockTable = () => {
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
-                    indeterminate={selected.length > 0 && selected.length < availableStocks.length}
-                    checked={availableStocks.length > 0 && selected.length === availableStocks.length}
+                    indeterminate={selected.length > 0 && selected.length < stats.length}
+                    checked={stats.length > 0 && selected.length === stats.length}
                     onChange={handleSelectAll}
                   />
                 </TableCell>
@@ -195,6 +194,15 @@ const StockTable = () => {
                     Name
                   </TableSortLabel>
                 </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={orderBy === 'exchange'}
+                    direction={orderBy === 'exchange' ? order : 'asc'}
+                    onClick={createSortHandler('exchange')}
+                  >
+                    Exchange
+                  </TableSortLabel>
+                </TableCell>
                 {Object.entries(metrics).map(([key, label]) => (
                   <TableCell key={key}>
                     <TableSortLabel
@@ -209,7 +217,7 @@ const StockTable = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortStocks(availableStocks).map((stock) => (
+              {sortStocks(stats).map((stock) => (
                 <TableRow
                   key={stock.symbol}
                   hover
@@ -225,8 +233,22 @@ const StockTable = () => {
                       }}
                     />
                   </TableCell>
-                  <TableCell>{stock.symbol}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <img 
+                        src={stock.icon} 
+                        alt={`${stock.symbol} icon`}
+                        style={{ width: 20, height: 20 }}
+                        onError={(e) => {
+                          e.target.onerror = null; // Prevent infinite loop
+                          e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                        }}
+                      />
+                      {stock.symbol}
+                    </Box>
+                  </TableCell>
                   <TableCell>{stock.name}</TableCell>
+                  <TableCell>{stock.exchange}</TableCell>
                   {Object.entries(metrics).map(([key, label]) => (
                     <TableCell key={key}>{stock[key]}</TableCell>
                   ))}

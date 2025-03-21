@@ -1,6 +1,6 @@
 import * as effects from 'redux-saga/effects';
 import {
-  setAvailableStocks,
+  setStats,
   setError,
   clearError,
   setStocks,
@@ -18,7 +18,7 @@ import { handleApiError } from '../utils';
 
 import {
   FETCH_STOCKS,
-  FETCH_AVAILABLE_STOCKS,
+  FETCH_STATS,
   PULL_STOCK_STATS,
   REMOVE_AVAILABLE_STOCK,
   EXPORT_STOCK_DATA,
@@ -55,7 +55,7 @@ function* pullStockListSaga() {
     const response = yield effects.call(api.pullStockList);
     yield effects.put(setMessages({
       action: MessageActions.PULL_STOCK_LIST,
-      message: response,
+      message: response.message,
     }));
     yield effects.call(fetchStocksSaga);
   } catch (error) {
@@ -95,7 +95,7 @@ function* removeAvailableStockSaga(action) {
     } ));
     yield effects.put(setLoader({ action: LoaderActions.REMOVE_AVAILABLE_STOCK, value: true }));
     yield effects.call(api.removeAvailableStock, action.payload);
-    yield effects.call(fetchAvailableStocksSaga);
+    yield effects.call(fetchStatsSaga);
   } catch (error) {
     yield effects.put(setError({
       action: ErrorActions.STOCK_TABLE,
@@ -132,7 +132,7 @@ function* pullStockStatsSaga(action) {
       action: ErrorActions.STOCK_SELECTOR,
     }));
     yield effects.call(api.pullStockStats, action.payload);
-    yield effects.call(fetchAvailableStocksSaga);
+    yield effects.call(fetchStatsSaga);
   } catch (error) {
     yield effects.put(setError({
       action: ErrorActions.STOCK_SELECTOR,
@@ -168,29 +168,29 @@ function* fetchStocksSaga(action) {
   }
 }
 
-function* fetchAvailableStocksSaga() {
+function* fetchStatsSaga() {
   try {
-    yield effects.put(setLoader({ action: LoaderActions.FETCH_AVAILABLE_STOCKS, value: true }));
+    yield effects.put(setLoader({ action: LoaderActions.FETCH_STATS, value: true }));
     yield effects.put(clearError({
       action: ErrorActions.STOCK_SELECTOR,
     } ));
-    const stocks = yield effects.call(api.fetchAvailableStocks);
-    yield effects.put(setAvailableStocks(stocks));
+    const stocks = yield effects.call(api.fetchStats);
+    yield effects.put(setStats(stocks));
   } catch (error) {
     yield effects.put(setError({
       action: ErrorActions.STOCK_SELECTOR,
-      message: 'Failed to fetch available stocks',
+      message: 'Failed to fetch stats',
     }));
-    yield effects.call(handleApiError, error, 'fetchAvailableStocksSaga');
+    yield effects.call(handleApiError, error, 'fetchStatsSaga');
   } finally {
-    yield effects.put(setLoader({ action: LoaderActions.FETCH_AVAILABLE_STOCKS, value: false }));
+    yield effects.put(setLoader({ action: LoaderActions.FETCH_STATS, value: false }));
   }
 }
 
 // Root Saga
 export function* stocksSaga() {
   yield effects.takeLatest(FETCH_STOCKS, fetchStocksSaga);
-  yield effects.takeLatest(FETCH_AVAILABLE_STOCKS, fetchAvailableStocksSaga);
+  yield effects.takeLatest(FETCH_STATS, fetchStatsSaga);
   yield effects.takeLatest(PULL_STOCK_STATS, pullStockStatsSaga);
   yield effects.takeLatest(REMOVE_AVAILABLE_STOCK, removeAvailableStockSaga);
   yield effects.takeLatest(EXPORT_STOCK_DATA, exportCsvSaga);

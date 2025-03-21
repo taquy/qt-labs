@@ -47,12 +47,15 @@ def init_stock_routes(app, token_required, stocks_ns):
 
     stock_stats_model = stocks_ns.model('StockStats', {
         'symbol': fields.String(required=True, description='Stock symbol'),
+        'name': fields.String(required=True, description='Stock name'),
+        'icon': fields.String(description='Stock icon URL'),
+        'exchange': fields.String(description='Stock exchange'),
         'price': fields.Float(description='Current price'),
         'market_cap': fields.Float(description='Market capitalization'),
         'eps': fields.Float(description='Earnings per share'),
         'pe': fields.Float(description='Price-to-earnings ratio'),
         'pb': fields.Float(description='Price-to-book ratio'),
-        'last_updated': fields.DateTime(readonly=True, description='Last update timestamp')
+        'last_updated': fields.String(description='Last update timestamp')
     })
 
     stock_exchange_model = stocks_ns.model('StockExchange', {
@@ -98,8 +101,14 @@ def init_stock_routes(app, token_required, stocks_ns):
                 # Apply exchanges filter if provided
                 if exchanges:
                     query = query.filter(Stock.exchange.in_(exchanges))
+                    
+                # Filter out stocks that are already in user's stock_stats
+                user_stock_symbols = [stat.symbol for stat in current_user.stock_stats]
+                query = query.filter(~Stock.symbol.in_(user_stock_symbols))
                 
                 # Query with pagination
+                # Sort by market_cap in descending order, handling NULL values last
+                query = query.order_by(db.desc(db.func.coalesce(Stock.market_cap, 0)))
                 pagination = query.paginate(
                     page=page,
                     per_page=per_page,
@@ -142,7 +151,7 @@ def init_stock_routes(app, token_required, stocks_ns):
     @stocks_ns.param('symbol', 'The stock symbol')
     class StockStatsResource(Resource):
         @stocks_ns.doc('get_stock_stats', security='Bearer')
-        @stocks_ns.marshal_with(stock_stats_model)
+        @stocks_ns.marshal_list_with(stock_stats_model)
         @token_required
         def get(self, current_user):
             """Get stats for all stocks in user's portfolio"""
@@ -153,24 +162,22 @@ def init_stock_routes(app, token_required, stocks_ns):
                     .join(StockStats, Stock.symbol == StockStats.symbol)\
                     .filter(Stock.symbol.in_(user_stock_symbols))\
                     .all()
-                return jsonify({
-                    'stocks': [
-                        {
-                            'symbol': stock.symbol,
-                            'name': stock.name,
-                            'last_updated': stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S'),
-                            'price': stock.stats.price,
-                            'market_cap': stock.stats.market_cap,
-                            'eps': stock.stats.eps,
-                            'pe': stock.stats.pe,
-                            'pb': stock.stats.pb
-                        }
-                        for stock in stocks_with_stats
-                    ]
-                })
+                return [
+                    {
+                        'symbol': stock.symbol,
+                        'name': stock.name,
+                        'icon': stock.icon,
+                        'exchange': stock.exchange,
+                        'last_updated': stock.stats.last_updated.strftime('%Y-%m-%d %H:%M:%S'),
+                        'price': stock.stats.price,
+                        'market_cap': stock.stats.market_cap,
+                        'eps': stock.stats.eps,
+                        'pe': stock.stats.pe,
+                        'pb': stock.stats.pb
+                    } for stock in stocks_with_stats
+                ]
             except Exception as e:
-                print(e)
-                return jsonify({'error': str(e)}), 500
+                stocks_ns.abort(500, message=str(e))
     
 
     @stocks_ns.route('/pull_stock_stats')

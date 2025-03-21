@@ -27,7 +27,7 @@ import {
   Legend
 } from 'chart.js';
 import {
-  fetchAvailableStocks,
+  fetchStats,
   exportGraphPdf
 } from '../store/actions/stocks';
 
@@ -69,7 +69,7 @@ const StockGraph = () => {
   // Initial data loading
   useEffect(() => {
     dispatch(fetchSettings());
-    dispatch(fetchAvailableStocks());
+    dispatch(fetchStats());
   }, [dispatch]);
 
   useEffect(() => {

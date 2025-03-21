@@ -14,7 +14,7 @@ export const API_SETTINGS_ENDPOINTS = {
 }
 
 export const API_STOCK_ENDPOINTS = {
-    stocksWithStats: `${API_BASE_URL}/stocks/stats`,
+    stats: `${API_BASE_URL}/stocks/stats`,
     stocks: `${API_BASE_URL}/stocks`,
     pullStockList: `${API_BASE_URL}/stocks/pull_stock_list`,
     pullStockStats: `${API_BASE_URL}/stocks/pull_stock_stats`,
