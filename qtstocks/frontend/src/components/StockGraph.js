@@ -38,6 +38,37 @@ import {
 
 import { LoaderActions, ErrorActions } from '../store/slices/stocks';
 import { SettingsTypes } from '../store/slices/settings';
+
+// Add custom plugin for bar labels
+const barLabelPlugin = {
+  id: 'barLabel',
+  afterDatasetsDraw(chart, args) {
+    const { ctx, data, scales } = chart;
+    const { x, y } = scales;
+
+    data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+      const fontSize = 12;
+
+      meta.data.forEach((bar, index) => {
+        const value = dataset.data[index];
+        const label = value.toLocaleString();
+        const xPos = bar.x;
+        const yPos = bar.y;
+
+        ctx.save();
+        ctx.fillStyle = '#000';
+        ctx.font = `${fontSize}px Arial`;
+        ctx.textAlign = 'center';
+
+        ctx.fillText(label, xPos, yPos - 5);
+
+        ctx.restore();
+      });
+    });
+  }
+};
+
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -45,7 +76,8 @@ ChartJS.register(
   BarElement,
   Title,
   ChartTooltip,
-  Legend
+  Legend,
+  barLabelPlugin
 );
 
 const StockGraph = () => {
@@ -319,7 +351,8 @@ const StockGraph = () => {
                 },
                 plugins: {
                   legend: { display: false },
-                  title: currentChartData.title
+                  title: currentChartData.title,
+                  barLabel: true
                 },
                 scales: {
                   y: {
