@@ -153,8 +153,8 @@ const Dashboard = () => {
         return (
           <>
             <StockSelector />
-            <StockGraph />
             <StockTable />
+            <StockGraph />
           </>
         );
       case 'settings':
@@ -176,7 +176,7 @@ const Dashboard = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box>
       <AppBar
         position="fixed"
         sx={{
@@ -201,7 +201,7 @@ const Dashboard = () => {
       </AppBar>
       <Box
         component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        sx={{ flexShrink: { sm: 0 } }}
       >
         {isMobile ? (
           <Drawer
@@ -234,11 +234,8 @@ const Dashboard = () => {
       <Box
         component="main"
         sx={{
-          flexGrow: 1,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: '64px',
-          maxWidth: '100%',
-          overflow: 'hidden'
+          ml: '30px'
         }}
       >
         {error && (

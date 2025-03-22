@@ -220,6 +220,7 @@ const StockGraph = () => {
             getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
             value={selectedStocks || []}
             onChange={handleStockChange}
+            size="small"
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -300,6 +301,7 @@ const StockGraph = () => {
             value={selectedMetric}
             label="Metric"
             onChange={onMetricChange}
+            size="small"
           >
             {Object.keys(metrics).map((metric) => (
               <MenuItem key={metric} value={metric}>
