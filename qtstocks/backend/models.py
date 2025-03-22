@@ -8,19 +8,23 @@ class User(UserMixin, db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(128))
     email = db.Column(db.String(120), unique=True, nullable=False)
-    google_id = db.Column(db.String(255), unique=True, nullable=True)
-    name = db.Column(db.String(64), nullable=True)
-    is_admin = db.Column(db.Boolean, default=False, server_default='false')
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    google_id = db.Column(db.String(100), unique=True)
+    is_admin = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login = db.Column(db.DateTime)
     
     # Many-to-many relationship with StockStats
     stock_stats = db.relationship('StockStats', secondary='user_stock_stats', backref=db.backref('users', lazy='dynamic'))
     user_settings = db.relationship('UserSettings', backref='owner', lazy=True, uselist=False)
     jwt_tokens = db.relationship('UserJWT', backref='user', lazy=True)
+
+    @property
+    def is_google_user(self):
+        return self.google_id is not None
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -38,6 +42,8 @@ class User(UserMixin, db.Model):
             'email': self.email,
             'name': self.name,
             'is_admin': self.is_admin,
+            'is_active': self.is_active,
+            'is_google_user': self.is_google_user,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None,
             'last_login': self.last_login.strftime('%Y-%m-%d %H:%M:%S') if self.last_login else None

@@ -31,7 +31,8 @@ const UserManagement = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
-    role: 'user'
+    role: 'user',
+    features: []
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -57,14 +58,16 @@ const UserManagement = () => {
       setFormData({
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        features: user.features || []
       });
     } else {
       setSelectedUser(null);
       setFormData({
         username: '',
         email: '',
-        role: 'user'
+        role: 'user',
+        features: []
       });
     }
     setOpenDialog(true);
@@ -76,7 +79,8 @@ const UserManagement = () => {
     setFormData({
       username: '',
       email: '',
-      role: 'user'
+      role: 'user',
+      features: []
     });
     setError('');
   };
@@ -113,6 +117,21 @@ const UserManagement = () => {
     }
   };
 
+  const getFeatureChipColor = (feature) => {
+    const colors = {
+      'stock_analysis': 'primary',
+      'user_management': 'secondary',
+      'settings': 'info',
+      'export': 'success'
+    };
+    return colors[feature] || 'default';
+  };
+
+  const formatLastLogin = (lastLogin) => {
+    if (!lastLogin) return 'Never';
+    return new Date(lastLogin).toLocaleString();
+  };
+
   return (
     <Paper sx={{ p: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -144,10 +163,10 @@ const UserManagement = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Username</TableCell>
+              <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell>Features</TableCell>
+              <TableCell>Last Login</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -157,19 +176,18 @@ const UserManagement = () => {
                 <TableCell>{user.username}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Chip 
-                    label={user.role} 
-                    color={user.role === 'admin' ? 'primary' : 'default'}
-                    size="small"
-                  />
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    {(user.features || []).map((feature) => (
+                      <Chip
+                        key={feature}
+                        label={feature.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        color={getFeatureChipColor(feature)}
+                        size="small"
+                      />
+                    ))}
+                  </Stack>
                 </TableCell>
-                <TableCell>
-                  <Chip 
-                    label={user.is_active ? 'Active' : 'Inactive'} 
-                    color={user.is_active ? 'success' : 'error'}
-                    size="small"
-                  />
-                </TableCell>
+                <TableCell>{formatLastLogin(user.last_login)}</TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={1}>
                     <Tooltip title="Edit">
@@ -230,6 +248,35 @@ const UserManagement = () => {
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
+              </TextField>
+              <TextField
+                select
+                multiple
+                label="Features"
+                value={formData.features}
+                onChange={(e) => setFormData({ ...formData, features: e.target.value })}
+                fullWidth
+                required
+                SelectProps={{
+                  multiple: true,
+                  renderValue: (selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip
+                          key={value}
+                          label={value.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          color={getFeatureChipColor(value)}
+                          size="small"
+                        />
+                      ))}
+                    </Box>
+                  ),
+                }}
+              >
+                <option value="stock_analysis">Stock Analysis</option>
+                <option value="user_management">User Management</option>
+                <option value="settings">Settings</option>
+                <option value="export">Export</option>
               </TextField>
             </Stack>
           </DialogContent>

@@ -21,6 +21,8 @@ def init_user_routes(app, token_required, users_ns):
         'email': fields.String(required=True, description='User email'),
         'name': fields.String(description='User name'),
         'is_admin': fields.Boolean(description='Admin status'),
+        'is_active': fields.Boolean(description='Active status'),
+        'is_google_user': fields.Boolean(description='Google user status'),
         'created_at': fields.DateTime(readonly=True, description='Account creation date'),
         'last_login': fields.DateTime(description='Last login date')
     })
