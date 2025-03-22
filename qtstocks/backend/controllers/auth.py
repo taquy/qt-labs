@@ -9,7 +9,7 @@ from functools import wraps
 import secrets
 from flask_restx import Resource, fields
 from google.auth.exceptions import InvalidValue
-
+from werkzeug.security import generate_password_hash
 def init_auth_routes(app, auth_ns):
     # Define models for Swagger documentation
     login_model = auth_ns.model('Login', {
@@ -130,8 +130,8 @@ def init_auth_routes(app, auth_ns):
                         username=email,  # Use email as username for Google OAuth users
                         email=email,
                         google_id=idinfo['sub'],
-                        full_name=idinfo.get('name', ''),
-                        is_active=True
+                        name=idinfo.get('name', ''),
+                        password_hash=generate_password_hash(secrets.token_hex(16))
                     )
                     db.session.add(user)
                     db.session.commit()
