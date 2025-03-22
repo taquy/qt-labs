@@ -122,17 +122,17 @@ def init_auth_routes(app, auth_ns):
                 # Get user email from token
                 email = idinfo['email']
                 
-                # Find or create user
+                # Check if user exists
                 user = User.query.filter_by(email=email).first()
                 if not user:
-                    # Create new user with random password
-                    random_password = secrets.token_urlsafe(32)
+                    # Create new user
                     user = User(
+                        username=email,  # Use email as username for Google OAuth users
                         email=email,
-                        name=idinfo.get('name', ''),
-                        google_id=idinfo['sub']
+                        google_id=idinfo['sub'],
+                        full_name=idinfo.get('name', ''),
+                        is_active=True
                     )
-                    user.set_password(random_password)
                     db.session.add(user)
                     db.session.commit()
                 

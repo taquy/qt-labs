@@ -2,7 +2,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const API_AUTH_ENDPOINTS = {
     login: `${API_BASE_URL}/auth/login`,
-    googleLogin: `${API_BASE_URL}/login/google`,
+    googleLogin: `${API_BASE_URL}/auth/login/google`,
     register: `${API_BASE_URL}/auth/register`,
     logout: `${API_BASE_URL}/auth/logout`,
 }
