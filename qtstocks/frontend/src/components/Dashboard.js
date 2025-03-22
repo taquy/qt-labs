@@ -71,7 +71,7 @@ const Dashboard = () => {
       <Divider />
       <List>
         <ListItem 
-          button 
+          button="true"
           selected={activeView === 'dashboard'}
           onClick={() => setActiveView('dashboard')}
         >
@@ -81,7 +81,7 @@ const Dashboard = () => {
           <ListItemText primary="Dashboard" />
         </ListItem>
         <ListItem 
-          button 
+          button="true"
           selected={activeView === 'analysis'}
           onClick={() => setActiveView('analysis')}
         >
@@ -91,7 +91,7 @@ const Dashboard = () => {
           <ListItemText primary="Stock Analysis" />
         </ListItem>
         <ListItem 
-          button 
+          button="true"
           selected={activeView === 'settings'}
           onClick={() => setActiveView('settings')}
         >
@@ -112,7 +112,10 @@ const Dashboard = () => {
             secondary="Administrator"
           />
         </ListItem>
-        <ListItem button onClick={handleLogout}>
+        <ListItem 
+          button="true"
+          onClick={handleLogout}
+        >
           <ListItemIcon>
             <LogoutIcon />
           </ListItemIcon>

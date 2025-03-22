@@ -73,7 +73,7 @@ const StockGraph = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!selectedStocks) return;
+    if (!selectedStocks || selectedStocks.length === 0) return;
 
     let dataPoints = selectedStocks.map(stock => stock[selectedMetric]);
     let labels = selectedStocks.map(stock => stock.symbol);
@@ -129,8 +129,8 @@ const StockGraph = () => {
   }
 
   const handleStockChange = (event, newValue) => {
-    setSelectedStocks(newValue);
-    const symbols = newValue.map(stock => stock.symbol);
+    setSelectedStocks(newValue || []);
+    const symbols = (newValue || []).map(stock => stock.symbol);
     if (symbols.length > 0) {
       handleSaveSettings(symbols, selectedMetric);
     } else {
