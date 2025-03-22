@@ -60,31 +60,41 @@ const userSlice = createSlice({
         state.error = action.payload.error;
       })
       .addCase(CREATE_USER, (state, action) => {
-        state.users = [...state.users, action.payload];
+        if (action.payload) {
+          state.users = [...state.users, action.payload];
+        }
         state.error = null;
       })
       .addCase(UPDATE_USER, (state, action) => {
-        const index = state.users.findIndex(user => user.id === action.payload.id);
-        if (index !== -1) {
-          state.users[index] = action.payload;
+        if (action.payload && action.payload.id) {
+          const index = state.users.findIndex(user => user.id === action.payload.id);
+          if (index !== -1) {
+            state.users[index] = action.payload;
+          }
         }
         state.error = null;
       })
       .addCase(DELETE_USER, (state, action) => {
-        state.users = state.users.filter(user => user.id !== action.payload);
+        if (action.payload) {
+          state.users = state.users.filter(user => user.id !== action.payload);
+        }
         state.error = null;
       })
       .addCase(TOGGLE_ACTIVE, (state, action) => {
-        const user = state.users.find(user => user.id === action.payload.id);
-        if (user) {
-          user.is_active = !user.is_active;
+        if (action.payload && action.payload.id) {
+          const user = state.users.find(user => user.id === action.payload.id);
+          if (user) {
+            user.is_active = !user.is_active;
+          }
         }
         state.error = null;
       })
       .addCase(TOGGLE_ADMIN, (state, action) => {
-        const user = state.users.find(user => user.id === action.payload.id);
-        if (user) {
-          user.is_admin = !user.is_admin;
+        if (action.payload && action.payload.id) {
+          const user = state.users.find(user => user.id === action.payload.id);
+          if (user) {
+            user.is_admin = !user.is_admin;
+          }
         }
         state.error = null;
       });

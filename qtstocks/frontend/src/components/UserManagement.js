@@ -150,6 +150,7 @@ const UserManagement = () => {
   };
 
   const handleToggleActive = async (userId) => {
+    if (!userId) return;
     setLoadingStates(prev => ({ ...prev, [`active_${userId}`]: true }));
     try {
       await dispatch(toggleActive(userId));
@@ -159,6 +160,7 @@ const UserManagement = () => {
   };
 
   const handleToggleAdmin = async (userId) => {
+    if (!userId) return;
     setLoadingStates(prev => ({ ...prev, [`admin_${userId}`]: true }));
     try {
       await dispatch(toggleAdmin(userId));

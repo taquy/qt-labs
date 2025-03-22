@@ -13,39 +13,43 @@ export const fetchUsers = (page = 1, limit = 20) => ({
   limit
 });
 
-export const fetchUsersSuccess = (users, hasMore) => ({
+export const fetchUsersSuccess = (users, hasMore, page, total, pages) => ({
   type: FETCH_USERS_SUCCESS,
-  users,
-  hasMore
+  payload: {
+    users,
+    hasMore,
+    page,
+    total,
+    pages
+  }
 });
 
 export const fetchUsersFailure = (error) => ({
   type: FETCH_USERS_FAILURE,
-  error
+  payload: { error }
 });
 
-export const createUser = (user) => ({
+export const createUser = (userData) => ({
   type: CREATE_USER,
-  user
+  payload: userData
 });
 
 export const updateUser = (userId, userData) => ({
   type: UPDATE_USER,
-  userId,
-  userData
+  payload: { id: userId, ...userData }
 });
 
 export const deleteUser = (userId) => ({
   type: DELETE_USER,
-  userId
+  payload: userId
 });
 
 export const toggleActive = (userId) => ({
   type: TOGGLE_ACTIVE,
-  userId
+  payload: { id: userId }
 });
 
 export const toggleAdmin = (userId) => ({
   type: TOGGLE_ADMIN,
-  userId
+  payload: { id: userId }
 });
