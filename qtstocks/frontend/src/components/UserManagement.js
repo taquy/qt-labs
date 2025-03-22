@@ -19,7 +19,9 @@ import {
   Alert,
   Stack,
   Chip,
-  Tooltip
+  Tooltip,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -31,7 +33,7 @@ const UserManagement = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
-    role: 'user',
+    is_admin: false,
     features: []
   });
   const [error, setError] = useState('');
@@ -58,7 +60,7 @@ const UserManagement = () => {
       setFormData({
         username: user.username,
         email: user.email,
-        role: user.role,
+        is_admin: user.is_admin || false,
         features: user.features || []
       });
     } else {
@@ -66,7 +68,7 @@ const UserManagement = () => {
       setFormData({
         username: '',
         email: '',
-        role: 'user',
+        is_admin: false,
         features: []
       });
     }
@@ -79,7 +81,7 @@ const UserManagement = () => {
     setFormData({
       username: '',
       email: '',
-      role: 'user',
+      is_admin: false,
       features: []
     });
     setError('');
@@ -238,17 +240,16 @@ const UserManagement = () => {
                 fullWidth
                 required
               />
-              <TextField
-                select
-                label="Role"
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                fullWidth
-                required
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </TextField>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.is_admin}
+                    onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
+                    color="primary"
+                  />
+                }
+                label="Administrator"
+              />
               <TextField
                 select
                 multiple
