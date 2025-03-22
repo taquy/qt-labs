@@ -21,7 +21,9 @@ import {
   Chip,
   Tooltip,
   Checkbox,
-  CircularProgress
+  CircularProgress,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -33,7 +35,10 @@ const UserManagement = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
-    name: ''
+    name: '',
+    email: '',
+    password: '',
+    is_admin: false
   });
   const [loadingStates, setLoadingStates] = useState({});
   const [showError, setShowError] = useState(false);
@@ -41,26 +46,35 @@ const UserManagement = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const observer = useRef();
+
+  const dispatch = useDispatch();
+  const { user: currentUser } = useSelector(state => state.auth);
+  const { users, error, hasMore: apiHasMore, total, pages, currentPage } = useSelector(state => state.user);
+  
   const lastUserElementRef = useCallback(node => {
     if (loading) return;
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
         setPage(prevPage => prevPage + 1);
+        setLoading(true);
+        dispatch(fetchUsers(page + 1, ITEMS_PER_PAGE))
+          .then(() => {
+            setLoading(false);
+          })
+          .catch(() => {
+            setLoading(false);
+          });
       }
     });
     if (node) observer.current.observe(node);
-  }, [loading, hasMore]);
+  }, [loading, hasMore, page, dispatch]);
 
-  const dispatch = useDispatch();
-  const { user: currentUser } = useSelector(state => state.auth);
-  const { users, error } = useSelector(state => state.user);
-  
   useEffect(() => {
     if (page === 1) {
       dispatch(fetchUsers(1, ITEMS_PER_PAGE));
     }
-  }, [dispatch]);
+  }, [dispatch, page]);
 
   useEffect(() => {
     if (error) {
@@ -72,24 +86,22 @@ const UserManagement = () => {
     }
   }, [error]);
 
-  useEffect(() => {
-    if (page > 1) {
-      setLoading(true);
-      dispatch(fetchUsers(page, ITEMS_PER_PAGE))
-        .finally(() => setLoading(false));
-    }
-  }, [dispatch, page]);
-
   const handleOpenDialog = (user = null) => {
     if (user) {
       setSelectedUser(user);
       setFormData({
-        name: user.name
+        name: user.name,
+        email: user.email,
+        password: '',
+        is_admin: user.is_admin
       });
     } else {
       setSelectedUser(null);
       setFormData({
-        name: ''
+        name: '',
+        email: '',
+        password: '',
+        is_admin: false
       });
     }
     setOpenDialog(true);
@@ -99,7 +111,10 @@ const UserManagement = () => {
     setOpenDialog(false);
     setSelectedUser(null);
     setFormData({
-      name: ''
+      name: '',
+      email: '',
+      password: '',
+      is_admin: false
     });
   };
 
@@ -194,96 +209,61 @@ const UserManagement = () => {
         </Alert>
       )}
 
-      <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
-        <Table stickyHeader>
+      <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
+        <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Features</TableCell>
-              <TableCell>Last Login</TableCell>
-              <TableCell>Active</TableCell>
-              <TableCell>Admin</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Name</TableCell>
+              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Email</TableCell>
+              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Features</TableCell>
+              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Last Login</TableCell>
+              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Active</TableCell>
+              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Admin</TableCell>
+              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {users.map((user, index) => (
               <TableRow
                 key={user.id}
-                ref={index === users.length - 1 ? lastUserElementRef : null}
+                ref={index === users.length - 1 ? observer : null}
+                sx={{ '& > td': { py: 1, fontSize: '0.875rem' } }}
               >
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
                     {getUserFeatures(user).map((feature) => (
                       <Chip
                         key={feature}
                         label={feature.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         color={getFeatureChipColor(feature)}
                         size="small"
+                        sx={{ height: '20px' }}
                       />
                     ))}
                   </Stack>
                 </TableCell>
                 <TableCell>{formatLastLogin(user.last_login)}</TableCell>
                 <TableCell>
-                  <Stack direction="row" spacing={2}>
+                  <Stack direction="row" spacing={1}>
                     <Box sx={{ position: 'relative' }}>
                       <Checkbox
                         checked={user.is_active}
                         onChange={() => handleToggleActive(user.id)}
                         disabled={loadingStates[`active_${user.id}`] || user.id === currentUser?.id}
                         color="primary"
+                        size="small"
                       />
                       {loadingStates[`active_${user.id}`] && (
                         <CircularProgress
-                          size={20}
+                          size={16}
                           sx={{
                             position: 'absolute',
                             top: '50%',
                             left: '50%',
-                            marginTop: '-10px',
-                            marginLeft: '-10px',
-                          }}
-                        />
-                      )}
-                    </Box>
-                  </Stack>
-                </TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={2}>
-                    <Box sx={{ position: 'relative' }}>
-                      <Box sx={{ position: 'relative' }}>
-                        <Checkbox
-                          checked={user.is_admin}
-                          onChange={() => handleToggleAdmin(user.id)}
-                          disabled={loadingStates[`admin_${user.id}`] || user.id === currentUser?.id}
-                          color="secondary"
-                        />
-                        {loadingStates[`admin_${user.id}`] && (
-                          <CircularProgress
-                            size={20}
-                            sx={{
-                              position: 'absolute',
-                              top: '50%',
-                              left: '50%',
-                              marginTop: '-10px',
-                              marginLeft: '-10px',
-                            }}
-                          />
-                        )}
-                      </Box>
-                      {loadingStates[`admin_${user.id}`] && (
-                        <CircularProgress
-                          size={20}
-                          sx={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            marginTop: '-10px',
-                            marginLeft: '-10px',
+                            marginTop: '-8px',
+                            marginLeft: '-8px',
                           }}
                         />
                       )}
@@ -292,13 +272,39 @@ const UserManagement = () => {
                 </TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={1}>
+                    <Box sx={{ position: 'relative' }}>
+                      <Checkbox
+                        checked={user.is_admin}
+                        onChange={() => handleToggleAdmin(user.id)}
+                        disabled={loadingStates[`admin_${user.id}`] || user.id === currentUser?.id}
+                        color="secondary"
+                        size="small"
+                      />
+                      {loadingStates[`admin_${user.id}`] && (
+                        <CircularProgress
+                          size={16}
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            marginTop: '-8px',
+                            marginLeft: '-8px',
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={0.5}>
                     <Tooltip title="Edit">
                       <IconButton 
                         size="small" 
                         onClick={() => handleOpenDialog(user)}
                         disabled={user.id === currentUser?.id}
+                        sx={{ padding: '4px' }}
                       >
-                        <EditIcon />
+                        <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete">
@@ -306,11 +312,12 @@ const UserManagement = () => {
                         size="small" 
                         onClick={() => handleDelete(user.id)}
                         disabled={loadingStates[`delete_${user.id}`] || user.id === currentUser?.id}
+                        sx={{ padding: '4px' }}
                       >
                         {loadingStates[`delete_${user.id}`] ? (
-                          <CircularProgress size={20} />
+                          <CircularProgress size={16} />
                         ) : (
-                          <DeleteIcon />
+                          <DeleteIcon fontSize="small" />
                         )}
                       </IconButton>
                     </Tooltip>
@@ -320,8 +327,8 @@ const UserManagement = () => {
             ))}
             {loading && (
               <TableRow>
-                <TableCell colSpan={6} align="center">
-                  <CircularProgress />
+                <TableCell colSpan={7} align="center" sx={{ py: 1 }}>
+                  <CircularProgress size={20} />
                 </TableCell>
               </TableRow>
             )}
@@ -342,6 +349,31 @@ const UserManagement = () => {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 fullWidth
                 required
+              />
+              <TextField
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                fullWidth
+                required
+              />
+              <TextField
+                label="Password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                fullWidth
+                required={!selectedUser}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.is_admin}
+                    onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
+                  />
+                }
+                label="Admin"
               />
             </Stack>
           </DialogContent>
