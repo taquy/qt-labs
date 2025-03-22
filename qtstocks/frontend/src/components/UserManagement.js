@@ -91,7 +91,14 @@ const UserManagement = () => {
   };
 
   const handleDelete = async (userId) => {
-    dispatch(deleteUser(userId));
+    setLoadingStates(prev => ({ ...prev, [`delete_${userId}`]: true }));
+    try {
+      await dispatch(deleteUser(userId));
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [`delete_${userId}`]: false }));
+    }
   };
 
   const handleToggleActive = async (userId) => {
@@ -262,9 +269,13 @@ const UserManagement = () => {
                       <IconButton 
                         size="small" 
                         onClick={() => handleDelete(user.id)}
-                        disabled={user.id === currentUser?.id}
+                        disabled={loadingStates[`delete_${user.id}`] || user.id === currentUser?.id}
                       >
-                        <DeleteIcon />
+                        {loadingStates[`delete_${user.id}`] ? (
+                          <CircularProgress size={20} />
+                        ) : (
+                          <DeleteIcon />
+                        )}
                       </IconButton>
                     </Tooltip>
                   </Stack>

@@ -41,18 +41,22 @@ function* updateUserSaga(action) {
 
 function* deleteUserSaga(action) {
   try {
-    const response = yield effects.call(api.deleteUser, action.userId);
-    const users = Array.isArray(response) ? response : [];
+    // First delete the user
+    yield effects.call(api.deleteUser, action.userId);
+    // Then fetch the updated users list
+    const usersResponse = yield effects.call(api.fetchUsers);
+    const users = Array.isArray(usersResponse) ? usersResponse : [];
     yield effects.put(setUsers(users));
   } catch (error) {
-    yield effects.put(setError(error));
+    const errorMessage = error.response?.data?.message || error.message;
+    yield effects.put(setError(errorMessage));
   }
 }
 
 function* toggleActiveSaga(action) {
   try {
     // First toggle the active status
-    const response = yield effects.call(api.toggleActive, action.userId);
+    yield effects.call(api.toggleActive, action.userId);
     // Then fetch the updated users list
     const usersResponse = yield effects.call(api.fetchUsers);
     const users = Array.isArray(usersResponse) ? usersResponse : [];
@@ -67,7 +71,7 @@ function* toggleActiveSaga(action) {
 function* toggleAdminSaga(action) {
   try {
     // First toggle the admin status
-    const response = yield effects.call(api.toggleAdmin, action.userId);
+    yield effects.call(api.toggleAdmin, action.userId);
     // Then fetch the updated users list
     const usersResponse = yield effects.call(api.fetchUsers);
     const users = Array.isArray(usersResponse) ? usersResponse : [];
