@@ -197,7 +197,7 @@ def init_stock_routes(app, token_required, stocks_ns):
                 load_latest_data = data.get('loadLatestData', False)
 
                 if not selected_stocks:
-                    stocks_ns.abort(400, message="No stocks selected")
+                    stocks_ns.abort(400, "No stocks selected")
                     
                 if not load_latest_data:
                     stock_stats = db.session.query(StockStats.symbol).all();
@@ -259,282 +259,279 @@ def init_stock_routes(app, token_required, stocks_ns):
         @token_required
         def get(self, current_user):
             """Export stock data to PDF with charts"""
-            try:
-                # Get symbols from query parameter
-                symbols_param = request.args.get('symbols', '')
-                if not symbols_param:
-                    stocks_ns.abort(400, message="No symbols provided")
-                
-                symbols = [s.strip() for s in symbols_param.split(',') if s.strip()]
-                if not symbols:
-                    stocks_ns.abort(400, message="No valid symbols provided")
-                
-                # Get stocks with their stats for the specified symbols
-                user_stock_symbols = [stock.symbol for stock in current_user.stock_stats]
-                # Filter symbols to only include those in user's portfolio
-                symbols = [symbol for symbol in symbols if symbol in user_stock_symbols]
-                if not symbols:
-                    stocks_ns.abort(400, message="None of the provided symbols are in your portfolio")
-                
-                # Get stocks with their stats
-                stocks_with_stats = []
-                for symbol in symbols:
-                    stock = Stock.query.get(symbol)
-                    if stock:
-                        stats = StockStats.query.get(symbol)
-                        if stats:
-                            stocks_with_stats.append((stock, stats))
-                
-                if not stocks_with_stats:
-                    stocks_ns.abort(404, message="No valid stocks found for the provided symbols")
-                
-                # Create PDF document
-                output = io.BytesIO()
-                doc = SimpleDocTemplate(output, pagesize=letter)
-                elements = []
-                
-                # Create styles
-                styles = getSampleStyleSheet()
-                centered_title_style = ParagraphStyle(
-                    'CenteredTitle',
-                    parent=styles['Heading1'],
-                    fontSize=24,
-                    alignment=TA_CENTER,
-                    spaceAfter=30
-                )
-                centered_heading_style = ParagraphStyle(
-                    'CenteredHeading',
-                    parent=styles['Heading2'],
-                    fontSize=18,
-                    alignment=TA_CENTER,
-                    spaceAfter=10
-                )
-                date_style = ParagraphStyle(
-                    'Date',
-                    parent=styles['Normal'],
-                    fontSize=12,
-                    alignment=TA_CENTER,
-                    spaceAfter=30
-                )
-                
-                # Add title and date
-                elements.append(Paragraph("Stock Statistics Report", centered_title_style))
-                elements.append(Paragraph(f"Generated on {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}", date_style))
-                
-                # Create tables
-                table_data = [['Symbol', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B']]
-                for stock, stats in stocks_with_stats:
-                    table_data.append([
-                        stock.symbol,
-                        f"{stats.price:,.2f}",
-                        f"{stats.market_cap:,.0f}",
-                        f"{stats.eps:,.2f}",
-                        f"{stats.pe:,.2f}",
-                        f"{stats.pb:,.2f}"
-                    ])
-                
-                # Create tables with titles
-                for i in range(0, len(table_data), 15):  # Split into chunks of 15 rows
-                    elements.append(Paragraph("Stock Statistics", centered_heading_style))
-                    table = Table(table_data[i:i+15])
-                    table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 12),
-                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-                        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                        ('FONTSIZE', (0, 1), (-1, -1), 10),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-                    ]))
-                    elements.append(table)
-                    elements.append(Spacer(1, 20))
-                
-                # Create bar charts with clean styling
-                plt.rcParams.update({
-                    'font.size': 10,
-                    'axes.titlesize': 14,
-                    'axes.labelsize': 12,
-                    'xtick.labelsize': 10,
-                    'ytick.labelsize': 10,
-                    'figure.facecolor': 'white',
-                    'axes.facecolor': 'white',
-                    'axes.grid': True,
-                    'grid.color': '#E0E0E0',
-                    'grid.linestyle': '--',
-                    'grid.alpha': 0.5
-                })
+            # Get symbols from query parameter
+            symbols_param = request.args.get('symbols', '')
+            if not symbols_param:
+                stocks_ns.abort(400, "No symbols provided")
+            
+            symbols = [s.strip() for s in symbols_param.split(',') if s.strip()]
+            if not symbols:
+                stocks_ns.abort(400, "No valid symbols provided")
+            
+            # Get stocks with their stats for the specified symbols
+            user_stock_symbols = [stock.symbol for stock in current_user.stock_stats]
+            # Filter symbols to only include those in user's portfolio
+            symbols = [symbol for symbol in symbols if symbol in user_stock_symbols]
+            if not symbols:
+                stocks_ns.abort(400, "None of the provided symbols are in your portfolio")
+            
+            # Get stocks with their stats
+            stocks_with_stats = []
+            for symbol in symbols:
+                stock = Stock.query.get(symbol)
+                if stock:
+                    stats = StockStats.query.get(symbol)
+                    if stats:
+                        stocks_with_stats.append((stock, stats))
+            
+            if not stocks_with_stats:
+                stocks_ns.abort(404, "No valid stocks found for the provided symbols")
+            
+            # Create PDF document
+            output = io.BytesIO()
+            doc = SimpleDocTemplate(output, pagesize=letter)
+            elements = []
+            
+            # Create styles
+            styles = getSampleStyleSheet()
+            centered_title_style = ParagraphStyle(
+                'CenteredTitle',
+                parent=styles['Heading1'],
+                fontSize=24,
+                alignment=TA_CENTER,
+                spaceAfter=30
+            )
+            centered_heading_style = ParagraphStyle(
+                'CenteredHeading',
+                parent=styles['Heading2'],
+                fontSize=18,
+                alignment=TA_CENTER,
+                spaceAfter=10
+            )
+            date_style = ParagraphStyle(
+                'Date',
+                parent=styles['Normal'],
+                fontSize=12,
+                alignment=TA_CENTER,
+                spaceAfter=30
+            )
+            
+            # Add title and date
+            elements.append(Paragraph("Stock Statistics Report", centered_title_style))
+            elements.append(Paragraph(f"Generated on {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}", date_style))
+            
+            # Create tables
+            table_data = [['Symbol', 'Price', 'Market Cap', 'EPS', 'P/E', 'P/B']]
+            for stock, stats in stocks_with_stats:
+                table_data.append([
+                    stock.symbol,
+                    f"{stats.price:,.2f}",
+                    f"{stats.market_cap:,.0f}",
+                    f"{stats.eps:,.2f}",
+                    f"{stats.pe:,.2f}",
+                    f"{stats.pb:,.2f}"
+                ])
+            
+            # Create tables with titles
+            for i in range(0, len(table_data), 15):  # Split into chunks of 15 rows
+                elements.append(Paragraph("Stock Statistics", centered_heading_style))
+                table = Table(table_data[i:i+15])
+                table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 12),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                    ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 10),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                ]))
+                elements.append(table)
+                elements.append(Spacer(1, 20))
+            
+            # Create bar charts with clean styling
+            plt.rcParams.update({
+                'font.size': 10,
+                'axes.titlesize': 14,
+                'axes.labelsize': 12,
+                'xtick.labelsize': 10,
+                'ytick.labelsize': 10,
+                'figure.facecolor': 'white',
+                'axes.facecolor': 'white',
+                'axes.grid': True,
+                'grid.color': '#E0E0E0',
+                'grid.linestyle': '--',
+                'grid.alpha': 0.5
+            })
 
-                # Define a color palette for charts
-                chart_colors = ['#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#FF6B6B']
+            # Define a color palette for charts
+            chart_colors = ['#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#FF6B6B']
 
-                # Define chart configurations
-                chart_configs = []
+            # Define chart configurations
+            chart_configs = []
+            
+            # Only add charts if there's data to show
+            if stocks_with_stats:
+                # Stock Price chart
+                price_data = [stats.price if stats.price else 0 for _, stats in stocks_with_stats]
+                if any(price_data):  # Only add if there's at least one non-zero value
+                    chart_configs.append({
+                        'data': price_data,
+                        'title': 'Stock Prices',
+                        'format': '{:,.2f}',
+                        'ylabel': 'Price (VND)'
+                    })
                 
-                # Only add charts if there's data to show
-                if stocks_with_stats:
-                    # Stock Price chart
-                    price_data = [stats.price if stats.price else 0 for _, stats in stocks_with_stats]
-                    if any(price_data):  # Only add if there's at least one non-zero value
-                        chart_configs.append({
-                            'data': price_data,
-                            'title': 'Stock Prices',
-                            'format': '{:,.2f}',
-                            'ylabel': 'Price (VND)'
-                        })
-                    
-                    # Market Cap chart
-                    market_cap_data = [stats.market_cap if stats.market_cap else 0 for _, stats in stocks_with_stats]
-                    if any(market_cap_data):
-                        chart_configs.append({
-                            'data': market_cap_data,
-                            'title': 'Market Capitalization',
-                            'format': '{:,.0f}',
-                            'ylabel': 'Market Cap (VND)'
-                        })
-                    
-                    # EPS chart
-                    eps_data = [stats.eps if stats.eps else 0 for _, stats in stocks_with_stats]
-                    if any(eps_data):
-                        chart_configs.append({
-                            'data': eps_data,
-                            'title': 'Earnings Per Share (EPS)',
-                            'format': '{:,.2f}',
-                            'ylabel': 'EPS (VND)'
-                        })
-                    
-                    # PE Ratio chart
-                    pe_data = [stats.pe if stats.pe else 0 for _, stats in stocks_with_stats]
-                    if any(pe_data):
-                        chart_configs.append({
-                            'data': pe_data,
-                            'title': 'Price-to-Earnings Ratio (P/E)',
-                            'format': '{:,.2f}',
-                            'ylabel': 'P/E Ratio'
-                        })
-                    
-                    # PB Ratio chart
-                    pb_data = [stats.pb if stats.pb else 0 for _, stats in stocks_with_stats]
-                    if any(pb_data):
-                        chart_configs.append({
-                            'data': pb_data,
-                            'title': 'Price-to-Book Ratio (P/B)',
-                            'format': '{:,.2f}',
-                            'ylabel': 'P/B Ratio'
-                        })
-
-                # Create charts
-                charts = []
-                for i, config in enumerate(chart_configs):
-                    # Create figure with reduced size
-                    fig, ax = plt.subplots(figsize=(8, 7.5))  # Increased height from 5 to 7.5
-                    
-                    # Create bars
-                    x = np.arange(len([stock.symbol for stock, _ in stocks_with_stats]))
-                    bars = ax.bar(x, config['data'],
-                                color=chart_colors[i % len(chart_colors)],
-                                alpha=0.7)
-                    
-                    # Customize the chart
-                    ax.set_title(config['title'], pad=10)
-                    ax.set_xlabel('')
-                    ax.set_ylabel(config['ylabel'])
-                    
-                    # Set x-axis ticks
-                    ax.set_xticks(x)
-                    ax.set_xticklabels([stock.symbol for stock, _ in stocks_with_stats], rotation=45, ha='right')
-                    
-                    # Add value labels inside bars
-                    for bar in bars:
-                        height = bar.get_height()
-                        if height > 0:  # Only add labels to bars with values
-                            text = config['format'].format(height)
-                            # Calculate text width in data coordinates
-                            text_width = len(text) * 0.1  # Approximate width based on character count
-                            bar_width = bar.get_width()
-                            
-                            # Position text in middle of bar
-                            x_pos = bar.get_x() + bar.get_width()/2.
-                            y_pos = height/2
-                            
-                            # If text is too wide for the bar, place it above
-                            if text_width > bar_width:
-                                y_pos = height + 5  # Position above bar
-                                va = 'bottom'
-                            else:
-                                va = 'center'
-                            
-                            # Add text with black border effect
-                            text_obj = ax.text(x_pos, y_pos, text,
-                                             ha='center', va=va,
-                                             fontsize=9,
-                                             color='white',
-                                             fontweight='bold')
-                            
-                            # Add black border effect
-                            text_obj.set_path_effects([
-                                path_effects.Stroke(linewidth=2, foreground='black'),
-                                path_effects.Normal()
-                            ])
-                    
-                    # Adjust layout
-                    plt.tight_layout()
-                    
-                    chart_buffer = io.BytesIO()
-                    plt.savefig(chart_buffer, 
-                              format='png', 
-                              dpi=100,
-                              bbox_inches='tight')
-                    plt.close()
-                    chart_buffer.seek(0)
-                    charts.append((chart_buffer, config['title']))
-
-                # Create a frame for centered content
-                frame = Frame(
-                    doc.leftMargin,
-                    doc.bottomMargin,
-                    doc.width,
-                    doc.height,
-                    id='normal'
-                )
-
-                # Create a page template with the centered frame
-                template = PageTemplate(id='centered', frames=[frame])
-                doc.addPageTemplates([template])
-
-                # Add page break before first chart
-                elements.append(PageBreak())
-
-                # Add charts to PDF (1 per page)
-                for i, (chart_data, title) in enumerate(charts):
-                    if i > 0:  # Add page break before each chart except the first one
-                        elements.append(PageBreak())
-                    elements.append(Paragraph(title, centered_heading_style))
-                    elements.append(Spacer(1, 5))
-                    
-                    # Add chart with increased height
-                    img = Image(chart_data, width=7*inch, height=6*inch)  # Increased height from 4 to 6
-                    elements.append(Spacer(1, 1*inch))  # Reduced spacing
-                    elements.append(img)
-                    elements.append(Spacer(1, 1*inch))  # Reduced spacing
-
-                # Build PDF
-                doc.build(elements)
-                output.seek(0)
+                # Market Cap chart
+                market_cap_data = [stats.market_cap if stats.market_cap else 0 for _, stats in stocks_with_stats]
+                if any(market_cap_data):
+                    chart_configs.append({
+                        'data': market_cap_data,
+                        'title': 'Market Capitalization',
+                        'format': '{:,.0f}',
+                        'ylabel': 'Market Cap (VND)'
+                    })
                 
-                # Return the PDF file
-                return send_file(
-                    output,
-                    mimetype='application/pdf',
-                    as_attachment=True,
-                    download_name='stocks_report.pdf'
-                )
-            except Exception as e:
-                stocks_ns.abort(500, f"Error generating PDF: {str(e)}")
+                # EPS chart
+                eps_data = [stats.eps if stats.eps else 0 for _, stats in stocks_with_stats]
+                if any(eps_data):
+                    chart_configs.append({
+                        'data': eps_data,
+                        'title': 'Earnings Per Share (EPS)',
+                        'format': '{:,.2f}',
+                        'ylabel': 'EPS (VND)'
+                    })
+                
+                # PE Ratio chart
+                pe_data = [stats.pe if stats.pe else 0 for _, stats in stocks_with_stats]
+                if any(pe_data):
+                    chart_configs.append({
+                        'data': pe_data,
+                        'title': 'Price-to-Earnings Ratio (P/E)',
+                        'format': '{:,.2f}',
+                        'ylabel': 'P/E Ratio'
+                    })
+                
+                # PB Ratio chart
+                pb_data = [stats.pb if stats.pb else 0 for _, stats in stocks_with_stats]
+                if any(pb_data):
+                    chart_configs.append({
+                        'data': pb_data,
+                        'title': 'Price-to-Book Ratio (P/B)',
+                        'format': '{:,.2f}',
+                        'ylabel': 'P/B Ratio'
+                    })
+
+            # Create charts
+            charts = []
+            for i, config in enumerate(chart_configs):
+                # Create figure with reduced size
+                fig, ax = plt.subplots(figsize=(8, 7.5))  # Increased height from 5 to 7.5
+                
+                # Create bars
+                x = np.arange(len([stock.symbol for stock, _ in stocks_with_stats]))
+                bars = ax.bar(x, config['data'],
+                            color=chart_colors[i % len(chart_colors)],
+                            alpha=0.7)
+                
+                # Customize the chart
+                ax.set_title(config['title'], pad=10)
+                ax.set_xlabel('')
+                ax.set_ylabel(config['ylabel'])
+                
+                # Set x-axis ticks
+                ax.set_xticks(x)
+                ax.set_xticklabels([stock.symbol for stock, _ in stocks_with_stats], rotation=45, ha='right')
+                
+                # Add value labels inside bars
+                for bar in bars:
+                    height = bar.get_height()
+                    if height > 0:  # Only add labels to bars with values
+                        text = config['format'].format(height)
+                        # Calculate text width in data coordinates
+                        text_width = len(text) * 0.1  # Approximate width based on character count
+                        bar_width = bar.get_width()
+                        
+                        # Position text in middle of bar
+                        x_pos = bar.get_x() + bar.get_width()/2.
+                        y_pos = height/2
+                        
+                        # If text is too wide for the bar, place it above
+                        if text_width > bar_width:
+                            y_pos = height + 5  # Position above bar
+                            va = 'bottom'
+                        else:
+                            va = 'center'
+                        
+                        # Add text with black border effect
+                        text_obj = ax.text(x_pos, y_pos, text,
+                                            ha='center', va=va,
+                                            fontsize=9,
+                                            color='white',
+                                            fontweight='bold')
+                        
+                        # Add black border effect
+                        text_obj.set_path_effects([
+                            path_effects.Stroke(linewidth=2, foreground='black'),
+                            path_effects.Normal()
+                        ])
+                
+                # Adjust layout
+                plt.tight_layout()
+                
+                chart_buffer = io.BytesIO()
+                plt.savefig(chart_buffer, 
+                            format='png', 
+                            dpi=100,
+                            bbox_inches='tight')
+                plt.close()
+                chart_buffer.seek(0)
+                charts.append((chart_buffer, config['title']))
+
+            # Create a frame for centered content
+            frame = Frame(
+                doc.leftMargin,
+                doc.bottomMargin,
+                doc.width,
+                doc.height,
+                id='normal'
+            )
+
+            # Create a page template with the centered frame
+            template = PageTemplate(id='centered', frames=[frame])
+            doc.addPageTemplates([template])
+
+            # Add page break before first chart
+            elements.append(PageBreak())
+
+            # Add charts to PDF (1 per page)
+            for i, (chart_data, title) in enumerate(charts):
+                if i > 0:  # Add page break before each chart except the first one
+                    elements.append(PageBreak())
+                elements.append(Paragraph(title, centered_heading_style))
+                elements.append(Spacer(1, 5))
+                
+                # Add chart with increased height
+                img = Image(chart_data, width=7*inch, height=6*inch)  # Increased height from 4 to 6
+                elements.append(Spacer(1, 1*inch))  # Reduced spacing
+                elements.append(img)
+                elements.append(Spacer(1, 1*inch))  # Reduced spacing
+
+            # Build PDF
+            doc.build(elements)
+            output.seek(0)
+            
+            # Return the PDF file
+            return send_file(
+                output,
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name='stocks_report.pdf'
+            )
 
     @stocks_ns.route('/remove_stats')
     class RemoveStockStats(Resource):
@@ -548,7 +545,7 @@ def init_stock_routes(app, token_required, stocks_ns):
                 symbols = data.get('symbols', [])
 
                 if not symbols:
-                    stocks_ns.abort(400, message="No symbols provided")
+                    stocks_ns.abort(400, "No symbols provided")
 
                 # Remove stocks from user's portfolio
                 for symbol in symbols:
