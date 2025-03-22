@@ -1,41 +1,51 @@
 import * as effects from 'redux-saga/effects';
 import api from '../apis/user';
 import { setUsers, setError } from '../slices/user';
-import { FETCH_USERS, CREATE_USER, UPDATE_USER, DELETE_USER } from '../actions/user';
+import { FETCH_USERS, CREATE_USER, UPDATE_USER, DELETE_USER, TOGGLE_ACTIVE } from '../actions/user';
+
 function* fetchUsersSaga() {
-  // try {
+  try {
     const response = yield effects.call(api.fetchUsers);
     yield effects.put(setUsers(response));
-  // } catch (error) {
-  //   yield effects.put(setError(error));
-  // }
+  } catch (error) {
+    yield effects.put(setError(error));
+  }
 }
 
-function* createUserSaga() {
-  // try {
-    const response = yield effects.call(api.createUser);
+function* createUserSaga(action) {
+  try {
+    const response = yield effects.call(api.createUser, action.user);
     yield effects.put(setUsers(response));
-  // } catch (error) {
-  //   yield effects.put(setError(error));
-  // }
+  } catch (error) {
+    yield effects.put(setError(error));
+  }
 }
 
-function* updateUserSaga() {
-  // try {
-    const response = yield effects.call(api.updateUser);
+function* updateUserSaga(action) {
+  try {
+    const response = yield effects.call(api.updateUser, action.user);
     yield effects.put(setUsers(response));
-  // } catch (error) {
-  //   yield effects.put(setError(error));
-  // }
+  } catch (error) {
+    yield effects.put(setError(error));
+  }
 }
 
-function* deleteUserSaga() {
-  // try {
-    const response = yield effects.call(api.deleteUser);
+function* deleteUserSaga(action) {
+  try {
+    const response = yield effects.call(api.deleteUser, action.userId);
     yield effects.put(setUsers(response));
-  // } catch (error) {
-  //   yield effects.put(setError(error));
-  // }
+  } catch (error) {
+    yield effects.put(setError(error));
+  }
+}
+
+function* toggleActiveSaga(action) {
+  try {
+    const response = yield effects.call(api.toggleActive, action.userId);
+    yield effects.put(setUsers(response));
+  } catch (error) {
+    yield effects.put(setError(error));
+  }
 }
 
 export function* userSaga() {
@@ -43,4 +53,5 @@ export function* userSaga() {
   yield effects.takeLatest(CREATE_USER, createUserSaga);
   yield effects.takeLatest(UPDATE_USER, updateUserSaga);
   yield effects.takeLatest(DELETE_USER, deleteUserSaga);
+  yield effects.takeLatest(TOGGLE_ACTIVE, toggleActiveSaga);
 }

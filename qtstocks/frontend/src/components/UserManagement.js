@@ -21,11 +21,12 @@ import {
   Chip,
   Tooltip,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  CircularProgress
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUsers, updateUser, createUser, deleteUser } from '../store/actions/user';
+import { fetchUsers, updateUser, createUser, deleteUser, toggleActive } from '../store/actions/user';
 
 const UserManagement = () => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -36,9 +37,10 @@ const UserManagement = () => {
     is_admin: false,
     features: []
   });
+  const [loadingStates, setLoadingStates] = useState({});
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
-  const { users } = useSelector(state => state.user);
+  const { users, errors } = useSelector(state => state.user);
   
   useEffect(() => {
     dispatch(fetchUsers());
@@ -78,16 +80,24 @@ const UserManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-      if (selectedUser) {
-        dispatch(updateUser(selectedUser.id, formData));
-      } else {
-        dispatch(createUser(formData));
-      }
+    if (selectedUser) {
+      dispatch(updateUser(selectedUser.id, formData));
+    } else {
+      dispatch(createUser(formData));
+    }
   };
 
   const handleDelete = async (userId) => {
     dispatch(deleteUser(userId));
+  };
+
+  const handleToggleActive = async (userId) => {
+    setLoadingStates(prev => ({ ...prev, [userId]: true }));
+    try {
+      await dispatch(toggleActive(userId));
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [userId]: false }));
+    }
   };
 
   const getFeatureChipColor = (feature) => {
@@ -142,6 +152,7 @@ const UserManagement = () => {
               <TableCell>Email</TableCell>
               <TableCell>Features</TableCell>
               <TableCell>Last Login</TableCell>
+              <TableCell>Active</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -163,6 +174,26 @@ const UserManagement = () => {
                   </Stack>
                 </TableCell>
                 <TableCell>{formatLastLogin(user.last_login)}</TableCell>
+                <TableCell>
+                  <Checkbox
+                    checked={user.is_active}
+                    onChange={() => handleToggleActive(user.id)}
+                    disabled={loadingStates[user.id] || user.id === currentUser?.id}
+                    color="primary"
+                  />
+                  {loadingStates[user.id] && (
+                    <CircularProgress
+                      size={20}
+                      sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        marginTop: '-10px',
+                        marginLeft: '-10px',
+                      }}
+                    />
+                  )}
+                </TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={1}>
                     <Tooltip title="Edit">
@@ -256,7 +287,7 @@ const UserManagement = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button type="submit" variant="contained">
+            <Button type="submit" variant="contained" color="primary">
               {selectedUser ? 'Update' : 'Create'}
             </Button>
           </DialogActions>

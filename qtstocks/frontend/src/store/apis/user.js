@@ -19,5 +19,9 @@ const api = {
     const response = await axios.delete(API_USER_ENDPOINTS.deleteUser, { params: { userId }, ...getRequestConfig() });
     return response.data;
   },
+  toggleActive: async (userId) => {
+    const response = await axios.post(API_USER_ENDPOINTS.toggleActive(userId), {}, getRequestConfig());
+    return response.data;
+  },
 };
 export default api;

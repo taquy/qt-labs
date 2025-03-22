@@ -30,6 +30,7 @@ const API_USER_ENDPOINTS = {
     createUser: `${API_BASE_URL}/users`,
     updateUser: `${API_BASE_URL}/users`,
     deleteUser: `${API_BASE_URL}/users`,
+    toggleActive: (userId) => `${API_BASE_URL}/users/${userId}/toggle_active`,
 }
 
 export { API_AUTH_ENDPOINTS, API_SETTINGS_ENDPOINTS, API_STOCK_ENDPOINTS, API_USER_ENDPOINTS };
