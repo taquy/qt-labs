@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Grid, Paper } from '@mui/material';
+import { Typography, Grid, Paper } from '@mui/material';
 import { useSelector } from 'react-redux';
 
 const Dashboard = () => {

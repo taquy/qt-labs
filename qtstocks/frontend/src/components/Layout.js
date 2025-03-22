@@ -3,7 +3,6 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
-  Grid,
   Drawer,
   List,
   ListItem,
@@ -15,7 +14,6 @@ import {
   useTheme,
   useMediaQuery,
   Divider,
-  Paper
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -33,7 +31,7 @@ import { getUserInfo } from '../store/actions/auth';
 const drawerWidth = 240;
 
 const Layout = () => {
-  const { error, isLoggedIn, userInfo } = useSelector(state => state.auth);
+  const { isLoggedIn, userInfo } = useSelector(state => state.auth);
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();

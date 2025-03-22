@@ -20,7 +20,6 @@ import {
   Stack,
   Chip,
   Tooltip,
-  FormControlLabel,
   Checkbox,
   CircularProgress
 } from '@mui/material';
@@ -79,10 +78,15 @@ const UserManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedUser) {
-      dispatch(updateUser(selectedUser.id, formData));
-    } else {
-      dispatch(createUser(formData));
+    try {
+      if (selectedUser) {
+        await dispatch(updateUser(selectedUser.id, formData));
+      } else {
+        await dispatch(createUser(formData));
+      }
+      handleCloseDialog();
+    } catch (error) {
+      console.error('Error submitting form:', error);
     }
   };
 

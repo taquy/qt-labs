@@ -27,11 +27,15 @@ function* createUserSaga(action) {
 
 function* updateUserSaga(action) {
   try {
-    const response = yield effects.call(api.updateUser, action.user);
-    const users = Array.isArray(response) ? response : [];
+    // First update the user
+    yield effects.call(api.updateUser, action.userId, action.userData);
+    // Then fetch the updated users list
+    const usersResponse = yield effects.call(api.fetchUsers);
+    const users = Array.isArray(usersResponse) ? usersResponse : [];
     yield effects.put(setUsers(users));
   } catch (error) {
-    yield effects.put(setError(error));
+    const errorMessage = error.response?.data?.message || error.message;
+    yield effects.put(setError(errorMessage));
   }
 }
 
