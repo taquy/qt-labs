@@ -90,10 +90,10 @@ const UserManagement = () => {
     if (user) {
       setSelectedUser(user);
       setFormData({
-        name: user.name,
-        email: user.email,
+        name: user.name || '',
+        email: user.email || '',
         password: '',
-        is_admin: user.is_admin
+        is_admin: user.is_admin || false
       });
     } else {
       setSelectedUser(null);
@@ -120,6 +120,8 @@ const UserManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.name || !formData.email) return;
+
     try {
       if (selectedUser) {
         await dispatch(updateUser(selectedUser.id, formData));
@@ -127,12 +129,17 @@ const UserManagement = () => {
         await dispatch(createUser(formData));
       }
       handleCloseDialog();
-      // Reset to first page and refresh
-      setPage(1);
-      dispatch(fetchUsers(1, ITEMS_PER_PAGE));
     } catch (error) {
       console.error('Error submitting form:', error);
     }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
   const handleDelete = async (userId) => {
@@ -339,53 +346,56 @@ const UserManagement = () => {
       </TableContainer>
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>
-          {selectedUser ? 'Edit User' : 'Add New User'}
-        </DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              <TextField
-                label="Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                fullWidth
-                required
-              />
-              <TextField
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                fullWidth
-                required
-              />
-              <TextField
-                label="Password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                fullWidth
-                required={!selectedUser}
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.is_admin}
-                    onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
-                  />
-                }
-                label="Admin"
-              />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button type="submit" variant="contained" color="primary">
-              {selectedUser ? 'Update' : 'Create'}
-            </Button>
-          </DialogActions>
-        </form>
+        <DialogTitle>{selectedUser ? 'Edit User' : 'Create User'}</DialogTitle>
+        <DialogContent>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+            <TextField
+              fullWidth
+              label="Name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              margin="normal"
+              required={!selectedUser}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  name="is_admin"
+                  checked={formData.is_admin}
+                  onChange={handleInputChange}
+                />
+              }
+              label="Admin"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained" color="primary">
+            {selectedUser ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Paper>
   );

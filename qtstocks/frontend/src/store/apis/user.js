@@ -11,19 +11,19 @@ const api = {
     return response.data;
   },
   fetchUser: async (userId) => {
-    const response = await axios.get(`${API_USER_ENDPOINTS.users}/${userId}`);
+    const response = await axios.get(`${API_USER_ENDPOINTS.users}/${userId}`, getRequestConfig());
     return response.data;
   },
   createUser: async (user) => {
     const response = await axios.post(API_USER_ENDPOINTS.createUser, user, getRequestConfig());
     return response.data;
   },
-  updateUser: async (userId, userData) => {
+  updateUser: async (userId, userData) => { 
     const response = await axios.put(`${API_USER_ENDPOINTS.updateUser}/${userId}`, userData, getRequestConfig());
     return response.data;
   },
   deleteUser: async (userId) => {
-    const response = await axios.delete(`${API_USER_ENDPOINTS.deleteUser}/${userId}`);
+    const response = await axios.delete(`${API_USER_ENDPOINTS.deleteUser}/${userId}`, getRequestConfig());
     return response.data;
   },
   toggleActive: async (userId) => {
