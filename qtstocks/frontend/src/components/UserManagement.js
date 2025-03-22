@@ -161,6 +161,8 @@ const UserManagement = () => {
     setLoadingStates(prev => ({ ...prev, [`active_${userId}`]: true }));
     try {
       await dispatch(toggleActiveRequest(userId));
+    } catch (error) {
+      console.error('Error toggling active status:', error);
     } finally {
       setLoadingStates(prev => ({ ...prev, [`active_${userId}`]: false }));
     }
@@ -171,6 +173,8 @@ const UserManagement = () => {
     setLoadingStates(prev => ({ ...prev, [`admin_${userId}`]: true }));
     try {
       await dispatch(toggleAdminRequest(userId));
+    } catch (error) {
+      console.error('Error toggling admin status:', error);
     } finally {
       setLoadingStates(prev => ({ ...prev, [`admin_${userId}`]: false }));
     }
@@ -235,7 +239,7 @@ const UserManagement = () => {
             {users.map((user, index) => (
               <TableRow
                 key={user.id}
-                ref={index === users.length - 1 ? observer : null}
+                ref={index === users.length - 1 ? lastUserElementRef : null}
                 sx={{ '& > td': { py: 1, fontSize: '0.875rem' } }}
               >
                 <TableCell>{user.name}</TableCell>
@@ -257,8 +261,8 @@ const UserManagement = () => {
                 <TableCell>
                   <Stack direction="row" spacing={1}>
                     <Box sx={{ position: 'relative' }}>
-                      <Checkbox
-                        checked={user.is_active}
+                      <Switch
+                        checked={Boolean(user.is_active)}
                         onChange={() => handleToggleActive(user.id)}
                         disabled={loadingStates[`active_${user.id}`] || user.id === currentUser?.id}
                         color="primary"
@@ -282,8 +286,8 @@ const UserManagement = () => {
                 <TableCell>
                   <Stack direction="row" spacing={1}>
                     <Box sx={{ position: 'relative' }}>
-                      <Checkbox
-                        checked={user.is_admin}
+                      <Switch
+                        checked={Boolean(user.is_admin)}
                         onChange={() => handleToggleAdmin(user.id)}
                         disabled={loadingStates[`admin_${user.id}`] || user.id === currentUser?.id}
                         color="secondary"
