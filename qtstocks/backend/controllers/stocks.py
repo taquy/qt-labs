@@ -193,24 +193,29 @@ def init_stock_routes(app, token_required, stocks_ns):
             """Pull stock statistics for selected stocks"""
             try:
                 data = request.get_json()
-                selected_stocks = data.get('selectedStocks', [])
+                requested_symbols = data.get('selectedStocks', [])
                 load_latest_data = data.get('loadLatestData', False)
 
-                if not selected_stocks:
+                if not requested_symbols:
                     stocks_ns.abort(400, "No stocks selected")
                     
-                if not load_latest_data:
-                    stock_stats = db.session.query(StockStats.symbol).all();
-                    existed_symbols = [stock_stat.symbol for stock_stat in stock_stats]
-                    selected_stocks = [symbol for symbol in selected_stocks if symbol not in existed_symbols]
+                if load_latest_data:
+                    process_stock_list(requested_symbols, current_user)
+                else:
+                    available_symbols = db.session.query(StockStats.symbol).all();
+                    available_symbols = [stock_stat.symbol for stock_stat in available_symbols]
+                    reusable_symbols = [symbol for symbol in requested_symbols if symbol in available_symbols]
+                    request_new_symbols = [symbol for symbol in requested_symbols if symbol not in reusable_symbols]
+                    
                     # Add any existing symbols to user's stock_stats if not already present
-                    for symbol in existed_symbols:
+                    for symbol in reusable_symbols:
                         # Get the existing stats
                         stats = StockStats.query.filter_by(symbol=symbol).first()
                         if stats and stats not in current_user.stock_stats:
                             current_user.stock_stats.append(stats)
+                            
                     db.session.commit()
-                process_stock_list(selected_stocks, current_user)
+                    process_stock_list(request_new_symbols, current_user)
                 return {'message': 'Stock statistics updated successfully'}
             except Exception as e:
                 db.session.rollback()
