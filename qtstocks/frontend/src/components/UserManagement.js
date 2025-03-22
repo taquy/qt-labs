@@ -38,6 +38,7 @@ const UserManagement = () => {
     features: []
   });
   const [loadingStates, setLoadingStates] = useState({});
+  const [showError, setShowError] = useState(false);
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
   const { users, error } = useSelector(state => state.user);
@@ -46,22 +47,28 @@ const UserManagement = () => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
+  useEffect(() => {
+    if (error) {
+      setShowError(true);
+      const timer = setTimeout(() => {
+        setShowError(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   const handleOpenDialog = (user = null) => {
     if (user) {
       setSelectedUser(user);
       setFormData({
-        username: user.username,
+        name: user.username,
         email: user.email,
-        is_admin: user.is_admin || false,
-        features: user.features || []
       });
     } else {
       setSelectedUser(null);
       setFormData({
-        username: '',
+        name: '',
         email: '',
-        is_admin: false,
-        features: []
       });
     }
     setOpenDialog(true);
@@ -71,10 +78,8 @@ const UserManagement = () => {
     setOpenDialog(false);
     setSelectedUser(null);
     setFormData({
-      username: '',
+      name: '',
       email: '',
-      is_admin: false,
-      features: []
     });
   };
 
@@ -111,8 +116,6 @@ const UserManagement = () => {
 
   const getFeatureChipColor = (feature) => {
     const colors = {
-      'admin': 'primary',
-      'active': 'secondary',
       'google': 'info',
     };
     return colors[feature] || 'default';
@@ -125,12 +128,6 @@ const UserManagement = () => {
 
   const getUserFeatures = (user) => {
     const features = [];
-    if (user.is_admin) {
-      features.push('admin');
-    }
-    if (user.is_active) {
-      features.push('active');
-    }
     if (user.is_google_user) {
       features.push('google');
     }
@@ -153,7 +150,7 @@ const UserManagement = () => {
         </Button>
       </Box>
 
-      {error && (
+      {showError && error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
