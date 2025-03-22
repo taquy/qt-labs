@@ -333,23 +333,23 @@ def init_stock_routes(app, token_required, stocks_ns):
                     elements.append(table)
                     elements.append(Spacer(1, 20))
                 
-                # Create bar charts with larger text and better styling
+                # Create bar charts with clean styling
                 plt.rcParams.update({
-                    'font.size': 16,
-                    'axes.titlesize': 20,
-                    'axes.labelsize': 16,
-                    'xtick.labelsize': 14,
-                    'ytick.labelsize': 14,
+                    'font.size': 10,
+                    'axes.titlesize': 14,
+                    'axes.labelsize': 12,
+                    'xtick.labelsize': 10,
+                    'ytick.labelsize': 10,
                     'figure.facecolor': 'white',
                     'axes.facecolor': 'white',
                     'axes.grid': True,
                     'grid.color': '#E0E0E0',
                     'grid.linestyle': '--',
-                    'grid.alpha': 0.7
+                    'grid.alpha': 0.5
                 })
 
                 # Define a color palette for charts
-                chart_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD']
+                chart_colors = ['#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#FF6B6B']
 
                 # Define chart configurations
                 chart_configs = [
@@ -388,56 +388,41 @@ def init_stock_routes(app, token_required, stocks_ns):
                 # Create charts
                 charts = []
                 for i, config in enumerate(chart_configs):
-                    fig = plt.figure(figsize=(12, 7))
-                    ax = fig.add_subplot(111, projection='3d')
+                    # Create figure with standard size
+                    fig, ax = plt.subplots(figsize=(10, 6))
                     
-                    # Create 3D bars
+                    # Create bars
                     x = np.arange(len([stock.symbol for stock, _ in stocks_with_stats]))
-                    y = np.ones_like(x)
-                    z = config['data']
+                    bars = ax.bar(x, config['data'],
+                                color=chart_colors[i % len(chart_colors)],
+                                alpha=0.7)
                     
-                    dx = dy = 0.8
-                    bars = ax.bar3d(x, y, np.zeros_like(z), dx, dy, z,
-                                  color=chart_colors[i % len(chart_colors)],
-                                  alpha=0.8,
-                                  edgecolor='white',
-                                  linewidth=1.5)
-                    
-                    # Customize the 3D view
-                    ax.view_init(elev=20, azim=45)
-                    
-                    # Set labels and title
-                    ax.set_title(config['title'], pad=20, fontweight='bold')
+                    # Customize the chart
+                    ax.set_title(config['title'], pad=10)
                     ax.set_xlabel('')
-                    ax.set_ylabel('')
-                    ax.set_zlabel(config['ylabel'], fontweight='bold')
+                    ax.set_ylabel(config['ylabel'])
                     
                     # Set x-axis ticks
                     ax.set_xticks(x)
                     ax.set_xticklabels([stock.symbol for stock, _ in stocks_with_stats], rotation=45, ha='right')
                     
                     # Add value labels on top of bars
-                    for j, height in enumerate(z):
-                        ax.text(x[j] + dx/2,
-                               1 + dy/2,
+                    for bar in bars:
+                        height = bar.get_height()
+                        ax.text(bar.get_x() + bar.get_width()/2.,
                                height + 0.1,
                                config['format'].format(height),
                                ha='center', va='bottom',
-                               fontsize=12,
-                               fontweight='bold',
-                               color='#2C3E50')
+                               fontsize=9)
                     
-                    # Add subtle background color
-                    ax.set_facecolor('#F8F9FA')
-                    
-                    # Adjust layout to prevent label cutoff
+                    # Adjust layout
                     plt.tight_layout()
                     
-                    # Add padding around the plot
-                    plt.subplots_adjust(top=0.9, bottom=0.15, left=0.1, right=0.95)
-                    
                     chart_buffer = io.BytesIO()
-                    plt.savefig(chart_buffer, format='png', dpi=300, bbox_inches='tight')
+                    plt.savefig(chart_buffer, 
+                              format='png', 
+                              dpi=100,  # Standard DPI
+                              bbox_inches='tight')
                     plt.close()
                     chart_buffer.seek(0)
                     charts.append((chart_buffer, config['title']))
@@ -455,7 +440,7 @@ def init_stock_routes(app, token_required, stocks_ns):
                 template = PageTemplate(id='centered', frames=[frame])
                 doc.addPageTemplates([template])
 
-                # Add page break before first chart to ensure it starts on a new page
+                # Add page break before first chart
                 elements.append(PageBreak())
 
                 # Add charts to PDF (1 per page)
@@ -463,14 +448,13 @@ def init_stock_routes(app, token_required, stocks_ns):
                     if i > 0:  # Add page break before each chart except the first one
                         elements.append(PageBreak())
                     elements.append(Paragraph(title, centered_heading_style))
-                    elements.append(Spacer(1, 5))  # Reduced space between title and chart
+                    elements.append(Spacer(1, 5))
                     
-                    # Calculate center position for the chart
+                    # Add chart with standard size
                     img = Image(chart_data, width=7*inch, height=4*inch)
-                    # Add spacer before chart to center it vertically
-                    elements.append(Spacer(1, 2*inch))  # Add space to push chart down
+                    elements.append(Spacer(1, 1*inch))  # Reduced spacing
                     elements.append(img)
-                    elements.append(Spacer(1, 2*inch))  # Add space after chart to maintain vertical centering
+                    elements.append(Spacer(1, 1*inch))  # Reduced spacing
 
                 # Build PDF
                 doc.build(elements)
