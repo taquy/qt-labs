@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 import random
 from faker import Faker
 import sys
-sys.path.append('..')
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models import User, db
 from app import create_app
 

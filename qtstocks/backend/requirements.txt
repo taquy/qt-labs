@@ -11,5 +11,7 @@ requests==2.31.0
 beautifulsoup4==4.12.3
 selenium==4.18.1
 python-dotenv==1.0.1
-faker==22.6.0
-gunicorn==21.2.0 
+faker==22.6.0 
+sqlalchemy==2.0.27
+psycopg2-binary==2.9.9
+PyJWT==2.8.0
