@@ -10,6 +10,7 @@ import secrets
 from flask_restx import Resource, fields
 from google.auth.exceptions import InvalidValue
 from werkzeug.security import generate_password_hash
+
 def init_auth_routes(app, auth_ns):
     # Define models for Swagger documentation
     login_model = auth_ns.model('Login', {
@@ -26,6 +27,47 @@ def init_auth_routes(app, auth_ns):
     google_login_model = auth_ns.model('GoogleLogin', {
         'token': fields.String(required=True, description='Google ID token')
     })
+
+    def token_required(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            token = request.headers.get('Authorization')
+            if not token or not token.startswith('Bearer '):
+                auth_ns.abort(401, "Missing or invalid token format")
+            
+            token = token.split(' ')[1]
+            try:
+                # Check if token exists and is valid in database
+                user_jwt = UserJWT.query.filter_by(token=token).first()
+                if not user_jwt or not user_jwt.is_active or user_jwt.expires_at < datetime.utcnow():
+                    if user_jwt:
+                        db.session.delete(user_jwt)
+                        db.session.commit()
+                    auth_ns.abort(401, "Invalid or expired token")
+                
+                # Verify token signature
+                data = PyJWT.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
+                current_user = User.query.get(data['user_id'])
+                if not current_user:
+                    db.session.delete(user_jwt)
+                    db.session.commit()
+                    auth_ns.abort(401, "User not found")
+                
+                kwargs['current_user'] = current_user
+                return f(*args, **kwargs)
+                
+            except PyJWT.ExpiredSignatureError:
+                if user_jwt:
+                    db.session.delete(user_jwt)
+                    db.session.commit()
+                auth_ns.abort(401, "Token has expired")
+            except PyJWT.InvalidTokenError:
+                if user_jwt:
+                    db.session.delete(user_jwt)
+                    db.session.commit()
+                auth_ns.abort(401, "Invalid token")
+        
+        return decorated
 
     @auth_ns.route('/login')
     class Login(Resource):
@@ -185,45 +227,12 @@ def init_auth_routes(app, auth_ns):
             
             return {'message': 'Logged out successfully'}
 
-    def token_required(f):
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            token = request.headers.get('Authorization')
-            if not token or not token.startswith('Bearer '):
-                auth_ns.abort(401, "Missing or invalid token format")
-            
-            token = token.split(' ')[1]
-            try:
-                # Check if token exists and is valid in database
-                user_jwt = UserJWT.query.filter_by(token=token).first()
-                if not user_jwt or not user_jwt.is_active or user_jwt.expires_at < datetime.utcnow():
-                    if user_jwt:
-                        db.session.delete(user_jwt)
-                        db.session.commit()
-                    auth_ns.abort(401, "Invalid or expired token")
-                
-                # Verify token signature
-                data = PyJWT.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
-                current_user = User.query.get(data['user_id'])
-                if not current_user:
-                    db.session.delete(user_jwt)
-                    db.session.commit()
-                    auth_ns.abort(401, "User not found")
-                
-                kwargs['current_user'] = current_user
-                return f(*args, **kwargs)
-                
-            except PyJWT.ExpiredSignatureError:
-                if user_jwt:
-                    db.session.delete(user_jwt)
-                    db.session.commit()
-                auth_ns.abort(401, "Token has expired")
-            except PyJWT.InvalidTokenError:
-                if user_jwt:
-                    db.session.delete(user_jwt)
-                    db.session.commit()
-                auth_ns.abort(401, "Invalid token")
-        
-        return decorated
+    @auth_ns.route('/me')
+    class CurrentUser(Resource):
+        @auth_ns.doc('get_current_user', security='Bearer')
+        @token_required
+        def get(self, current_user):
+            """Get current user information"""
+            return current_user.to_dict()
 
     return token_required 

@@ -1,15 +1,26 @@
 import * as effects from 'redux-saga/effects';
-import { setIsLoggedIn, setAuthToken, setCheckingLogin, setError } from '../slices/auth';
+import { setIsLoggedIn, setAuthToken, setCheckingLogin, setError, setUserInfo } from '../slices/auth';
 import { handleApiError } from '../utils';
 import axios from 'axios';
 import {
   LOGOUT,
   LOGIN,
   GOOGLE_LOGIN,
-  CHECK_IS_LOGGED_IN
+  CHECK_IS_LOGGED_IN,
+  GET_USER_INFO
 } from '../actions/auth';
 
 import api from '../apis/auth';
+
+function* getUserInfoSaga() {
+  try {
+    const response = yield effects.call(api.getUserInfo);
+    yield effects.put(setUserInfo(response));
+  } catch (error) {
+    yield effects.put(setError('Failed to get user info'));
+    yield effects.call(handleApiError, error, 'getUserInfoSaga');
+  }
+}
 
 function* checkIsLoggedInSaga() {
   const isLoggedIn = localStorage.getItem('isLoggedIn');
@@ -68,4 +79,5 @@ export function* authSaga() {
   yield effects.takeLatest(LOGIN, loginSaga);
   yield effects.takeLatest(GOOGLE_LOGIN, googleLoginSaga);
   yield effects.takeLatest(CHECK_IS_LOGGED_IN, checkIsLoggedInSaga);
+  yield effects.takeLatest(GET_USER_INFO, getUserInfoSaga);
 }

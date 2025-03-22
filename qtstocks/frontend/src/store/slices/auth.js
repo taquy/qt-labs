@@ -4,6 +4,7 @@ const initialState = {
   isLoggedIn: false,
   authToken: null,
   checkingLogin: true,
+  userInfo: null,
   ...sharedInitialState,
 };
 
@@ -22,6 +23,9 @@ const authSlice = createSlice({
     setCheckingLogin: (state, action) => {
       state.checkingLogin = action.payload;
     },
+    setUserInfo: (state, action) => {
+      state.userInfo = action.payload;
+    },
     ...sharedReducer,
   }
 });
@@ -30,6 +34,7 @@ export const {
   setIsLoggedIn,
   setAuthToken,
   setCheckingLogin,
+  setUserInfo,
   setError,
   setLoading,
   clearError,

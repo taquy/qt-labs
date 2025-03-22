@@ -43,8 +43,7 @@ import { SettingsTypes } from '../store/slices/settings';
 const barLabelPlugin = {
   id: 'barLabel',
   afterDatasetsDraw(chart, args) {
-    const { ctx, data, scales } = chart;
-    const { x, y } = scales;
+    const { ctx, data } = chart;
 
     data.datasets.forEach((dataset, datasetIndex) => {
       const meta = chart.getDatasetMeta(datasetIndex);

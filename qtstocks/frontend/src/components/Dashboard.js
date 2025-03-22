@@ -23,15 +23,19 @@ import {
   Assessment as AssessmentIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  People as PeopleIcon
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import StockSelector from './StockSelector';
 import StockGraph from './StockGraph';
 import StockTable from './StockTable';
+import UserManagement from './UserManagement';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/actions/auth';
+import { getUserInfo } from '../store/actions/auth';
+
 
 // Configure axios to include credentials
 axios.defaults.withCredentials = true;
@@ -40,7 +44,7 @@ axios.defaults.headers.common['Content-Type'] = 'application/json';
 const drawerWidth = 240;
 
 const Dashboard = () => {
-  const { error, isLoggedIn, user } = useSelector(state => state.auth);
+  const { error, isLoggedIn, userInfo } = useSelector(state => state.auth);
   const { stats } = useSelector(state => state.stocks);
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -48,6 +52,10 @@ const Dashboard = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeView, setActiveView] = useState('analysis');
+
+  useEffect(() => {
+    dispatch(getUserInfo());
+  }, [dispatch]);
 
   useEffect(() => {
     if (!isLoggedIn) navigate('/login');
@@ -90,6 +98,18 @@ const Dashboard = () => {
           </ListItemIcon>
           <ListItemText primary="Stock Analysis" />
         </ListItem>
+        {userInfo?.is_admin && (
+          <ListItem 
+            button="true"
+            selected={activeView === 'users'}
+            onClick={() => setActiveView('users')}
+          >
+            <ListItemIcon>
+              <PeopleIcon />
+            </ListItemIcon>
+            <ListItemText primary="User Management" />
+          </ListItem>
+        )}
         <ListItem 
           button="true"
           selected={activeView === 'settings'}
@@ -108,8 +128,8 @@ const Dashboard = () => {
             <PersonIcon />
           </ListItemIcon>
           <ListItemText 
-            primary={user?.email || 'User'} 
-            secondary="Administrator"
+            primary={userInfo?.email || 'User'} 
+            secondary={userInfo?.is_admin ? 'Administrator' : 'User'}
           />
         </ListItem>
         <ListItem 
@@ -156,10 +176,12 @@ const Dashboard = () => {
         return (
           <>
             <StockSelector />
-            <StockTable />
             <StockGraph />
+            <StockTable />
           </>
         );
+      case 'users':
+        return <UserManagement />;
       case 'settings':
         return (
           <Grid container spacing={3}>

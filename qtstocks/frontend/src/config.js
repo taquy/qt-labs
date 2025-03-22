@@ -5,6 +5,7 @@ const API_AUTH_ENDPOINTS = {
     googleLogin: `${API_BASE_URL}/auth/login/google`,
     register: `${API_BASE_URL}/auth/register`,
     logout: `${API_BASE_URL}/auth/logout`,
+    getUserInfo: `${API_BASE_URL}/auth/me`,
 }
 
 const API_SETTINGS_ENDPOINTS = {
