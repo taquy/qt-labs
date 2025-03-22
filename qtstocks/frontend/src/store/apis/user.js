@@ -4,7 +4,7 @@ import { getRequestConfig } from '../utils';
 
 const api = {
   fetchUsers: async () => {
-    const response = await axios.get(API_USER_ENDPOINTS.fetchUsers, getRequestConfig());
+    const response = await axios.get(API_USER_ENDPOINTS.users, getRequestConfig());
     return response.data;
   },
   createUser: async (user) => {

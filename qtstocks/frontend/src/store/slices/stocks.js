@@ -60,7 +60,7 @@ const initialState = {
   },
 };
 
-const stockGraphSlice = createSlice({
+const stocksSlice = createSlice({
   name: 'stocks',
   initialState,
   reducers: {
@@ -122,8 +122,8 @@ export const {
   removeStats,
   setStocksQuery,
   getStocksQuery,
-} = stockGraphSlice.actions;
+} = stocksSlice.actions;
 
-export default stockGraphSlice.reducer;
+export default stocksSlice.reducer;
 
 export { LoaderActions, MessageActions, ErrorActions };

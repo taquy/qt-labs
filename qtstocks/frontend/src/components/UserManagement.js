@@ -92,10 +92,9 @@ const UserManagement = () => {
 
   const getFeatureChipColor = (feature) => {
     const colors = {
-      'stock_analysis': 'primary',
-      'user_management': 'secondary',
-      'settings': 'info',
-      'export': 'success'
+      'admin': 'primary',
+      'active': 'secondary',
+      'google': 'info',
     };
     return colors[feature] || 'default';
   };
@@ -103,6 +102,21 @@ const UserManagement = () => {
   const formatLastLogin = (lastLogin) => {
     if (!lastLogin) return 'Never';
     return new Date(lastLogin).toLocaleString();
+  };
+
+  const getUserFeatures = (user) => {
+    const features = [];
+    if (user.is_admin) {
+      features.push('admin');
+    }
+    if (user.is_active) {
+      features.push('active');
+    }
+    if (user.is_google_user) {
+      features.push('google');
+    }
+    features.sort((a, b) => a.localeCompare(b));
+    return features;
   };
 
   return (
@@ -134,11 +148,11 @@ const UserManagement = () => {
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell>{user.username}</TableCell>
+                <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                    {(user.features || []).map((feature) => (
+                    {getUserFeatures(user).map((feature) => (
                       <Chip
                         key={feature}
                         label={feature.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}

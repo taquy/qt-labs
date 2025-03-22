@@ -25,4 +25,11 @@ const API_STOCK_ENDPOINTS = {
     exchanges: `${API_BASE_URL}/stocks/exchanges`,
 };
 
-export { API_AUTH_ENDPOINTS, API_SETTINGS_ENDPOINTS, API_STOCK_ENDPOINTS };
+const API_USER_ENDPOINTS = {
+    users: `${API_BASE_URL}/users`,
+    createUser: `${API_BASE_URL}/users`,
+    updateUser: `${API_BASE_URL}/users`,
+    deleteUser: `${API_BASE_URL}/users`,
+}
+
+export { API_AUTH_ENDPOINTS, API_SETTINGS_ENDPOINTS, API_STOCK_ENDPOINTS, API_USER_ENDPOINTS };
