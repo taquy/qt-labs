@@ -23,5 +23,9 @@ const api = {
     const response = await axios.post(API_USER_ENDPOINTS.toggleActive(userId), {}, getRequestConfig());
     return response.data;
   },
+  toggleAdmin: async (userId) => {
+    const response = await axios.post(`${API_USER_ENDPOINTS.toggleAdmin(userId)}`, {}, getRequestConfig());
+    return response.data;
+  },
 };
 export default api;

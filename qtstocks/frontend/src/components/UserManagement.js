@@ -26,7 +26,7 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUsers, updateUser, createUser, deleteUser, toggleActive } from '../store/actions/user';
+import { fetchUsers, updateUser, createUser, deleteUser, toggleActive, toggleAdmin } from '../store/actions/user';
 
 const UserManagement = () => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -92,11 +92,20 @@ const UserManagement = () => {
   };
 
   const handleToggleActive = async (userId) => {
-    setLoadingStates(prev => ({ ...prev, [userId]: true }));
+    setLoadingStates(prev => ({ ...prev, [`active_${userId}`]: true }));
     try {
       await dispatch(toggleActive(userId));
     } finally {
-      setLoadingStates(prev => ({ ...prev, [userId]: false }));
+      setLoadingStates(prev => ({ ...prev, [`active_${userId}`]: false }));
+    }
+  };
+
+  const handleToggleAdmin = async (userId) => {
+    setLoadingStates(prev => ({ ...prev, [`admin_${userId}`]: true }));
+    try {
+      await dispatch(toggleAdmin(userId));
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [`admin_${userId}`]: false }));
     }
   };
 
@@ -159,6 +168,7 @@ const UserManagement = () => {
               <TableCell>Features</TableCell>
               <TableCell>Last Login</TableCell>
               <TableCell>Active</TableCell>
+              <TableCell>Admin</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -181,24 +191,66 @@ const UserManagement = () => {
                 </TableCell>
                 <TableCell>{formatLastLogin(user.last_login)}</TableCell>
                 <TableCell>
-                  <Checkbox
-                    checked={user.is_active}
-                    onChange={() => handleToggleActive(user.id)}
-                    disabled={loadingStates[user.id] || user.id === currentUser?.id}
-                    color="primary"
-                  />
-                  {loadingStates[user.id] && (
-                    <CircularProgress
-                      size={20}
-                      sx={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        marginTop: '-10px',
-                        marginLeft: '-10px',
-                      }}
-                    />
-                  )}
+                  <Stack direction="row" spacing={2}>
+                    <Box sx={{ position: 'relative' }}>
+                      <Checkbox
+                        checked={user.is_active}
+                        onChange={() => handleToggleActive(user.id)}
+                        disabled={loadingStates[`active_${user.id}`] || user.id === currentUser?.id}
+                        color="primary"
+                      />
+                      {loadingStates[`active_${user.id}`] && (
+                        <CircularProgress
+                          size={20}
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            marginTop: '-10px',
+                            marginLeft: '-10px',
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={2}>
+                    <Box sx={{ position: 'relative' }}>
+                      <Box sx={{ position: 'relative' }}>
+                        <Checkbox
+                          checked={user.is_admin}
+                          onChange={() => handleToggleAdmin(user.id)}
+                          disabled={loadingStates[`admin_${user.id}`] || user.id === currentUser?.id}
+                          color="secondary"
+                        />
+                        {loadingStates[`admin_${user.id}`] && (
+                          <CircularProgress
+                            size={20}
+                            sx={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              marginTop: '-10px',
+                              marginLeft: '-10px',
+                            }}
+                          />
+                        )}
+                      </Box>
+                      {loadingStates[`admin_${user.id}`] && (
+                        <CircularProgress
+                          size={20}
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            marginTop: '-10px',
+                            marginLeft: '-10px',
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </Stack>
                 </TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={1}>

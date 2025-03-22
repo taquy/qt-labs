@@ -113,7 +113,7 @@ def init_user_routes(app, token_required, users_ns):
             user = User.query.get_or_404(user_id)
             
             try:
-                user.set_admin_status(not user.is_admin, current_user)
+                user.toggle_admin_status(current_user)
                 db.session.commit()
                 return user
             except ValueError as e:
@@ -131,7 +131,7 @@ def init_user_routes(app, token_required, users_ns):
             user = User.query.get_or_404(user_id)
             
             try:
-                user.set_active_status(not user.is_active, current_user)
+                user.toggle_active_status(current_user)
                 db.session.commit()
                 return user
             except ValueError as e:

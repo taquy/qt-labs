@@ -1,7 +1,7 @@
 import * as effects from 'redux-saga/effects';
 import api from '../apis/user';
 import { setUsers, setError } from '../slices/user';
-import { FETCH_USERS, CREATE_USER, UPDATE_USER, DELETE_USER, TOGGLE_ACTIVE } from '../actions/user';
+import { FETCH_USERS, CREATE_USER, UPDATE_USER, DELETE_USER, TOGGLE_ACTIVE, TOGGLE_ADMIN } from '../actions/user';
 
 function* fetchUsersSaga() {
   try {
@@ -60,10 +60,26 @@ function* toggleActiveSaga(action) {
   }
 }
 
+function* toggleAdminSaga(action) {
+  try {
+    // First toggle the admin status
+    const response = yield effects.call(api.toggleAdmin, action.userId);
+    // Then fetch the updated users list
+    const usersResponse = yield effects.call(api.fetchUsers);
+    const users = Array.isArray(usersResponse) ? usersResponse : [];
+    yield effects.put(setUsers(users));
+  } catch (error) {
+    // Handle the error message from the API response
+    const errorMessage = error.response?.data?.message || error.message;
+    yield effects.put(setError(errorMessage));
+  }
+}
+
 export function* userSaga() {
   yield effects.takeLatest(FETCH_USERS, fetchUsersSaga);
   yield effects.takeLatest(CREATE_USER, createUserSaga);
   yield effects.takeLatest(UPDATE_USER, updateUserSaga);
   yield effects.takeLatest(DELETE_USER, deleteUserSaga);
   yield effects.takeLatest(TOGGLE_ACTIVE, toggleActiveSaga);
+  yield effects.takeLatest(TOGGLE_ADMIN, toggleAdminSaga);
 }

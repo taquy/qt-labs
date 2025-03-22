@@ -52,6 +52,22 @@ class User(UserMixin, db.Model):
             raise ValueError("Cannot modify your own active status")
         self.is_active = is_active
 
+    def toggle_admin_status(self, admin_user):
+        """Toggle admin status with authorization check"""
+        if not admin_user.is_admin:
+            raise ValueError("Only admin users can modify admin status")
+        if self.id == admin_user.id:
+            raise ValueError("Cannot modify your own admin status")
+        self.is_admin = not self.is_admin
+
+    def toggle_active_status(self, admin_user):
+        """Toggle active status with authorization check"""
+        if not admin_user.is_admin:
+            raise ValueError("Only admin users can modify active status")
+        if self.id == admin_user.id:
+            raise ValueError("Cannot modify your own active status")
+        self.is_active = not self.is_active
+
     def to_dict(self):
         return {
             'id': self.id,
