@@ -10,6 +10,10 @@ const api = {
     });
     return response.data;
   },
+  fetchUser: async (userId) => {
+    const response = await axios.get(`${API_USER_ENDPOINTS.users}/${userId}`);
+    return response.data;
+  },
   createUser: async (user) => {
     const response = await axios.post(API_USER_ENDPOINTS.createUser, user, getRequestConfig());
     return response.data;

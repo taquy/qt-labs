@@ -82,18 +82,18 @@ const userSlice = createSlice({
       })
       .addCase(TOGGLE_ACTIVE, (state, action) => {
         if (action.payload && action.payload.id) {
-          const user = state.users.find(user => user.id === action.payload.id);
-          if (user) {
-            user.is_active = !user.is_active;
+          const index = state.users.findIndex(user => user.id === action.payload.id);
+          if (index !== -1) {
+            state.users[index] = action.payload;
           }
         }
         state.error = null;
       })
       .addCase(TOGGLE_ADMIN, (state, action) => {
         if (action.payload && action.payload.id) {
-          const user = state.users.find(user => user.id === action.payload.id);
-          if (user) {
-            user.is_admin = !user.is_admin;
+          const index = state.users.findIndex(user => user.id === action.payload.id);
+          if (index !== -1) {
+            state.users[index] = action.payload;
           }
         }
         state.error = null;

@@ -78,11 +78,13 @@ function* deleteUserSaga(action) {
 function* toggleActiveSaga(action) {
   try {
     // First toggle the active status
-    yield effects.call(api.toggleActive, action.userId);
-    // Then fetch the updated users list
-    const usersResponse = yield effects.call(api.fetchUsers, 1, 20);
-    const users = Array.isArray(usersResponse.items) ? usersResponse.items : [];
-    yield effects.put(setUsers(users));
+    yield effects.call(api.toggleActive, action.payload.id);
+    // Then fetch only the updated user
+    const updatedUser = yield effects.call(api.fetchUser, action.payload.id);
+    yield effects.put({ 
+      type: TOGGLE_ACTIVE, 
+      payload: updatedUser 
+    });
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
     yield effects.put(setError(errorMessage));
@@ -92,11 +94,13 @@ function* toggleActiveSaga(action) {
 function* toggleAdminSaga(action) {
   try {
     // First toggle the admin status
-    yield effects.call(api.toggleAdmin, action.userId);
-    // Then fetch the updated users list
-    const usersResponse = yield effects.call(api.fetchUsers, 1, 20);
-    const users = Array.isArray(usersResponse.items) ? usersResponse.items : [];
-    yield effects.put(setUsers(users));
+    yield effects.call(api.toggleAdmin, action.payload.id);
+    // Then fetch only the updated user
+    const updatedUser = yield effects.call(api.fetchUser, action.payload.id);
+    yield effects.put({ 
+      type: TOGGLE_ADMIN, 
+      payload: updatedUser 
+    });
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
     yield effects.put(setError(errorMessage));
