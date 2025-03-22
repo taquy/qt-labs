@@ -11,7 +11,9 @@ import {
   LoaderActions,
   MessageActions,
   ErrorActions,
-  setMessages
+  setMessages,
+  setStocksQuery,
+  getStocksQuery
 } from '../slices/stocks';
 
 import { handleApiError } from '../utils';
@@ -24,11 +26,21 @@ import {
   EXPORT_STOCK_DATA,
   EXPORT_GRAPH_PDF,
   PULL_STOCK_LIST,
-  FETCH_EXCHANGES
+  FETCH_EXCHANGES,
+  SET_MESSAGE,
+  SET_STOCKS_QUERY
 } from '../actions/stocks';
 
 import api from '../apis/stocks';
 // Sagas
+function* setStocksQuerySaga(action) {
+  yield effects.put(setStocksQuery(action.payload));
+}
+
+function* setMessagesSaga(action) {
+  yield effects.put(setMessages(action.payload));
+}
+
 function* fetchExchangesSaga() {
   try {
     const response = yield effects.call(api.fetchExchanges);
@@ -144,15 +156,17 @@ function* pullStockStatsSaga(action) {
   }
 }
 
-function* fetchStocksSaga(action) {
+function* fetchStocksSaga() {
   try {
     yield effects.put(clearError({
       action: ErrorActions.STOCK_SELECTOR,
     }));
-    action.payload.exchanges = action.payload.exchanges.join(',');
+    const state_query = yield effects.select(getStocksQuery);
+    const query = {...state_query.payload.stocks.stocks_query};
     yield effects.put(setLoader({ action: LoaderActions.FETCH_STOCKS, value: true }));
-    const results = yield effects.call(api.fetchStocks, action.payload);
-    let refresh = action.payload.search.trim() !== "" || action.payload.page === 1;
+    query["exchanges"] = query["exchanges"].join(',');
+    const results = yield effects.call(api.fetchStocks, query);
+    let refresh = query.search.trim() !== "" || query.page === 1;
     refresh = refresh && results.items.length > 0;
     yield effects.put(setStocks({...results, refresh}));
     yield effects.call(fetchExchangesSaga);
@@ -197,4 +211,6 @@ export function* stocksSaga() {
   yield effects.takeLatest(EXPORT_GRAPH_PDF, exportGraphPdfSaga);
   yield effects.takeLatest(PULL_STOCK_LIST, pullStockListSaga);
   yield effects.takeLatest(FETCH_EXCHANGES, fetchExchangesSaga);
+  yield effects.takeLatest(SET_MESSAGE, setMessagesSaga);
+  yield effects.takeLatest(SET_STOCKS_QUERY, setStocksQuerySaga);
 }

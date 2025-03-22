@@ -33,6 +33,13 @@ const initialState = {
     current_page: 0,
     has_next: true,
   },
+  stocks_query: {
+    page: 1,
+    per_page: 20,
+    exchanges: [],
+    search: '',
+    refresh: false
+  },
   stats: [],
   metrics: METRICS,
   exportedCsv: null,
@@ -57,6 +64,12 @@ const stockGraphSlice = createSlice({
   name: 'stocks',
   initialState,
   reducers: {
+    setStocksQuery: (state, action) => {
+      state.stocks_query = action.payload;
+    },
+    getStocksQuery: (state) => {
+      return state.stocks_query;
+    },
     setStocks: (state, action) => {
       if (action.payload) {
         state.stocks.items = action.payload.refresh ? action.payload.items : [...state.stocks.items, ...action.payload.items];
@@ -107,6 +120,8 @@ export const {
   setExchanges,
   setMessages,
   removeStats,
+  setStocksQuery,
+  getStocksQuery,
 } = stockGraphSlice.actions;
 
 export default stockGraphSlice.reducer;

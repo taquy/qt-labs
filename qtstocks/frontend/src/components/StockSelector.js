@@ -19,7 +19,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { LoaderActions, ErrorActions, MessageActions } from '../store/slices/stocks';
 import { SettingsTypes } from '../store/slices/settings';
 import { saveSettings } from '../store/actions/settings';
-
+import { setMessage, setStocksQuery } from '../store/actions/stocks';
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [loadLatestData, setLoadLatestData] = useState(false);
@@ -33,20 +33,13 @@ const StockSelector = () => {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
   };
 
-  const [query, setQuery] = useState({
-    page: 1,
-    per_page: 20,
-    exchanges: [],
-    search: '',
-    refresh: false
-  });
-  
   const {
     stocks,
     loaders,
     exchanges,
     errors,
     messages,
+    stocks_query
   } = useSelector(state => state.stocks);
 
   const { settings } = useSelector(state => state.settings);
@@ -57,41 +50,50 @@ const StockSelector = () => {
 
   // Add debounced search effect
   useEffect(() => {
-    const notAllowFetch = query.search === '' && !forceFetchStocks && !firstLoad && !fetchNextPage;
+    if (!stocks_query) return;
+    const notAllowFetch = stocks_query.search === '' && !forceFetchStocks && !firstLoad && !fetchNextPage;
     if (notAllowFetch) return;
     const timer = setTimeout(() => {
       if (firstLoad || forceFetchStocks) {
-        dispatch(fetchStocks({ ...query, page: 1, refresh: true }));
+        dispatch(fetchStocks({ ...stocks_query, page: 1, refresh: true }));
       } else {
-        dispatch(fetchStocks({ ...query, refresh: false }));
+        dispatch(fetchStocks({ ...stocks_query, refresh: false }));
       }
       setForceFetchStocks(false);
       setFirstLoad(false);
       setFetchNextPage(false);
     }, 500);
     return () => clearTimeout(timer);
-  }, [query, dispatch, forceFetchStocks, stocks.current_page, firstLoad, fetchNextPage]);
+  }, [stocks_query, dispatch, forceFetchStocks, stocks.current_page, firstLoad, fetchNextPage]);
 
   useEffect(() => {
     if (firstLoad) return;
-    dispatch(saveSettings(SettingsTypes.STOCK_SELECTOR, { exchanges: query.exchanges, loadLatestData }));
-  }, [query.exchanges, loadLatestData, dispatch, firstLoad]);
+    dispatch(saveSettings(SettingsTypes.STOCK_SELECTOR, { exchanges: stocks_query.exchanges, loadLatestData }));
+  }, [stocks_query.exchanges, loadLatestData, dispatch, firstLoad]);
 
   useEffect(() => {
     if (settings && settings[SettingsTypes.STOCK_SELECTOR]) {
       const currentSettings = settings[SettingsTypes.STOCK_SELECTOR];
       setLoadLatestData(currentSettings.loadLatestData || false);
-      setQuery(prevQuery => ({ ...prevQuery, exchanges: currentSettings.exchanges || [], loadLatestData: currentSettings.loadLatestData || false }));
+      setStocksQuery(prevQuery => ({ ...prevQuery, exchanges: currentSettings.exchanges || [], loadLatestData: currentSettings.loadLatestData || false }));
     }
   }, [settings]);
+
+  useEffect(() => {
+    if (messages[MessageActions.PULL_STOCK_LIST]) {
+      setTimeout(() => {
+        dispatch(setMessage({ action: MessageActions.PULL_STOCK_LIST, message: "" }));
+      }, 3000);
+    }
+  }, [messages, dispatch]);
 
   const handleScroll = (event) => {
     const listbox = event.target;
     if (
-      query.page === stocks.current_page && stocks.has_next && !fetchNextPage &&
+      stocks_query.page === stocks.current_page && stocks.has_next && !fetchNextPage &&
       listbox.scrollTop + listbox.clientHeight >= listbox.scrollHeight - 10
     ) {
-      setQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
+      setStocksQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
       setFetchNextPage(true);
     }
   };
@@ -123,7 +125,7 @@ const StockSelector = () => {
   };
 
   const handleOnInputChange = (event, newInputValue) => {
-    setQuery(prevQuery => ({ ...prevQuery, search: newInputValue, refresh: true }));
+    setStocksQuery(prevQuery => ({ ...prevQuery, search: newInputValue, refresh: true }));
     if (!newInputValue.trim()) {
      setForceFetchStocks(true);     
     }
@@ -178,10 +180,10 @@ const StockSelector = () => {
                 <Box component="li" key={generateUniqueId()} {...otherProps}>
                   <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                     <Typography variant="body1">
-                      {highlightMatch(option.symbol, query.search)}
+                      {highlightMatch(option.symbol, stocks_query.search)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {highlightMatch(option.name + ' (' + option.exchange + ')', query.search)}
+                      {highlightMatch(option.name + ' (' + option.exchange + ')', stocks_query.search)}
                     </Typography>
                   </Box>
                 </Box>
@@ -286,10 +288,10 @@ const StockSelector = () => {
               key={exchange}
               control={
                 <Checkbox
-                  checked={query.exchanges.includes(exchange)}
+                  checked={stocks_query.exchanges.includes(exchange)}
                   onChange={(e) => {
-                    const newExchanges = e.target.checked ? [...query.exchanges, exchange] : query.exchanges.filter(ex => ex !== exchange);
-                    setQuery(prevQuery => ({ ...prevQuery, exchanges: newExchanges, page: 1 }));
+                    const newExchanges = e.target.checked ? [...stocks_query.exchanges, exchange] : stocks_query.exchanges.filter(ex => ex !== exchange);
+                    setStocksQuery(prevQuery => ({ ...prevQuery, exchanges: newExchanges, page: 1 }));
                     setForceFetchStocks(true);
                   }}
                   name={exchange}
