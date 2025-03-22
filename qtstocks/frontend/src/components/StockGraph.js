@@ -115,7 +115,6 @@ const StockGraph = () => {
     const selectedStocksData = stats.filter(stock =>
       selectedSymbols.includes(stock.symbol)
     )
-    console.log(selectedStocksData)
     if (selectedStocksData.length > 0) {
       setSelectedStocks(selectedStocksData);
     }
@@ -127,7 +126,7 @@ const StockGraph = () => {
       selectedSymbols,
       selectedMetric
      }));
-  } 
+  }
 
   const handleStockChange = (event, newValue) => {
     setSelectedStocks(newValue);

@@ -20,6 +20,6 @@ export const API_STOCK_ENDPOINTS = {
     pullStockStats: `${API_BASE_URL}/stocks/pull_stock_stats`,
     removeStats: `${API_BASE_URL}/stocks/remove_stats`,
     exportCsv: `${API_BASE_URL}/stocks/export`,
-    exportGraphPdf: `${API_BASE_URL}/export_graph_pdf`,
+    exportGraphPdf: `${API_BASE_URL}/stocks/export/pdf`,
     exchanges: `${API_BASE_URL}/stocks/exchanges`,
 };
