@@ -113,12 +113,14 @@ const StockGraph = () => {
     if (!currentSettings) return;
     const { selectedSymbols, selectedMetric } = currentSettings;
     const selectedStocksData = stats.filter(stock =>
-      selectedSymbols.includes(stock.symbol)
+      selectedSymbols ? selectedSymbols.includes(stock.symbol) : false
     )
     if (selectedStocksData.length > 0) {
       setSelectedStocks(selectedStocksData);
     }
-    setSelectedMetric(selectedMetric);
+    if (selectedMetric) { 
+      setSelectedMetric(selectedMetric);
+    }
   }, [settings, stats, dispatch]);
 
   const handleSaveSettings = (selectedSymbols, selectedMetric) => {
@@ -178,16 +180,6 @@ const StockGraph = () => {
       <Box sx={{ p: 3, textAlign: 'center' }}>
         <Typography variant="body1" color="error">
           {errors[ErrorActions.STOCK_GRAPH]}
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (!currentChartData || Object.keys(currentChartData).length === 0) {
-    return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant="body1" color="text.secondary">
-          No data available. Please select stocks to view their charts.
         </Typography>
       </Box>
     );
