@@ -255,17 +255,38 @@ def init_stock_routes(app, token_required, stocks_ns):
     @stocks_ns.route('/export/pdf')
     class StockPDFExport(Resource):
         @stocks_ns.doc('export_stocks_pdf', security='Bearer')
+        @stocks_ns.param('symbols', 'Comma-separated list of stock symbols to include in the report')
         @token_required
         def get(self, current_user):
             """Export stock data to PDF with charts"""
             try:
-                # Get all stocks with their stats
-                stocks = Stock.query.all()
+                # Get symbols from query parameter
+                symbols_param = request.args.get('symbols', '')
+                if not symbols_param:
+                    stocks_ns.abort(400, message="No symbols provided")
+                
+                symbols = [s.strip() for s in symbols_param.split(',') if s.strip()]
+                if not symbols:
+                    stocks_ns.abort(400, message="No valid symbols provided")
+                
+                # Get stocks with their stats for the specified symbols
+                user_stock_symbols = [stock.symbol for stock in current_user.stock_stats]
+                # Filter symbols to only include those in user's portfolio
+                symbols = [symbol for symbol in symbols if symbol in user_stock_symbols]
+                if not symbols:
+                    stocks_ns.abort(400, message="None of the provided symbols are in your portfolio")
+                
+                # Get stocks with their stats
                 stocks_with_stats = []
-                for stock in stocks:
-                    stats = StockStats.query.get(stock.symbol)
-                    if stats:
-                        stocks_with_stats.append((stock, stats))
+                for symbol in symbols:
+                    stock = Stock.query.get(symbol)
+                    if stock:
+                        stats = StockStats.query.get(symbol)
+                        if stats:
+                            stocks_with_stats.append((stock, stats))
+                
+                if not stocks_with_stats:
+                    stocks_ns.abort(404, message="No valid stocks found for the provided symbols")
                 
                 # Create PDF document
                 output = io.BytesIO()
@@ -352,44 +373,65 @@ def init_stock_routes(app, token_required, stocks_ns):
                 chart_colors = ['#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#FF6B6B']
 
                 # Define chart configurations
-                chart_configs = [
-                    {
-                        'data': [stats.price / 1000 for _, stats in stocks_with_stats],  # Convert to thousands
-                        'title': 'Stock Prices',
-                        'format': '{:,.2f}',
-                        'ylabel': 'Price (x1000 VND)'
-                    },
-                    {
-                        'data': [stats.market_cap / 1_000_000_000 for _, stats in stocks_with_stats],  # Convert to billions
-                        'title': 'Market Capitalization',
-                        'format': '{:,.2f}',
-                        'ylabel': 'Market Cap (Billion VND)'
-                    },
-                    {
-                        'data': [stats.eps / 1000 for _, stats in stocks_with_stats],  # Convert to thousands
-                        'title': 'Earnings Per Share (EPS)',
-                        'format': '{:,.2f}',
-                        'ylabel': 'EPS (x1000 VND)'
-                    },
-                    {
-                        'data': [stats.pe for _, stats in stocks_with_stats],
-                        'title': 'Price-to-Earnings Ratio (P/E)',
-                        'format': '{:,.2f}',
-                        'ylabel': 'P/E Ratio'
-                    },
-                    {
-                        'data': [stats.pb for _, stats in stocks_with_stats],
-                        'title': 'Price-to-Book Ratio (P/B)',
-                        'format': '{:,.2f}',
-                        'ylabel': 'P/B Ratio'
-                    }
-                ]
+                chart_configs = []
+                
+                # Only add charts if there's data to show
+                if stocks_with_stats:
+                    # Stock Price chart
+                    price_data = [stats.price if stats.price else 0 for _, stats in stocks_with_stats]
+                    if any(price_data):  # Only add if there's at least one non-zero value
+                        chart_configs.append({
+                            'data': price_data,
+                            'title': 'Stock Prices',
+                            'format': '{:,.2f}',
+                            'ylabel': 'Price (VND)'
+                        })
+                    
+                    # Market Cap chart
+                    market_cap_data = [stats.market_cap if stats.market_cap else 0 for _, stats in stocks_with_stats]
+                    if any(market_cap_data):
+                        chart_configs.append({
+                            'data': market_cap_data,
+                            'title': 'Market Capitalization',
+                            'format': '{:,.0f}',
+                            'ylabel': 'Market Cap (VND)'
+                        })
+                    
+                    # EPS chart
+                    eps_data = [stats.eps if stats.eps else 0 for _, stats in stocks_with_stats]
+                    if any(eps_data):
+                        chart_configs.append({
+                            'data': eps_data,
+                            'title': 'Earnings Per Share (EPS)',
+                            'format': '{:,.2f}',
+                            'ylabel': 'EPS (VND)'
+                        })
+                    
+                    # PE Ratio chart
+                    pe_data = [stats.pe if stats.pe else 0 for _, stats in stocks_with_stats]
+                    if any(pe_data):
+                        chart_configs.append({
+                            'data': pe_data,
+                            'title': 'Price-to-Earnings Ratio (P/E)',
+                            'format': '{:,.2f}',
+                            'ylabel': 'P/E Ratio'
+                        })
+                    
+                    # PB Ratio chart
+                    pb_data = [stats.pb if stats.pb else 0 for _, stats in stocks_with_stats]
+                    if any(pb_data):
+                        chart_configs.append({
+                            'data': pb_data,
+                            'title': 'Price-to-Book Ratio (P/B)',
+                            'format': '{:,.2f}',
+                            'ylabel': 'P/B Ratio'
+                        })
 
                 # Create charts
                 charts = []
                 for i, config in enumerate(chart_configs):
-                    # Create figure with standard size
-                    fig, ax = plt.subplots(figsize=(10, 6))
+                    # Create figure with reduced size
+                    fig, ax = plt.subplots(figsize=(8, 7.5))  # Increased height from 5 to 7.5
                     
                     # Create bars
                     x = np.arange(len([stock.symbol for stock, _ in stocks_with_stats]))
@@ -406,14 +448,38 @@ def init_stock_routes(app, token_required, stocks_ns):
                     ax.set_xticks(x)
                     ax.set_xticklabels([stock.symbol for stock, _ in stocks_with_stats], rotation=45, ha='right')
                     
-                    # Add value labels on top of bars
+                    # Add value labels inside bars
                     for bar in bars:
                         height = bar.get_height()
-                        ax.text(bar.get_x() + bar.get_width()/2.,
-                               height + 0.1,
-                               config['format'].format(height),
-                               ha='center', va='bottom',
-                               fontsize=9)
+                        if height > 0:  # Only add labels to bars with values
+                            text = config['format'].format(height)
+                            # Calculate text width in data coordinates
+                            text_width = len(text) * 0.1  # Approximate width based on character count
+                            bar_width = bar.get_width()
+                            
+                            # Position text in middle of bar
+                            x_pos = bar.get_x() + bar.get_width()/2.
+                            y_pos = height/2
+                            
+                            # If text is too wide for the bar, place it above
+                            if text_width > bar_width:
+                                y_pos = height + 5  # Position above bar
+                                va = 'bottom'
+                            else:
+                                va = 'center'
+                            
+                            # Add text with black border effect
+                            text_obj = ax.text(x_pos, y_pos, text,
+                                             ha='center', va=va,
+                                             fontsize=9,
+                                             color='white',
+                                             fontweight='bold')
+                            
+                            # Add black border effect
+                            text_obj.set_path_effects([
+                                path_effects.Stroke(linewidth=2, foreground='black'),
+                                path_effects.Normal()
+                            ])
                     
                     # Adjust layout
                     plt.tight_layout()
@@ -421,7 +487,7 @@ def init_stock_routes(app, token_required, stocks_ns):
                     chart_buffer = io.BytesIO()
                     plt.savefig(chart_buffer, 
                               format='png', 
-                              dpi=100,  # Standard DPI
+                              dpi=100,
                               bbox_inches='tight')
                     plt.close()
                     chart_buffer.seek(0)
@@ -450,8 +516,8 @@ def init_stock_routes(app, token_required, stocks_ns):
                     elements.append(Paragraph(title, centered_heading_style))
                     elements.append(Spacer(1, 5))
                     
-                    # Add chart with standard size
-                    img = Image(chart_data, width=7*inch, height=4*inch)
+                    # Add chart with increased height
+                    img = Image(chart_data, width=7*inch, height=6*inch)  # Increased height from 4 to 6
                     elements.append(Spacer(1, 1*inch))  # Reduced spacing
                     elements.append(img)
                     elements.append(Spacer(1, 1*inch))  # Reduced spacing
@@ -460,6 +526,7 @@ def init_stock_routes(app, token_required, stocks_ns):
                 doc.build(elements)
                 output.seek(0)
                 
+                # Return the PDF file
                 return send_file(
                     output,
                     mimetype='application/pdf',
