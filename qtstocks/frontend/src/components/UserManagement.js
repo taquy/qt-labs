@@ -247,8 +247,8 @@ const UserManagement = () => {
                   ),
                 }}
               >
-                <option value="stock_analysis">Stock Analysis</option>
-                <option value="user_management">User Management</option>
+                <option value="stocks">Stocks</option>
+                <option value="users">Users</option>
                 <option value="settings">Settings</option>
                 <option value="export">Export</option>
               </TextField>

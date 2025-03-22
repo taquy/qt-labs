@@ -180,8 +180,8 @@ const StockTable = () => {
   };
 
   return (
-    <Paper sx={{ p: 2, mt: 3, mb: 3 }}> 
-      <Box sx={{ width: '100%', mb: 3 }}>
+    <Paper sx={{ p: 2, mt: 0, mb: 3 }}> 
+      <Box sx={{ width: '100%' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h6">
             Selected Stocks
