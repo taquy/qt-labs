@@ -5,10 +5,10 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
+ENV PYTHONUNBUFFERED=1 \
     FLASK_APP=app.py \
-    FLASK_ENV=development
+    FLASK_ENV=production \
+    FLASK_DEBUG=0
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -29,7 +29,7 @@ COPY . .
 RUN mkdir -p logs
 
 # Expose port
-EXPOSE 5000
+EXPOSE 5555
 
-# Command to run the application
-CMD ["flask", "run", "--host=0.0.0.0"] 
+# Command to run the application with gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5555", "--workers", "4", "--timeout", "120", "app:app"] 

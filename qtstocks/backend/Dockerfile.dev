@@ -1,0 +1,45 @@
+# Use Python 3.10 slim image as base
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    FLASK_APP=app.py \
+    FLASK_ENV=development \
+    FLASK_DEBUG=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install debugpy for remote debugging
+RUN pip install --no-cache-dir debugpy
+
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install development dependencies
+RUN pip install --no-cache-dir watchdog[watchmedo] pytest pytest-cov
+
+# Copy the rest of the application
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p logs
+
+# Expose ports
+EXPOSE 5555
+EXPOSE 5678
+
+# Command to run the application with hot reload and debugger
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", "flask", "run", "--host=0.0.0.0", "--port=5555", "--reload"] 
