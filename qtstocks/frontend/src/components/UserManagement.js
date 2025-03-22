@@ -25,9 +25,9 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
+import { fetchUsers, updateUser, createUser, deleteUser } from '../store/actions/user';
+
 const UserManagement = () => {
-  const [users, setUsers] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -36,23 +36,13 @@ const UserManagement = () => {
     is_admin: false,
     features: []
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
-
+  const { users } = useSelector(state => state.user);
+  
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get('/api/users', { withCredentials: true });
-      setUsers(response.data);
-    } catch (err) {
-      setError('Failed to fetch users');
-    }
-  };
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
   const handleOpenDialog = (user = null) => {
     if (user) {
@@ -84,39 +74,20 @@ const UserManagement = () => {
       is_admin: false,
       features: []
     });
-    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
-    try {
       if (selectedUser) {
-        await axios.put(`/api/users/${selectedUser.id}`, formData, { withCredentials: true });
-        setSuccess('User updated successfully');
+        dispatch(updateUser(selectedUser.id, formData));
       } else {
-        await axios.post('/api/users', formData, { withCredentials: true });
-        setSuccess('User created successfully');
+        dispatch(createUser(formData));
       }
-      fetchUsers();
-      handleCloseDialog();
-    } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred');
-    }
   };
 
   const handleDelete = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        await axios.delete(`/api/users/${userId}`, { withCredentials: true });
-        setSuccess('User deleted successfully');
-        fetchUsers();
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to delete user');
-      }
-    }
+    dispatch(deleteUser(userId));
   };
 
   const getFeatureChipColor = (feature) => {
@@ -148,18 +119,6 @@ const UserManagement = () => {
           Add User
         </Button>
       </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {success}
-        </Alert>
-      )}
 
       <TableContainer>
         <Table>

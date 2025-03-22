@@ -7,6 +7,8 @@ import settingsReducer from './slices/settings';
 import { all } from 'redux-saga/effects';
 import { authSaga } from './sagas/auth';
 import { settingsSaga } from './sagas/settings';
+import userReducer from './slices/user';
+import { userSaga } from './sagas/user';
 
 const sagaMiddleware = createSagaMiddleware();
 
@@ -15,6 +17,7 @@ export const store = configureStore({
     stocks: stocksReducer,
     auth: authReducer,
     settings: settingsReducer,
+    user: userReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(sagaMiddleware)
@@ -26,6 +29,7 @@ function *rootSaga() {
     stocksSaga(),
     authSaga(),
     settingsSaga(),
+    userSaga(),
   ]);
 }
 

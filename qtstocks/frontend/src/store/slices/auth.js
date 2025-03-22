@@ -1,11 +1,12 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { sharedReducer, sharedInitialState } from './shared';
+
 const initialState = {
   isLoggedIn: false,
   authToken: null,
   checkingLogin: true,
   userInfo: null,
-  ...sharedInitialState,
+  loading: false,
+  error: null,
 };
 
 const authSlice = createSlice({
@@ -26,7 +27,15 @@ const authSlice = createSlice({
     setUserInfo: (state, action) => {
       state.userInfo = action.payload;
     },
-    ...sharedReducer,
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action) => {
+      state.error = action.payload;
+    },
+    clearError: (state) => {
+      state.error = null;
+    }
   }
 });
 
