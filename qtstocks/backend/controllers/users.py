@@ -31,6 +31,7 @@ def init_user_routes(app, token_required, users_ns):
         'email': fields.String(description='User email'),
         'name': fields.String(description='User name'),
         'is_admin': fields.Boolean(description='Admin status'),
+        'is_active': fields.Boolean(description='Active status'),
         'password': fields.String(description='New password')
     })
 
@@ -70,7 +71,15 @@ def init_user_routes(app, token_required, users_ns):
             if 'name' in data:
                 user.name = data['name']
             if 'is_admin' in data:
-                user.is_admin = data['is_admin']
+                try:
+                    user.set_admin_status(data['is_admin'], current_user)
+                except ValueError as e:
+                    users_ns.abort(400, str(e))
+            if 'is_active' in data:
+                try:
+                    user.set_active_status(data['is_active'], current_user)
+                except ValueError as e:
+                    users_ns.abort(400, str(e))
             if 'password' in data:
                 user.set_password(data['password'])
 
@@ -103,10 +112,27 @@ def init_user_routes(app, token_required, users_ns):
             """Toggle admin status for a user"""
             user = User.query.get_or_404(user_id)
             
-            # Prevent admin from toggling their own admin status
-            if user.id == current_user.id:
-                users_ns.abort(400, "Cannot modify your own admin status")
-                
-            user.is_admin = not user.is_admin
-            db.session.commit()
-            return user 
+            try:
+                user.set_admin_status(not user.is_admin, current_user)
+                db.session.commit()
+                return user
+            except ValueError as e:
+                users_ns.abort(400, str(e))
+
+    @users_ns.route('/<int:user_id>/toggle_active')
+    @users_ns.param('user_id', 'The user identifier')
+    class UserToggleActive(Resource):
+        @users_ns.doc('toggle_active', security='Bearer')
+        @users_ns.marshal_with(user_model)
+        @token_required
+        @admin_required
+        def post(self, current_user, user_id):
+            """Toggle active status for a user"""
+            user = User.query.get_or_404(user_id)
+            
+            try:
+                user.set_active_status(not user.is_active, current_user)
+                db.session.commit()
+                return user
+            except ValueError as e:
+                users_ns.abort(400, str(e)) 

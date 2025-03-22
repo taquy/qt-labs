@@ -13,7 +13,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     google_id = db.Column(db.String(100), unique=True)
     is_admin = db.Column(db.Boolean, default=False)
-    is_active = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login = db.Column(db.DateTime)
@@ -35,6 +35,22 @@ class User(UserMixin, db.Model):
 
     def get_id(self):
         return str(self.id)
+
+    def set_admin_status(self, is_admin, admin_user):
+        """Set admin status with authorization check"""
+        if not admin_user.is_admin:
+            raise ValueError("Only admin users can modify admin status")
+        if self.id == admin_user.id:
+            raise ValueError("Cannot modify your own admin status")
+        self.is_admin = is_admin
+
+    def set_active_status(self, is_active, admin_user):
+        """Set active status with authorization check"""
+        if not admin_user.is_admin:
+            raise ValueError("Only admin users can modify active status")
+        if self.id == admin_user.id:
+            raise ValueError("Cannot modify your own active status")
+        self.is_active = is_active
 
     def to_dict(self):
         return {
