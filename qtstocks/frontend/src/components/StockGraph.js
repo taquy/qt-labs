@@ -108,29 +108,36 @@ const StockGraph = () => {
     });
   }, [selectedStocks, selectedMetric, metrics]);
 
-  // Load settings when available
   useEffect(() => {
-    // if (settings?.stocks && stocks.length > 0) {
-    //   const { selectedSymbols, selectedMetric: savedMetric } = settings.stocks;
-    //   // Find and set selected stocks
-    //   const selectedStocksData = stocks.filter(stock =>
-    //     selectedSymbols.includes(stock.symbol)
-    //   )
-    //   if (selectedStocksData.length > 0) {
-    //     setSelectedStocks(selectedStocksData);
-    //   }
-    //   setSelectedMetric(savedMetric);
-    // }
+    const currentSettings = settings[SettingsTypes.STOCK_GRAPH];
+    if (!currentSettings) return;
+    const { selectedSymbols, selectedMetric } = currentSettings;
+    const selectedStocksData = stats.filter(stock =>
+      selectedSymbols.includes(stock.symbol)
+    )
+    console.log(selectedStocksData)
+    if (selectedStocksData.length > 0) {
+      setSelectedStocks(selectedStocksData);
+    }
+    setSelectedMetric(selectedMetric);
   }, [settings, stats, dispatch]);
+
+  const handleSaveSettings = (selectedSymbols, selectedMetric) => {
+    dispatch(saveSettings(SettingsTypes.STOCK_GRAPH, {
+      selectedSymbols,
+      selectedMetric
+     }));
+  } 
 
   const handleStockChange = (event, newValue) => {
     setSelectedStocks(newValue);
-    // if (newValue.length > 0) {
-    //   dispatch(saveSettings(newValue, selectedMetric));
-    // } else {
-    //   setCurrentChartData(null);
-    //   dispatch(saveSettings([], selectedMetric));
-    // }
+    const symbols = newValue.map(stock => stock.symbol);
+    if (symbols.length > 0) {
+      handleSaveSettings(symbols, selectedMetric);
+    } else {
+      setCurrentChartData(null);
+      handleSaveSettings([], selectedMetric);
+    }
   };
 
   useEffect(() => {
@@ -160,7 +167,7 @@ const StockGraph = () => {
   const onMetricChange = (event) => {
     const newMetric = event.target.value;
     setSelectedMetric(newMetric);
-    dispatch(saveSettings(selectedStocks, newMetric));
+    handleSaveSettings(selectedStocks, newMetric);
   };
 
   const exportToPDF = async () => {
@@ -212,7 +219,7 @@ const StockGraph = () => {
             multiple
             options={stats}
             getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
-            value={selectedStocks}
+            value={selectedStocks || []}
             onChange={handleStockChange}
             renderInput={(params) => (
               <TextField

@@ -80,8 +80,8 @@ const StockSelector = () => {
   useEffect(() => {
     if (settings && settings[SettingsTypes.STOCK_SELECTOR]) {
       const currentSettings = settings[SettingsTypes.STOCK_SELECTOR];
-      setLoadLatestData(currentSettings.loadLatestData);
-      setQuery(prevQuery => ({ ...prevQuery, exchanges: currentSettings.exchanges, loadLatestData: currentSettings.loadLatestData }));
+      setLoadLatestData(currentSettings.loadLatestData || false);
+      setQuery(prevQuery => ({ ...prevQuery, exchanges: currentSettings.exchanges || [], loadLatestData: currentSettings.loadLatestData || false }));
     }
   }, [settings]);
 
