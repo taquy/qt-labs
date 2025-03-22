@@ -32,10 +32,7 @@ const UserManagement = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    is_admin: false,
-    features: []
+    name: ''
   });
   const [loadingStates, setLoadingStates] = useState({});
   const [showError, setShowError] = useState(false);
@@ -61,14 +58,12 @@ const UserManagement = () => {
     if (user) {
       setSelectedUser(user);
       setFormData({
-        name: user.username,
-        email: user.email,
+        name: user.name
       });
     } else {
       setSelectedUser(null);
       setFormData({
-        name: '',
-        email: '',
+        name: ''
       });
     }
     setOpenDialog(true);
@@ -78,8 +73,7 @@ const UserManagement = () => {
     setOpenDialog(false);
     setSelectedUser(null);
     setFormData({
-      name: '',
-      email: '',
+      name: ''
     });
   };
 
@@ -285,59 +279,12 @@ const UserManagement = () => {
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 1 }}>
               <TextField
-                label="Username"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                label="Name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 fullWidth
                 required
               />
-              <TextField
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                fullWidth
-                required
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.is_admin}
-                    onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
-                    color="primary"
-                  />
-                }
-                label="Administrator"
-              />
-              <TextField
-                select
-                multiple
-                label="Features"
-                value={formData.features}
-                onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                fullWidth
-                required
-                SelectProps={{
-                  multiple: true,
-                  renderValue: (selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip
-                          key={value}
-                          label={value.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          color={getFeatureChipColor(value)}
-                          size="small"
-                        />
-                      ))}
-                    </Box>
-                  ),
-                }}
-              >
-                <option value="stocks">Stocks</option>
-                <option value="users">Users</option>
-                <option value="settings">Settings</option>
-                <option value="export">Export</option>
-              </TextField>
             </Stack>
           </DialogContent>
           <DialogActions>

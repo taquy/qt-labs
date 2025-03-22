@@ -92,6 +92,45 @@ user_stock_stats = db.Table('user_stock_stats',
     db.Column('created_at', db.DateTime, default=lambda: datetime.now(timezone.utc))
 )
 
+# Association table for StockPortfolio-Stock many-to-many relationship
+portfolio_stocks = db.Table('portfolio_stocks',
+    db.Column('portfolio_id', db.Integer, db.ForeignKey('stock_portfolio.id'), primary_key=True),
+    db.Column('stock_symbol', db.String(10), db.ForeignKey('stock.symbol'), primary_key=True),
+    db.Column('created_at', db.DateTime, default=lambda: datetime.now(timezone.utc))
+)
+
+class StockPortfolio(db.Model):
+    __tablename__ = 'stock_portfolio'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref=db.backref('portfolios', lazy=True))
+    stocks = db.relationship('Stock', secondary=portfolio_stocks, backref=db.backref('portfolios', lazy='dynamic'))
+    
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'name', name='unique_portfolio_name_per_user'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'name': self.name,
+            'description': self.description,
+            'stocks': [stock.to_dict() for stock in self.stocks],
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None
+        }
+        
+    def __repr__(self):
+        return f'<StockPortfolio {self.name}>'
+
 class Stock(db.Model):
     __tablename__ = 'stock'
     symbol = db.Column(db.String(10), primary_key=True)
