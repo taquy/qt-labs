@@ -27,7 +27,7 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUsers, updateUser, createUser, deleteUser, toggleActive, toggleAdmin } from '../store/actions/user';
+import { fetchUsers, updateUser, createUser, deleteUser, toggleActiveRequest, toggleAdminRequest } from '../store/actions/user';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -160,7 +160,7 @@ const UserManagement = () => {
     if (!userId) return;
     setLoadingStates(prev => ({ ...prev, [`active_${userId}`]: true }));
     try {
-      await dispatch(toggleActive(userId));
+      await dispatch(toggleActiveRequest(userId));
     } finally {
       setLoadingStates(prev => ({ ...prev, [`active_${userId}`]: false }));
     }
@@ -170,7 +170,7 @@ const UserManagement = () => {
     if (!userId) return;
     setLoadingStates(prev => ({ ...prev, [`admin_${userId}`]: true }));
     try {
-      await dispatch(toggleAdmin(userId));
+      await dispatch(toggleAdminRequest(userId));
     } finally {
       setLoadingStates(prev => ({ ...prev, [`admin_${userId}`]: false }));
     }

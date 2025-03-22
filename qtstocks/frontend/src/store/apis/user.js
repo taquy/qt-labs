@@ -19,11 +19,11 @@ const api = {
     return response.data;
   },
   updateUser: async (userId, userData) => { 
-    const response = await axios.put(`${API_USER_ENDPOINTS.updateUser}/${userId}`, userData, getRequestConfig());
+    const response = await axios.put(API_USER_ENDPOINTS.updateUser(userId), userData, getRequestConfig());
     return response.data;
   },
   deleteUser: async (userId) => {
-    const response = await axios.delete(`${API_USER_ENDPOINTS.deleteUser}/${userId}`, getRequestConfig());
+    const response = await axios.delete(API_USER_ENDPOINTS.deleteUser(userId), getRequestConfig());
     return response.data;
   },
   toggleActive: async (userId) => {

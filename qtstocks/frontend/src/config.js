@@ -29,8 +29,8 @@ const API_USER_ENDPOINTS = {
     users: `${API_BASE_URL}/users`,
     user: (userId) => `${API_BASE_URL}/users/${userId}`,
     createUser: `${API_BASE_URL}/users`,
-    updateUser: `${API_BASE_URL}/users`,
-    deleteUser: `${API_BASE_URL}/users`,
+    updateUser: (userId) => `${API_BASE_URL}/users/${userId}`,
+    deleteUser: (userId) => `${API_BASE_URL}/users/${userId}`,
     toggleActive: (userId) => `${API_BASE_URL}/users/${userId}/toggle_active`,
     toggleAdmin: (userId) => `${API_BASE_URL}/users/${userId}/toggle_admin`,
 }
