@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Paper,
   Typography,
@@ -27,6 +27,8 @@ import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/ico
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsers, updateUser, createUser, deleteUser, toggleActive, toggleAdmin } from '../store/actions/user';
 
+const ITEMS_PER_PAGE = 20;
+
 const UserManagement = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -35,12 +37,29 @@ const UserManagement = () => {
   });
   const [loadingStates, setLoadingStates] = useState({});
   const [showError, setShowError] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const observer = useRef();
+  const lastUserElementRef = useCallback(node => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore]);
+
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
   const { users, error } = useSelector(state => state.user);
   
   useEffect(() => {
-    dispatch(fetchUsers());
+    if (page === 1) {
+      dispatch(fetchUsers(1, ITEMS_PER_PAGE));
+    }
   }, [dispatch]);
 
   useEffect(() => {
@@ -52,6 +71,14 @@ const UserManagement = () => {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  useEffect(() => {
+    if (page > 1) {
+      setLoading(true);
+      dispatch(fetchUsers(page, ITEMS_PER_PAGE))
+        .finally(() => setLoading(false));
+    }
+  }, [dispatch, page]);
 
   const handleOpenDialog = (user = null) => {
     if (user) {
@@ -85,6 +112,9 @@ const UserManagement = () => {
         await dispatch(createUser(formData));
       }
       handleCloseDialog();
+      // Reset to first page and refresh
+      setPage(1);
+      dispatch(fetchUsers(1, ITEMS_PER_PAGE));
     } catch (error) {
       console.error('Error submitting form:', error);
     }
@@ -94,6 +124,9 @@ const UserManagement = () => {
     setLoadingStates(prev => ({ ...prev, [`delete_${userId}`]: true }));
     try {
       await dispatch(deleteUser(userId));
+      // Reset to first page and refresh
+      setPage(1);
+      dispatch(fetchUsers(1, ITEMS_PER_PAGE));
     } catch (error) {
       console.error('Error deleting user:', error);
     } finally {
@@ -161,8 +194,8 @@ const UserManagement = () => {
         </Alert>
       )}
 
-      <TableContainer>
-        <Table>
+      <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
@@ -175,8 +208,11 @@ const UserManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {Array.isArray(users) && users.map((user) => (
-              <TableRow key={user.id}>
+            {users.map((user, index) => (
+              <TableRow
+                key={user.id}
+                ref={index === users.length - 1 ? lastUserElementRef : null}
+              >
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
@@ -282,6 +318,13 @@ const UserManagement = () => {
                 </TableCell>
               </TableRow>
             ))}
+            {loading && (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

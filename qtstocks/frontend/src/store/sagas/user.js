@@ -1,17 +1,38 @@
 import * as effects from 'redux-saga/effects';
 import api from '../apis/user';
 import { setUsers, setError } from '../slices/user';
-import { FETCH_USERS, CREATE_USER, UPDATE_USER, DELETE_USER, TOGGLE_ACTIVE, TOGGLE_ADMIN } from '../actions/user';
+import {
+  FETCH_USERS,
+  FETCH_USERS_SUCCESS,
+  FETCH_USERS_FAILURE,
+  CREATE_USER,
+  UPDATE_USER,
+  DELETE_USER,
+  TOGGLE_ACTIVE,
+  TOGGLE_ADMIN
+} from '../actions/user';
 
-function* fetchUsersSaga() {
+function* fetchUsersSaga(action) {
   try {
-    const response = yield effects.call(api.fetchUsers);
-    // Ensure response is an array
-    const users = Array.isArray(response) ? response : [];
-    yield effects.put(setUsers(users));
+    const response = yield effects.call(api.fetchUsers, action.page, action.limit);
+    const users = Array.isArray(response.items) ? response.items : [];
+    const hasMore = response.has_next || false;
+    yield effects.put({ 
+      type: FETCH_USERS_SUCCESS, 
+      payload: {
+        users,
+        hasMore,
+        page: response.current_page,
+        total: response.total,
+        pages: response.pages
+      }
+    });
   } catch (error) {
-    yield effects.put(setError(error));
-    yield effects.put(setUsers([])); // Set empty array on error
+    const errorMessage = error.response?.data?.message || error.message;
+    yield effects.put({ 
+      type: FETCH_USERS_FAILURE, 
+      payload: { error: errorMessage }
+    });
   }
 }
 
@@ -21,7 +42,8 @@ function* createUserSaga(action) {
     const users = Array.isArray(response) ? response : [];
     yield effects.put(setUsers(users));
   } catch (error) {
-    yield effects.put(setError(error));
+    const errorMessage = error.response?.data?.message || error.message;
+    yield effects.put(setError(errorMessage));
   }
 }
 
@@ -30,8 +52,8 @@ function* updateUserSaga(action) {
     // First update the user
     yield effects.call(api.updateUser, action.userId, action.userData);
     // Then fetch the updated users list
-    const usersResponse = yield effects.call(api.fetchUsers);
-    const users = Array.isArray(usersResponse) ? usersResponse : [];
+    const usersResponse = yield effects.call(api.fetchUsers, 1, 20);
+    const users = Array.isArray(usersResponse.items) ? usersResponse.items : [];
     yield effects.put(setUsers(users));
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
@@ -44,8 +66,8 @@ function* deleteUserSaga(action) {
     // First delete the user
     yield effects.call(api.deleteUser, action.userId);
     // Then fetch the updated users list
-    const usersResponse = yield effects.call(api.fetchUsers);
-    const users = Array.isArray(usersResponse) ? usersResponse : [];
+    const usersResponse = yield effects.call(api.fetchUsers, 1, 20);
+    const users = Array.isArray(usersResponse.items) ? usersResponse.items : [];
     yield effects.put(setUsers(users));
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
@@ -58,11 +80,10 @@ function* toggleActiveSaga(action) {
     // First toggle the active status
     yield effects.call(api.toggleActive, action.userId);
     // Then fetch the updated users list
-    const usersResponse = yield effects.call(api.fetchUsers);
-    const users = Array.isArray(usersResponse) ? usersResponse : [];
+    const usersResponse = yield effects.call(api.fetchUsers, 1, 20);
+    const users = Array.isArray(usersResponse.items) ? usersResponse.items : [];
     yield effects.put(setUsers(users));
   } catch (error) {
-    // Handle the error message from the API response
     const errorMessage = error.response?.data?.message || error.message;
     yield effects.put(setError(errorMessage));
   }
@@ -73,11 +94,10 @@ function* toggleAdminSaga(action) {
     // First toggle the admin status
     yield effects.call(api.toggleAdmin, action.userId);
     // Then fetch the updated users list
-    const usersResponse = yield effects.call(api.fetchUsers);
-    const users = Array.isArray(usersResponse) ? usersResponse : [];
+    const usersResponse = yield effects.call(api.fetchUsers, 1, 20);
+    const users = Array.isArray(usersResponse.items) ? usersResponse.items : [];
     yield effects.put(setUsers(users));
   } catch (error) {
-    // Handle the error message from the API response
     const errorMessage = error.response?.data?.message || error.message;
     yield effects.put(setError(errorMessage));
   }
