@@ -1,144 +1,110 @@
-import React, { useEffect, useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../store/actions/auth';
 import {
+  AppBar,
   Box,
-  Typography,
+  CssBaseline,
   Drawer,
+  IconButton,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  IconButton,
-  AppBar,
   Toolbar,
+  Typography,
   useTheme,
   useMediaQuery,
-  Divider,
+  Menu,
+  MenuItem,
+  Avatar,
+  Divider
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
-  Assessment as AssessmentIcon,
+  ShowChart as ShowChartIcon,
+  People as PeopleIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
-  Person as PersonIcon,
-  People as PeopleIcon
+  ChevronLeft as ChevronLeftIcon
 } from '@mui/icons-material';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../store/actions/auth';
-import { getUserInfo } from '../store/actions/auth';
 
 const drawerWidth = 240;
 
 const Layout = () => {
-  const { isLoggedIn, userInfo } = useSelector(state => state.auth);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const dispatch = useDispatch();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    dispatch(getUserInfo());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (!isLoggedIn) navigate('/login');
-  }, [navigate, isLoggedIn]);
-
-  const handleLogout = () => {
-    dispatch(logout());
-  };
+  const [anchorEl, setAnchorEl] = useState(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector(state => state.auth);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const getActivePath = () => {
-    const path = location.pathname;
-    if (path === '/') return 'dashboard';
-    return path.substring(1);
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
   };
 
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
+
+  const menuItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+    { text: 'Stocks', icon: <ShowChartIcon />, path: '/stocks' },
+    { text: 'Users', icon: <PeopleIcon />, path: '/users' },
+    { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+  ];
+
   const drawer = (
-    <Box>
+    <div>
       <Toolbar>
         <Typography variant="h6" noWrap component="div">
-          Stock Admin
+          QT Stocks
         </Typography>
       </Toolbar>
       <Divider />
       <List>
-        <ListItem 
-          button="true"
-          selected={getActivePath() === 'dashboard'}
-          onClick={() => navigate('/')}
-        >
-          <ListItemIcon>
-            <DashboardIcon />
-          </ListItemIcon>
-          <ListItemText primary="Dashboard" />
-        </ListItem>
-        <ListItem 
-          button="true"
-          selected={getActivePath() === 'stocks'}
-          onClick={() => navigate('/stocks')}
-        >
-          <ListItemIcon>
-            <AssessmentIcon />
-          </ListItemIcon>
-          <ListItemText primary="Stocks" />
-        </ListItem>
-        {userInfo?.is_admin && (
+        {menuItems.map((item) => (
           <ListItem 
-            button="true"
-            selected={getActivePath() === 'users'}
-            onClick={() => navigate('/users')}
+            button
+            key={item.text} 
+            onClick={() => {
+              navigate(item.path);
+              if (isMobile) setMobileOpen(false);
+            }}
           >
-            <ListItemIcon>
-              <PeopleIcon />
-            </ListItemIcon>
-            <ListItemText primary="Users" />
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.text} />
           </ListItem>
-        )}
-        <ListItem 
-          button="true"
-          selected={getActivePath() === 'settings'}
-          onClick={() => navigate('/settings')}
-        >
-          <ListItemIcon>
-            <SettingsIcon />
-          </ListItemIcon>
-          <ListItemText primary="Settings" />
-        </ListItem>
+        ))}
       </List>
       <Divider />
       <List>
-        <ListItem>
-          <ListItemIcon>
-            <PersonIcon />
-          </ListItemIcon>
-          <ListItemText 
-            primary={userInfo?.email || 'User'} 
-            secondary={userInfo?.is_admin ? 'Administrator' : 'User'}
-          />
-        </ListItem>
         <ListItem 
-          button="true"
+          button
           onClick={handleLogout}
         >
-          <ListItemIcon>
-            <LogoutIcon />
-          </ListItemIcon>
+          <ListItemIcon><LogoutIcon /></ListItemIcon>
           <ListItemText primary="Logout" />
         </ListItem>
       </List>
-    </Box>
+    </div>
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ display: 'flex' }}>
+      <CssBaseline />
       <AppBar
         position="fixed"
         sx={{
@@ -156,14 +122,33 @@ const Layout = () => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Stock Analysis Dashboard
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            {menuItems.find(item => item.path === window.location.pathname)?.text || 'Dashboard'}
           </Typography>
+          <IconButton
+            onClick={handleMenuOpen}
+            size="small"
+            sx={{ ml: 2 }}
+          >
+            <Avatar sx={{ width: 32, height: 32 }}>
+              {user?.username?.[0]?.toUpperCase() || 'U'}
+            </Avatar>
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+            onClick={handleMenuClose}
+          >
+            <MenuItem onClick={handleLogout}>
+              <LogoutIcon sx={{ mr: 1 }} /> Logout
+            </MenuItem>
+          </Menu>
         </Toolbar>
       </AppBar>
       <Box
         component="nav"
-        sx={{ flexShrink: { sm: 0 } }}
+        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
       >
         {isMobile ? (
           <Drawer
@@ -199,10 +184,7 @@ const Layout = () => {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          minHeight: '100vh',
-          backgroundColor: 'background.default',
-          marginTop: '64px', // Height of AppBar
-          marginLeft: { xs: 0, sm: `${drawerWidth}px` },
+          mt: '64px'
         }}
       >
         <Outlet />

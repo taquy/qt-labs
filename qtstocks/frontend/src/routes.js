@@ -1,43 +1,48 @@
-import { createBrowserRouter } from 'react-router-dom';
-import Layout from './components/Layout';
-import Dashboard from './components/Dashboard';
+import { Navigate } from 'react-router-dom';
 import Login from './components/Login';
-import Register from './components/Register';
-import PrivateRoute from './components/PrivateRoute';
-import PublicRoute from './components/PublicRoute';
+import Dashboard from './components/Dashboard';
 import StockAnalysis from './components/StockAnalysis';
 import UserManagement from './components/UserManagement';
+import Layout from './components/Layout';
+import PublicRoute from './components/PublicRoute';
+import PrivateRoute from './components/PrivateRoute';
 import Settings from './components/Settings';
 
-export const routes = createBrowserRouter([
+const routes = [
+  {
+    path: '/login',
+    element: (
+      <PublicRoute>
+        <Login />
+      </PublicRoute>
+    )
+  },
   {
     path: '/',
-    element: <Layout />,
+    element: (
+      <PrivateRoute>
+        <Layout />
+      </PrivateRoute>
+    ),
     children: [
       {
-        path: 'login',
-        element: <PublicRoute><Login /></PublicRoute>
-      },
-      {
-        path: 'register',
-        element: <PublicRoute><Register /></PublicRoute>
-      },
-      {
         path: '',
-        element: <PrivateRoute><Dashboard /></PrivateRoute>
+        element: <Dashboard />
       },
       {
         path: 'stocks',
-        element: <PrivateRoute><StockAnalysis /></PrivateRoute>
+        element: <StockAnalysis />
       },
       {
         path: 'users',
-        element: <PrivateRoute><UserManagement /></PrivateRoute>
+        element: <UserManagement />
       },
       {
         path: 'settings',
-        element: <PrivateRoute><Settings /></PrivateRoute>
+        element: <Settings />
       }
     ]
   }
-]);
+];
+
+export default routes;
