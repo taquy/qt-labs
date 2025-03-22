@@ -40,7 +40,7 @@ const UserManagement = () => {
   const [loadingStates, setLoadingStates] = useState({});
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
-  const { users, errors } = useSelector(state => state.user);
+  const { users, error } = useSelector(state => state.user);
   
   useEffect(() => {
     dispatch(fetchUsers());
@@ -143,6 +143,12 @@ const UserManagement = () => {
           Add User
         </Button>
       </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       <TableContainer>
         <Table>

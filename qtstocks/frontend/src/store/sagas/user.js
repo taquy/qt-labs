@@ -48,13 +48,15 @@ function* deleteUserSaga(action) {
 function* toggleActiveSaga(action) {
   try {
     // First toggle the active status
-    yield effects.call(api.toggleActive, action.userId);
+    const response = yield effects.call(api.toggleActive, action.userId);
     // Then fetch the updated users list
-    const response = yield effects.call(api.fetchUsers);
-    const users = Array.isArray(response) ? response : [];
+    const usersResponse = yield effects.call(api.fetchUsers);
+    const users = Array.isArray(usersResponse) ? usersResponse : [];
     yield effects.put(setUsers(users));
   } catch (error) {
-    yield effects.put(setError(error));
+    // Handle the error message from the API response
+    const errorMessage = error.response?.data?.message || error.message;
+    yield effects.put(setError(errorMessage));
   }
 }
 
