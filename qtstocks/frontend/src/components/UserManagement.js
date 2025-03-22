@@ -157,7 +157,7 @@ const UserManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((user) => (
+            {Array.isArray(users) && users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>

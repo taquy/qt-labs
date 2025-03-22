@@ -6,16 +6,20 @@ import { FETCH_USERS, CREATE_USER, UPDATE_USER, DELETE_USER, TOGGLE_ACTIVE } fro
 function* fetchUsersSaga() {
   try {
     const response = yield effects.call(api.fetchUsers);
-    yield effects.put(setUsers(response));
+    // Ensure response is an array
+    const users = Array.isArray(response) ? response : [];
+    yield effects.put(setUsers(users));
   } catch (error) {
     yield effects.put(setError(error));
+    yield effects.put(setUsers([])); // Set empty array on error
   }
 }
 
 function* createUserSaga(action) {
   try {
     const response = yield effects.call(api.createUser, action.user);
-    yield effects.put(setUsers(response));
+    const users = Array.isArray(response) ? response : [];
+    yield effects.put(setUsers(users));
   } catch (error) {
     yield effects.put(setError(error));
   }
@@ -24,7 +28,8 @@ function* createUserSaga(action) {
 function* updateUserSaga(action) {
   try {
     const response = yield effects.call(api.updateUser, action.user);
-    yield effects.put(setUsers(response));
+    const users = Array.isArray(response) ? response : [];
+    yield effects.put(setUsers(users));
   } catch (error) {
     yield effects.put(setError(error));
   }
@@ -33,7 +38,8 @@ function* updateUserSaga(action) {
 function* deleteUserSaga(action) {
   try {
     const response = yield effects.call(api.deleteUser, action.userId);
-    yield effects.put(setUsers(response));
+    const users = Array.isArray(response) ? response : [];
+    yield effects.put(setUsers(users));
   } catch (error) {
     yield effects.put(setError(error));
   }
@@ -41,8 +47,12 @@ function* deleteUserSaga(action) {
 
 function* toggleActiveSaga(action) {
   try {
-    const response = yield effects.call(api.toggleActive, action.userId);
-    yield effects.put(setUsers(response));
+    // First toggle the active status
+    yield effects.call(api.toggleActive, action.userId);
+    // Then fetch the updated users list
+    const response = yield effects.call(api.fetchUsers);
+    const users = Array.isArray(response) ? response : [];
+    yield effects.put(setUsers(users));
   } catch (error) {
     yield effects.put(setError(error));
   }
