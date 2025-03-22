@@ -1,4 +1,3 @@
-import { Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import StockAnalysis from './components/StockAnalysis';

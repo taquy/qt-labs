@@ -9,7 +9,7 @@ import {
   Drawer,
   IconButton,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Toolbar,
@@ -27,8 +27,7 @@ import {
   ShowChart as ShowChartIcon,
   People as PeopleIcon,
   Settings as SettingsIcon,
-  Logout as LogoutIcon,
-  ChevronLeft as ChevronLeftIcon
+  Logout as LogoutIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -76,8 +75,7 @@ const Layout = () => {
       <Divider />
       <List>
         {menuItems.map((item) => (
-          <ListItem 
-            button
+          <ListItemButton
             key={item.text} 
             onClick={() => {
               navigate(item.path);
@@ -86,18 +84,15 @@ const Layout = () => {
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
-          </ListItem>
+          </ListItemButton>
         ))}
       </List>
       <Divider />
       <List>
-        <ListItem 
-          button
-          onClick={handleLogout}
-        >
+        <ListItemButton onClick={handleLogout}>
           <ListItemIcon><LogoutIcon /></ListItemIcon>
           <ListItemText primary="Logout" />
-        </ListItem>
+        </ListItemButton>
       </List>
     </div>
   );
