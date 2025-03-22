@@ -8,8 +8,12 @@ import {
   CREATE_USER,
   UPDATE_USER,
   DELETE_USER,
-  TOGGLE_ACTIVE,
-  TOGGLE_ADMIN
+  TOGGLE_ACTIVE_REQUEST,
+  TOGGLE_ACTIVE_SUCCESS,
+  TOGGLE_ACTIVE_FAILURE,
+  TOGGLE_ADMIN_REQUEST,
+  TOGGLE_ADMIN_SUCCESS,
+  TOGGLE_ADMIN_FAILURE
 } from '../actions/user';
 
 function* fetchUsersSaga(action) {
@@ -77,33 +81,33 @@ function* deleteUserSaga(action) {
 
 function* toggleActiveSaga(action) {
   try {
-    // First toggle the active status
     yield effects.call(api.toggleActive, action.payload.id);
-    // Then fetch only the updated user
-    const updatedUser = yield effects.call(api.fetchUser, action.payload.id);
     yield effects.put({ 
-      type: TOGGLE_ACTIVE, 
-      payload: updatedUser 
+      type: TOGGLE_ACTIVE_SUCCESS, 
+      payload: { id: action.payload.id }
     });
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
-    yield effects.put(setError(errorMessage));
+    yield effects.put({ 
+      type: TOGGLE_ACTIVE_FAILURE, 
+      payload: { error: errorMessage }
+    });
   }
 }
 
 function* toggleAdminSaga(action) {
   try {
-    // First toggle the admin status
     yield effects.call(api.toggleAdmin, action.payload.id);
-    // Then fetch only the updated user
-    const updatedUser = yield effects.call(api.fetchUser, action.payload.id);
     yield effects.put({ 
-      type: TOGGLE_ADMIN, 
-      payload: updatedUser 
+      type: TOGGLE_ADMIN_SUCCESS, 
+      payload: { id: action.payload.id }
     });
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
-    yield effects.put(setError(errorMessage));
+    yield effects.put({ 
+      type: TOGGLE_ADMIN_FAILURE, 
+      payload: { error: errorMessage }
+    });
   }
 }
 
@@ -112,6 +116,6 @@ export function* userSaga() {
   yield effects.takeLatest(CREATE_USER, createUserSaga);
   yield effects.takeLatest(UPDATE_USER, updateUserSaga);
   yield effects.takeLatest(DELETE_USER, deleteUserSaga);
-  yield effects.takeLatest(TOGGLE_ACTIVE, toggleActiveSaga);
-  yield effects.takeLatest(TOGGLE_ADMIN, toggleAdminSaga);
+  yield effects.takeLatest(TOGGLE_ACTIVE_REQUEST, toggleActiveSaga);
+  yield effects.takeLatest(TOGGLE_ADMIN_REQUEST, toggleAdminSaga);
 }

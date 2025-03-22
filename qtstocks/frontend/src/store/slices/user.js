@@ -5,8 +5,10 @@ import {
   CREATE_USER,
   UPDATE_USER,
   DELETE_USER,
-  TOGGLE_ACTIVE,
-  TOGGLE_ADMIN
+  TOGGLE_ACTIVE_SUCCESS,
+  TOGGLE_ACTIVE_FAILURE,
+  TOGGLE_ADMIN_SUCCESS,
+  TOGGLE_ADMIN_FAILURE
 } from '../actions/user';
 
 const initialState = {
@@ -80,23 +82,29 @@ const userSlice = createSlice({
         }
         state.error = null;
       })
-      .addCase(TOGGLE_ACTIVE, (state, action) => {
+      .addCase(TOGGLE_ACTIVE_SUCCESS, (state, action) => {
         if (action.payload && action.payload.id) {
           const index = state.users.findIndex(user => user.id === action.payload.id);
           if (index !== -1) {
-            state.users[index] = action.payload;
+            state.users[index].is_active = !state.users[index].is_active;
           }
         }
         state.error = null;
       })
-      .addCase(TOGGLE_ADMIN, (state, action) => {
+      .addCase(TOGGLE_ACTIVE_FAILURE, (state, action) => {
+        state.error = action.payload.error;
+      })
+      .addCase(TOGGLE_ADMIN_SUCCESS, (state, action) => {
         if (action.payload && action.payload.id) {
           const index = state.users.findIndex(user => user.id === action.payload.id);
           if (index !== -1) {
-            state.users[index] = action.payload;
+            state.users[index].is_admin = !state.users[index].is_admin;
           }
         }
         state.error = null;
+      })
+      .addCase(TOGGLE_ADMIN_FAILURE, (state, action) => {
+        state.error = action.payload.error;
       });
   }
 });
