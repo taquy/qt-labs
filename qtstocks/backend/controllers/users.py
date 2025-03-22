@@ -42,8 +42,8 @@ def init_user_routes(app, token_required, users_ns):
         @token_required
         @admin_required
         def get(self, current_user):
-            """List all users"""
-            return User.query.all()
+            """List all users sorted by email"""
+            return User.query.order_by(User.email.asc()).all()
 
     @users_ns.route('/<int:user_id>')
     @users_ns.param('user_id', 'The user identifier')
