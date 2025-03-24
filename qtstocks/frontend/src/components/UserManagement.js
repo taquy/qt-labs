@@ -26,8 +26,7 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUsers, updateUser, createUser, deleteUser, toggleActive, toggleAdmin, setError } from '../store/actions/user';
-import { setUsersQuery } from '../store/slices/user';
+import { fetchUsers, updateUser, createUser, deleteUser, toggleActive, toggleAdmin, setError, setUsersQuery } from '../store/actions/user';
 import { LoaderActions, ErrorActions } from '../store/slices/user';
 
 const UserManagement = () => {
@@ -44,15 +43,20 @@ const UserManagement = () => {
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
   const { users, error, users_query, loaders } = useSelector(state => state.user);
-  
 
   useEffect(() => {
     dispatch(fetchUsers());
   }, [users_query, dispatch]);
 
-  useEffect(() => {
-    setUsersQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
-  }, [users_query, dispatch]);
+  const handleScroll = useCallback((event) => {
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+    // Check if scrolled to bottom (with 20px threshold)
+    if (scrollHeight - scrollTop <= clientHeight + 20) {
+      if (!loaders[LoaderActions.FETCH_USERS]) {
+        dispatch(setUsersQuery({ ...users_query, page: users_query.page + 1 }));
+      }
+    }
+  }, [dispatch, loaders, users_query]);
 
   useEffect(() => {
     const errorKeys = Object.keys(error);
@@ -175,7 +179,7 @@ const UserManagement = () => {
         </Alert>
       )}
 
-      <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }} onScroll={handleScroll}>
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>

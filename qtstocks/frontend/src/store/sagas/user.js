@@ -1,6 +1,6 @@
 import * as effects from 'redux-saga/effects';
 import api from '../apis/user';
-import { setUsers, setError, setLoader, getUsersQuery, setCreateUser, setUpdateUser, setDeleteUser, setToggleActive, setToggleAdmin } from '../slices/user';
+import { setUsers, setError, setLoader, setCreateUser, setUpdateUser, setDeleteUser, setToggleActive, setToggleAdmin, setUsersQuery } from '../slices/user';
 import { LoaderActions, ErrorActions } from '../slices/user';
 import { handleApiError } from '../utils';
 import {
@@ -11,7 +11,12 @@ import {
   TOGGLE_ACTIVE,
   TOGGLE_ADMIN,
   SET_ERROR,
+  SET_USERS_QUERY,
 } from '../actions/user';
+
+function *setUsersQuerySaga(action) {
+  yield effects.put(setUsersQuery(action.payload));
+}
 
 function* setErrorSaga(action, message) {
   yield effects.put(setError({
@@ -104,4 +109,5 @@ export function* userSaga() {
   yield effects.takeLatest(TOGGLE_ACTIVE, toggleActiveSaga);
   yield effects.takeLatest(TOGGLE_ADMIN, toggleAdminSaga);
   yield effects.takeLatest(SET_ERROR, setErrorSaga);
+  yield effects.takeLatest(SET_USERS_QUERY, setUsersQuerySaga);
 }
