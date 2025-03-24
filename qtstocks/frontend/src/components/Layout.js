@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../store/actions/auth';
+import { logout, getUserInfo } from '../store/actions/auth';
 import {
   AppBar,
   Box,
@@ -39,7 +39,7 @@ const Layout = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector(state => state.auth);
+  const { userInfo } = useSelector(state => state.auth);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -61,9 +61,16 @@ const Layout = () => {
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
     { text: 'Stocks', icon: <ShowChartIcon />, path: '/stocks' },
-    { text: 'Users', icon: <PeopleIcon />, path: '/users' },
-    { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+    { text: 'Users', icon: <PeopleIcon />, path: '/users', requiredPermissions: ['is_admin'] },
+    { text: 'Settings', icon: <SettingsIcon />, path: '/settings', requiredPermissions: ['is_admin'] },
   ];
+
+  const filteredMenuItems = menuItems.filter(item => {
+    if (!item.requiredPermissions) return true;
+    return item.requiredPermissions.every(permission => {
+      return userInfo?.is_admin === true || userInfo?.permissions?.includes(permission);
+    });
+  });
 
   const drawer = (
     <div>
@@ -74,7 +81,7 @@ const Layout = () => {
       </Toolbar>
       <Divider />
       <List>
-        {menuItems.map((item) => (
+        {filteredMenuItems.map((item) => (
           <ListItemButton
             key={item.text} 
             onClick={() => {
@@ -97,6 +104,12 @@ const Layout = () => {
     </div>
   );
 
+  useEffect(() => {
+    if (!userInfo) {
+      dispatch(getUserInfo());
+    }
+  }, [userInfo, dispatch]);
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
@@ -118,7 +131,7 @@ const Layout = () => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {menuItems.find(item => item.path === window.location.pathname)?.text || 'Dashboard'}
+            {filteredMenuItems.find(item => item.path === window.location.pathname)?.text || 'Dashboard'}
           </Typography>
           <IconButton
             onClick={handleMenuOpen}
@@ -126,7 +139,7 @@ const Layout = () => {
             sx={{ ml: 2 }}
           >
             <Avatar sx={{ width: 32, height: 32 }}>
-              {user?.username?.[0]?.toUpperCase() || 'U'}
+              {userInfo?.username?.[0]?.toUpperCase() || 'U'}
             </Avatar>
           </IconButton>
           <Menu

@@ -12,10 +12,6 @@ const PrivateRoute = ({ children }) => {
     dispatch(checkIsLoggedIn());
   }, [dispatch]);
 
-  useEffect(() => {
-    console.log(userInfo);
-  }, [userInfo]);
-
   if (checkingLogin) {
     return (
      <PageLoader/>
@@ -27,7 +23,8 @@ const PrivateRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   // Check if user is admin for /users path
-  if (location.pathname === '/users' && !userInfo?.is_admin) {
+  const adminRoutes = ['/users', '/settings'];
+  if (adminRoutes.includes(location.pathname) && !userInfo?.is_admin) {
     return <Navigate to="/" replace />;
   }
   return children;

@@ -16,7 +16,6 @@ import api from '../apis/auth';
 function* getUserInfoSaga() {
   try {
     const response = yield effects.call(api.getUserInfo);
-    console.log(response);
     yield effects.put(setUserInfo(response));
   } catch (error) {
     yield effects.put(setError('Failed to get user info'));
