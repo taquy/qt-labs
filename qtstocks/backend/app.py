@@ -96,7 +96,7 @@ def create_app(config_class=Config):
     init_payment_routes(app, token_required, payments_ns)
     init_subscription_routes(app, token_required, subscriptions_ns)
     
-    # Initialize database
+    # Initialize database (comment out when run flask db upgrade)
     with app.app_context():
         # Create admin user if it doesn't exist
         admin = User.query.filter_by(username=Config.ADMIN_USERNAME).first()

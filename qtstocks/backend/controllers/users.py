@@ -1,5 +1,5 @@
 from flask import jsonify, request
-from models import User, db
+from models import User, db, UserSettings
 from extensions import ma
 from datetime import datetime, timezone
 from functools import wraps
@@ -197,4 +197,118 @@ def init_user_routes(app, token_required, users_ns):
                 db.session.commit()
                 return user
             except ValueError as e:
-                users_ns.abort(400, str(e)) 
+                users_ns.abort(400, str(e))
+
+    @users_ns.route('/<int:user_id>/budget')
+    @users_ns.param('user_id', 'The user identifier')
+    class UserBudget(Resource):
+        @users_ns.doc('update_user_budget', security='Bearer')
+        @users_ns.expect(users_ns.model('BudgetUpdate', {
+            'amount': fields.Float(required=True, description='Amount to add (positive) or subtract (negative) from budget'),
+            'reason': fields.String(required=True, description='Reason for the budget modification')
+        }))
+        @users_ns.marshal_with(user_model)
+        @token_required
+        def post(self, current_user, user_id):
+            """Update a user's budget (admin only)"""
+            if not current_user.is_admin:
+                users_ns.abort(403, "Only admin users can modify budgets")
+                
+            target_user = User.query.get_or_404(user_id)
+            
+            try:
+                data = request.get_json()
+                amount = data.get('amount')
+                reason = data.get('reason')
+                
+                if amount is None:
+                    users_ns.abort(400, "Amount is required")
+                if not reason:
+                    users_ns.abort(400, "Reason is required")
+                
+                # Update user's budget
+                target_user.budget += amount
+                
+                # Log the budget change in user settings
+                budget_history = UserSettings.query.filter_by(
+                    user_id=target_user.id,
+                    setting_key='budget_history'
+                ).first()
+                
+                if not budget_history:
+                    budget_history = UserSettings(
+                        user_id=target_user.id,
+                        setting_key='budget_history',
+                        setting_value=[]
+                    )
+                    db.session.add(budget_history)
+                
+                history_entry = {
+                    'amount': amount,
+                    'reason': reason,
+                    'modified_by': current_user.id,
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'new_balance': target_user.budget
+                }
+                
+                budget_history.setting_value.append(history_entry)
+                db.session.commit()
+                
+                return target_user
+            except Exception as e:
+                db.session.rollback()
+                users_ns.abort(500, message=str(e))
+
+        @users_ns.doc('get_user_budget_history', security='Bearer')
+        @users_ns.param('page', 'Page number (1-based)', type=int, default=1)
+        @users_ns.param('per_page', 'Items per page', type=int, default=10)
+        @token_required
+        def get(self, current_user, user_id):
+            """Get user's budget modification history (admin only)"""
+            if not current_user.is_admin:
+                users_ns.abort(403, "Only admin users can view budget history")
+                
+            target_user = User.query.get_or_404(user_id)
+            
+            try:
+                page = request.args.get('page', 1, type=int)
+                per_page = request.args.get('per_page', 10, type=int)
+                
+                # Get budget history from user settings
+                budget_history = UserSettings.query.filter_by(
+                    user_id=target_user.id,
+                    setting_key='budget_history'
+                ).first()
+                
+                if not budget_history:
+                    return {
+                        'items': [],
+                        'total': 0,
+                        'pages': 0,
+                        'current_page': page,
+                        'has_next': False,
+                        'has_prev': False
+                    }
+                
+                # Sort history by timestamp (newest first)
+                history = sorted(
+                    budget_history.setting_value,
+                    key=lambda x: x['timestamp'],
+                    reverse=True
+                )
+                
+                # Paginate the history
+                start_idx = (page - 1) * per_page
+                end_idx = start_idx + per_page
+                paginated_history = history[start_idx:end_idx]
+                
+                return {
+                    'items': paginated_history,
+                    'total': len(history),
+                    'pages': (len(history) + per_page - 1) // per_page,
+                    'current_page': page,
+                    'has_next': end_idx < len(history),
+                    'has_prev': page > 1
+                }
+            except Exception as e:
+                users_ns.abort(500, message=str(e)) 
