@@ -6,11 +6,15 @@ import PageLoader from './PageLoader';
 const PrivateRoute = ({ children }) => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const { isLoggedIn, checkingLogin } = useSelector(state => state.auth);
+  const { isLoggedIn, checkingLogin, userInfo } = useSelector(state => state.auth);
 
   useEffect(() => {
     dispatch(checkIsLoggedIn());
   }, [dispatch]);
+
+  useEffect(() => {
+    console.log(userInfo);
+  }, [userInfo]);
 
   if (checkingLogin) {
     return (
@@ -22,7 +26,10 @@ const PrivateRoute = ({ children }) => {
     // Redirect to login page but save the attempted url
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-
+  // Check if user is admin for /users path
+  if (location.pathname === '/users' && !userInfo?.is_admin) {
+    return <Navigate to="/" replace />;
+  }
   return children;
 };
 

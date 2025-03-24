@@ -16,6 +16,7 @@ import api from '../apis/auth';
 function* getUserInfoSaga() {
   try {
     const response = yield effects.call(api.getUserInfo);
+    console.log(response);
     yield effects.put(setUserInfo(response));
   } catch (error) {
     yield effects.put(setError('Failed to get user info'));
@@ -46,11 +47,13 @@ function* googleLoginSaga(action) {
     if (response.token) {
       yield effects.put(setIsLoggedIn(true));
       yield effects.put(setAuthToken(response.token));
+      yield effects.call(getUserInfoSaga);
     } else {
       yield effects.put(setError('Failed to login'));
     }
   } catch (error) {
     yield effects.put(setError('Failed to login'));
+    yield effects.call(handleApiError, error, 'googleLoginSaga');
   }
 }
 
@@ -59,8 +62,10 @@ function* loginSaga(action) {
     const response = yield effects.call(api.login, action.payload);
     yield effects.put(setIsLoggedIn(true));
     yield effects.put(setAuthToken(response.token));
+    yield effects.call(getUserInfoSaga);
   } catch (error) {
     yield effects.put(setError('Failed to login'));
+    yield effects.call(handleApiError, error, 'loginSaga');
   }
 }
 

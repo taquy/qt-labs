@@ -8,9 +8,15 @@ const handleApiError = (error, saga) => {
   return saga;
 }
 
-const getRequestConfig = () => ({
-  headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-  withCredentials: true
-});
+const getRequestConfig = () => {
+  const token = localStorage.getItem('authToken');
+  return {
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    withCredentials: true
+  };
+}
 
 export { handleApiError, getRequestConfig };
