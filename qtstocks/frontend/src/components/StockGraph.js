@@ -47,7 +47,7 @@ const barLabelPlugin = {
 
     data.datasets.forEach((dataset, datasetIndex) => {
       const meta = chart.getDatasetMeta(datasetIndex);
-      const fontSize = 12;
+      const fontSize = 14;
 
       meta.data.forEach((bar, index) => {
         const value = dataset.data[index];
@@ -134,7 +134,7 @@ const StockGraph = () => {
       title: {
         display: true,
         text: `Comparison of ${metrics[selectedMetric]} across selected stocks`,
-        font: { size: 16 }
+        font: { size: 20 }
       }
     });
   }, [selectedStocks, selectedMetric, metrics]);
@@ -349,9 +349,20 @@ const StockGraph = () => {
                   easing: 'easeInOutQuart'
                 },
                 plugins: {
-                  legend: { display: false },
-                  title: currentChartData.title,
-                  barLabel: true
+                  legend: {
+                    position: 'top',
+                    labels: {
+                      font: {
+                        size: 14
+                      }
+                    }
+                  },
+                  title: {
+                    display: true,
+                    font: {
+                      size: 20
+                    }
+                  }
                 },
                 scales: {
                   y: {
@@ -361,7 +372,12 @@ const StockGraph = () => {
                       text: currentChartData.metric,
                       font: { size: 14 }
                     },
-                    grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                    grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                    ticks: {
+                      font: {
+                        size: 18
+                      }
+                    }
                   },
                   x: {
                     title: {
@@ -369,7 +385,12 @@ const StockGraph = () => {
                       text: 'Stock Symbol',
                       font: { size: 14 }
                     },
-                    grid: { display: false }
+                    grid: { display: false },
+                    ticks: {
+                      font: {
+                        size: 18
+                      }
+                    }
                   }
                 }
               }} 
