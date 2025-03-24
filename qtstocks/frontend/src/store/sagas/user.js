@@ -34,6 +34,7 @@ function* fetchUsersSaga() {
 
 function* createUserSaga(action) {
   try {
+    yield effects.put(setLoader(LoaderActions.CREATE_USER, true));
     const response = yield effects.call(api.createUser, action.user);
     yield effects.put(setCreateUser(response));
   } catch (error) {
@@ -41,11 +42,14 @@ function* createUserSaga(action) {
       action: ErrorActions.CREATE_USER,
       message: "Failed to create user",
     }));
+  } finally {
+    yield effects.put(setLoader(LoaderActions.CREATE_USER, false));
   }
 }
 
 function* updateUserSaga(action) {
   try {
+    yield effects.put(setLoader(LoaderActions.UPDATE_USER, true));
     yield effects.call(api.updateUser, action.userId, action.userData);
     yield effects.put(setUpdateUser(action.userData));
   } catch (error) {
@@ -53,11 +57,14 @@ function* updateUserSaga(action) {
       action: ErrorActions.UPDATE_USER,
       message: "Failed to update user",
     }));
+  } finally {
+    yield effects.put(setLoader(LoaderActions.UPDATE_USER, false));
   }
 }
 
 function* deleteUserSaga(action) {
   try {
+    yield effects.put(setLoader(LoaderActions.DELETE_USER, true));
     const response = yield effects.call(api.deleteUser, action.userId);
     yield effects.put(setDeleteUser(response));
   } catch (error) {
@@ -65,11 +72,14 @@ function* deleteUserSaga(action) {
       action: ErrorActions.DELETE_USER,
       message: "Failed to delete user",
     }));
+  } finally {
+    yield effects.put(setLoader(LoaderActions.DELETE_USER, false));
   }
 }
 
 function* toggleActiveSaga(action) {
   try {
+    yield effects.put(setLoader(LoaderActions.TOGGLE_ACTIVE, true));
     yield effects.call(api.toggleActive, action.payload.id);
     yield effects.put(setToggleActive(action.payload.id));
   } catch (error) {
@@ -77,11 +87,14 @@ function* toggleActiveSaga(action) {
       action: ErrorActions.TOGGLE_ACTIVE,
       message: "Failed to toggle active",
     }));
+  } finally {
+    yield effects.put(setLoader(LoaderActions.TOGGLE_ACTIVE, false));
   }
 }
 
 function* toggleAdminSaga(action) {
   try {
+    yield effects.put(setLoader(LoaderActions.TOGGLE_ADMIN, true));
     yield effects.call(api.toggleAdmin, action.payload.id);
     yield effects.put(setToggleAdmin(action.payload.id));
   } catch (error) {
@@ -89,6 +102,8 @@ function* toggleAdminSaga(action) {
       action: ErrorActions.TOGGLE_ADMIN,
       message: "Failed to toggle admin",
     }));
+  } finally {
+    yield effects.put(setLoader(LoaderActions.TOGGLE_ADMIN, false));
   }
 }
 

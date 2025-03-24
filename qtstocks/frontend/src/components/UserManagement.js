@@ -42,7 +42,6 @@ const UserManagement = () => {
     password: '',
     is_admin: false
   });
-  const [loadingStates, setLoadingStates] = useState({});
   const [showError, setShowError] = useState(false);
   const [page, setPage] = useState(1);
   const observer = useRef();
@@ -135,39 +134,17 @@ const UserManagement = () => {
   };
 
   const handleDelete = async (userId) => {
-    setLoadingStates(prev => ({ ...prev, [`delete_${userId}`]: true }));
-    try {
-      await dispatch(deleteUser(userId));
-      dispatch(fetchUsers());
-    } catch (error) {
-      console.error('Error deleting user:', error);
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [`delete_${userId}`]: false }));
-    }
+    await dispatch(deleteUser(userId));
   };
 
   const handleToggleActive = async (userId) => {
     if (!userId) return;
-    setLoadingStates(prev => ({ ...prev, [`active_${userId}`]: true }));
-    try {
-      await dispatch(toggleActiveRequest(userId));
-    } catch (error) {
-      console.error('Error toggling active status:', error);
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [`active_${userId}`]: false }));
-    }
+    await dispatch(toggleActiveRequest(userId));
   };
 
   const handleToggleAdmin = async (userId) => {
     if (!userId) return;
-    setLoadingStates(prev => ({ ...prev, [`admin_${userId}`]: true }));
-    try {
-      await dispatch(toggleAdminRequest(userId));
-    } catch (error) {
-      console.error('Error toggling admin status:', error);
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [`admin_${userId}`]: false }));
-    }
+    await dispatch(toggleAdminRequest(userId));
   };
 
   const getFeatureChipColor = (feature) => {
@@ -254,11 +231,11 @@ const UserManagement = () => {
                       <Switch
                         checked={Boolean(user.is_active)}
                         onChange={() => handleToggleActive(user.id)}
-                        disabled={loadingStates[`active_${user.id}`] || user.id === currentUser?.id}
+                        disabled={loaders[LoaderActions.TOGGLE_ACTIVE] || user.id === currentUser?.id}
                         color="primary"
                         size="small"
                       />
-                      {loadingStates[`active_${user.id}`] && (
+                      {loaders[LoaderActions.TOGGLE_ACTIVE] && (
                         <CircularProgress
                           size={16}
                           sx={{
@@ -279,11 +256,11 @@ const UserManagement = () => {
                       <Switch
                         checked={Boolean(user.is_admin)}
                         onChange={() => handleToggleAdmin(user.id)}
-                        disabled={loadingStates[`admin_${user.id}`] || user.id === currentUser?.id}
+                        disabled={loaders[LoaderActions.TOGGLE_ADMIN] || user.id === currentUser?.id}
                         color="secondary"
                         size="small"
                       />
-                      {loadingStates[`admin_${user.id}`] && (
+                      {loaders[LoaderActions.TOGGLE_ADMIN] && (
                         <CircularProgress
                           size={16}
                           sx={{
@@ -314,10 +291,10 @@ const UserManagement = () => {
                       <IconButton 
                         size="small" 
                         onClick={() => handleDelete(user.id)}
-                        disabled={loadingStates[`delete_${user.id}`] || user.id === currentUser?.id}
+                        disabled={loaders[LoaderActions.DELETE_USER] || user.id === currentUser?.id}
                         sx={{ padding: '4px' }}
                       >
-                        {loadingStates[`delete_${user.id}`] ? (
+                        {loaders[LoaderActions.DELETE_USER] ? (
                           <CircularProgress size={16} />
                         ) : (
                           <DeleteIcon fontSize="small" />

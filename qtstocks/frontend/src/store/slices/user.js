@@ -1,13 +1,4 @@
 import { createSlice } from '@reduxjs/toolkit';
-import {
-  CREATE_USER,
-  UPDATE_USER,
-  DELETE_USER,
-  TOGGLE_ACTIVE_SUCCESS,
-  TOGGLE_ACTIVE_FAILURE,
-  TOGGLE_ADMIN_SUCCESS,
-  TOGGLE_ADMIN_FAILURE
-} from '../actions/user';
 
 const ErrorActions = {
   'FETCH_USERS': 'fetchUsers',
@@ -20,6 +11,11 @@ const ErrorActions = {
 
 const LoaderActions = {
   'FETCH_USERS': 'fetchUsers',
+  'CREATE_USER': 'createUser',
+  'UPDATE_USER': 'updateUser',
+  'DELETE_USER': 'deleteUser',
+  'TOGGLE_ACTIVE': 'toggleActive',
+  'TOGGLE_ADMIN': 'toggleAdmin',
 }
 
 const initialState = {
