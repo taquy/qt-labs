@@ -138,8 +138,11 @@ const Layout = () => {
             size="small"
             sx={{ ml: 2 }}
           >
+            <Typography variant="body2" sx={{ mr: 1, fontWeight: 'bold', color: 'white' }}>
+              {userInfo?.email}
+            </Typography>
             <Avatar sx={{ width: 32, height: 32 }}>
-              {userInfo?.username?.[0]?.toUpperCase() || 'U'}
+              {userInfo?.name?.[0]?.toUpperCase() || 'U'}
             </Avatar>
           </IconButton>
           <Menu
