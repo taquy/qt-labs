@@ -235,6 +235,40 @@ class UserJWT(db.Model):
     def __repr__(self):
         return f'<UserJWT {self.user_id}>'
 
+class Payment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(3), nullable=False, default='USD')
+    payment_method = db.Column(db.String(50), nullable=False)  # e.g., 'credit_card', 'paypal', 'bank_transfer'
+    status = db.Column(db.String(20), nullable=False, default='pending')  # pending, completed, failed, refunded
+    transaction_id = db.Column(db.String(100), unique=True)
+    description = db.Column(db.String(255))
+    metadata = db.Column(db.JSON)  # For storing additional payment-related data
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    user = db.relationship('User', backref=db.backref('payments', lazy=True))
+    
+    def __repr__(self):
+        return f'<Payment {self.id} - {self.amount} {self.currency}>'
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'amount': self.amount,
+            'currency': self.currency,
+            'payment_method': self.payment_method,
+            'status': self.status,
+            'transaction_id': self.transaction_id,
+            'description': self.description,
+            'metadata': self.metadata,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
 class StockExchanges(db.Model):
     __tablename__ = 'stock_exchanges'
     __table_args__ = {'info': {'is_view': True}}

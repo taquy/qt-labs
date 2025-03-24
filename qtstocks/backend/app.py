@@ -29,6 +29,7 @@ from controllers.settings import init_settings_routes
 from controllers.stocks import init_stock_routes
 from controllers.users import init_user_routes
 from controllers.portfolios import init_portfolio_routes
+from controllers.payments import init_payment_routes
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -50,6 +51,7 @@ def create_app(config_class=Config):
     stocks_ns = Namespace('stocks', description='Stock operations')
     settings_ns = Namespace('settings', description='User settings operations')
     portfolios_ns = Namespace('portfolios', description='Stock portfolio operations')
+    payments_ns = Namespace('payments', description='Payment operations')
     
     # Add namespaces to API
     api.add_namespace(auth_ns)
@@ -57,6 +59,7 @@ def create_app(config_class=Config):
     api.add_namespace(stocks_ns)
     api.add_namespace(settings_ns)
     api.add_namespace(portfolios_ns)
+    api.add_namespace(payments_ns)
     
     # Configure login manager
     login_manager.login_view = 'login'
@@ -87,6 +90,7 @@ def create_app(config_class=Config):
     init_stock_routes(app, token_required, stocks_ns)
     init_user_routes(app, token_required, users_ns)
     init_portfolio_routes(app, token_required, portfolios_ns)
+    init_payment_routes(app, token_required, payments_ns)
     
     # Initialize database
     with app.app_context():
