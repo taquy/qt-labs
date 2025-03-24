@@ -39,44 +39,34 @@ const UserManagement = () => {
     password: '',
     is_admin: false
   });
-  const [page, setPage] = useState(1);
-  const observer = useRef();
 
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
   const { users, error, users_query, loaders } = useSelector(state => state.user);
   
-  const lastUserElementRef = useCallback(node => {
-    if (loaders[LoaderActions.FETCH_USERS]) return;
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && users_query.has_next) {
-        setPage(prevPage => prevPage + 1);
-        dispatch(fetchUsers())
-      }
-    });
-    if (node) observer.current.observe(node);
-  }, [users_query, loaders, dispatch]);
 
   useEffect(() => {
     dispatch(fetchUsers());
-  }, [dispatch, page, users_query]);
+  }, [dispatch, users_query]);
 
   useEffect(() => {
-    if (page === 1) {
-      setUsersQuery({...users_query, page: 1});
+    if (users_query.page === 1) {
+      dispatch(setUsersQuery({...users_query, page: 1}));
     }
-  }, [page, dispatch, users_query]);
+  }, [users_query, dispatch]);
 
   useEffect(() => {
-    Object.keys(error).forEach((key) => {
-      if (error[key] !== "") {
-        const timer = setTimeout(() => {
-          dispatch(setError(key, ''));
-        }, 3000);
-        return () => clearTimeout(timer);
-      }
-    });
+    const errorKeys = Object.keys(error);
+    if (errorKeys.length > 0) {
+      errorKeys.forEach((key) => {
+        if (error[key]) {
+          const timer = setTimeout(() => {
+            dispatch(setError(key, ''));
+          }, 3000);
+          return () => clearTimeout(timer);
+        }
+      });
+    }
   }, [error, dispatch]);
 
   const handleOpenDialog = (user = null) => {
@@ -203,7 +193,6 @@ const UserManagement = () => {
             {users.items.map((user, index) => (
               <TableRow
                 key={user.id}
-                ref={index === users.items.length - 1 ? lastUserElementRef : null}
                 sx={{ '& > td': { py: 1, fontSize: '0.875rem' } }}
               >
                 <TableCell>{user.name}</TableCell>
