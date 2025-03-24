@@ -31,6 +31,9 @@ from controllers.users import init_user_routes
 from controllers.portfolios import init_portfolio_routes
 from controllers.payments import init_payment_routes
 from controllers.subscriptions import init_subscription_routes
+from controllers.products import init_product_routes
+from controllers.roles import init_role_routes
+from utils.auth import token_required
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -54,6 +57,8 @@ def create_app(config_class=Config):
     portfolios_ns = Namespace('portfolios', description='Stock portfolio operations')
     payments_ns = Namespace('payments', description='Payment operations')
     subscriptions_ns = Namespace('subscriptions', description='Subscription operations')
+    products_ns = Namespace('products', description='Product management operations')
+    roles_ns = Namespace('roles', description='Role and permission operations')
     
     # Add namespaces to API
     api.add_namespace(auth_ns)
@@ -63,6 +68,8 @@ def create_app(config_class=Config):
     api.add_namespace(portfolios_ns)
     api.add_namespace(payments_ns)
     api.add_namespace(subscriptions_ns)
+    api.add_namespace(products_ns)
+    api.add_namespace(roles_ns)
     
     # Configure login manager
     login_manager.login_view = 'login'
@@ -95,6 +102,8 @@ def create_app(config_class=Config):
     init_portfolio_routes(app, token_required, portfolios_ns)
     init_payment_routes(app, token_required, payments_ns)
     init_subscription_routes(app, token_required, subscriptions_ns)
+    init_product_routes(app, token_required, products_ns)
+    init_role_routes(app, token_required, roles_ns)
     
     # Initialize database (comment out when run flask db upgrade)
     with app.app_context():
