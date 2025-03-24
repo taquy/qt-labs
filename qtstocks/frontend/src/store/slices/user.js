@@ -19,14 +19,25 @@ const LoaderActions = {
 }
 
 const initialState = {
-  users: [],
+  users: {
+    items: [],
+    current_page: 0,
+    has_next: true,
+  },
   users_query: {
     page: 1,
     per_page: 20,
     search: '',
     refresh: false
   },
-  error: null,
+  error: {
+    [ErrorActions.FETCH_USERS]: "",
+    [ErrorActions.CREATE_USER]: "",
+    [ErrorActions.UPDATE_USER]: "",
+    [ErrorActions.DELETE_USER]: "",
+    [ErrorActions.TOGGLE_ACTIVE]: "",
+    [ErrorActions.TOGGLE_ADMIN]: "",
+  },
   loaders: {
     [LoaderActions.FETCH_USERS]: false
   }
@@ -43,8 +54,18 @@ const userSlice = createSlice({
       return state.users_query;
     },
     setUsers: (state, action) => {
-      state.users = action.payload;
-      state.error = null;
+      if (action.payload) {
+        const { items, has_next, current_page, refresh } = action.payload;
+        state.users.items = refresh ? items : [...state.users.items, ...items];
+        state.users.has_next = refresh ? true : has_next;
+        state.users.current_page = current_page;
+      } else {
+        state.users = {
+          items: [],
+          has_next: true,
+        };
+      }
+      state.error[ErrorActions.FETCH_USERS] = "";
     },
     setError: (state, action) => {
       state.error[action.payload.action] = action.payload.message;
@@ -54,32 +75,32 @@ const userSlice = createSlice({
     },
     setCreateUser: (state, action) => {
       state.users = [...state.users, action.payload];
-      state.error[ErrorActions.CREATE_USER] = null;
+      state.error[ErrorActions.CREATE_USER] = "";
     },
     setUpdateUser: (state, action) => {
       const index = state.users.findIndex(user => user.id === action.payload.id);
       if (index !== -1) {
         state.users[index] = action.payload;
       }
-      state.error[ErrorActions.UPDATE_USER] = null;
+      state.error[ErrorActions.UPDATE_USER] = "";
     },
     setDeleteUser: (state, action) => {
       state.users = state.users.filter(user => user.id !== action.payload);
-      state.error[ErrorActions.DELETE_USER] = null;
+      state.error[ErrorActions.DELETE_USER] = "";
     },
     setToggleActive: (state, action) => {
       const index = state.users.findIndex(user => user.id === action.payload.id);
       if (index !== -1) {
         state.users[index].is_active = !state.users[index].is_active;
       }
-      state.error[ErrorActions.TOGGLE_ACTIVE] = null;
+      state.error[ErrorActions.TOGGLE_ACTIVE] = "";
     },
     setToggleAdmin: (state, action) => {
       const index = state.users.findIndex(user => user.id === action.payload.id);
       if (index !== -1) {
         state.users[index].is_admin = !state.users[index].is_admin;
       }
-      state.error[ErrorActions.TOGGLE_ADMIN] = null;
+      state.error[ErrorActions.TOGGLE_ADMIN] = "";
     },
   }
 });

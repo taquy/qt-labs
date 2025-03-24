@@ -20,18 +20,15 @@ import {
   Stack,
   Chip,
   Tooltip,
-  Checkbox,
   CircularProgress,
   FormControlLabel,
   Switch
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUsers, updateUser, createUser, deleteUser, toggleActiveRequest, toggleAdminRequest } from '../store/actions/user';
+import { fetchUsers, updateUser, createUser, deleteUser, toggleActive, toggleAdmin, setError } from '../store/actions/user';
 import { setUsersQuery } from '../store/slices/user';
-import { LoaderActions } from '../store/slices/user';
-
-const ITEMS_PER_PAGE = 20;
+import { LoaderActions, ErrorActions } from '../store/slices/user';
 
 const UserManagement = () => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -42,7 +39,6 @@ const UserManagement = () => {
     password: '',
     is_admin: false
   });
-  const [showError, setShowError] = useState(false);
   const [page, setPage] = useState(1);
   const observer = useRef();
 
@@ -73,14 +69,15 @@ const UserManagement = () => {
   }, [page, dispatch, users_query]);
 
   useEffect(() => {
-    if (error) {
-      setShowError(true);
-      const timer = setTimeout(() => {
-        setShowError(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
+    Object.keys(error).forEach((key) => {
+      if (error[key] !== "") {
+        const timer = setTimeout(() => {
+          dispatch(setError(key, ''));
+        }, 3000);
+        return () => clearTimeout(timer);
+      }
+    });
+  }, [error, dispatch]);
 
   const handleOpenDialog = (user = null) => {
     if (user) {
@@ -139,12 +136,12 @@ const UserManagement = () => {
 
   const handleToggleActive = async (userId) => {
     if (!userId) return;
-    await dispatch(toggleActiveRequest(userId));
+    await dispatch(toggleActive(userId));
   };
 
   const handleToggleAdmin = async (userId) => {
     if (!userId) return;
-    await dispatch(toggleAdminRequest(userId));
+    await dispatch(toggleAdmin(userId));
   };
 
   const getFeatureChipColor = (feature) => {
@@ -183,9 +180,9 @@ const UserManagement = () => {
         </Button>
       </Box>
 
-      {showError && error && (
+      {error[ErrorActions.FETCH_USERS] && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+          {error[ErrorActions.FETCH_USERS]}
         </Alert>
       )}
 
@@ -203,10 +200,10 @@ const UserManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((user, index) => (
+            {users.items.map((user, index) => (
               <TableRow
                 key={user.id}
-                ref={index === users.length - 1 ? lastUserElementRef : null}
+                ref={index === users.items.length - 1 ? lastUserElementRef : null}
                 sx={{ '& > td': { py: 1, fontSize: '0.875rem' } }}
               >
                 <TableCell>{user.name}</TableCell>
