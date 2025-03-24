@@ -39,6 +39,7 @@ const UserManagement = () => {
     password: '',
     is_admin: false
   });
+  const prevQueryRef = useRef();
 
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
@@ -47,12 +48,10 @@ const UserManagement = () => {
 
   useEffect(() => {
     dispatch(fetchUsers());
-  }, [dispatch, users_query]);
+  }, [users_query, dispatch]);
 
   useEffect(() => {
-    if (users_query.page === 1) {
-      dispatch(setUsersQuery({...users_query, page: 1}));
-    }
+    setUsersQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
   }, [users_query, dispatch]);
 
   useEffect(() => {

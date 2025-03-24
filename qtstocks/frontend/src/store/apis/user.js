@@ -3,11 +3,9 @@ import { API_USER_ENDPOINTS } from '../../config';
 import { getRequestConfig } from '../utils';
 
 const api = {
-  fetchUsers: async (page = 1, limit = 20) => {
-    const response = await axios.get(`${API_USER_ENDPOINTS.users}`, {
-      params: { page, limit },
-      ...getRequestConfig()
-    });
+  fetchUsers: async (payload) => {
+    const query = new URLSearchParams(payload);
+    const response = await axios.get(`${API_USER_ENDPOINTS.users}?${query.toString()}`, getRequestConfig());
     return response.data;
   },
   fetchUser: async (userId) => {
