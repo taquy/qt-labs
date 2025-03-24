@@ -23,11 +23,21 @@ class User(UserMixin, db.Model):
     stock_stats = db.relationship('StockStats', secondary='user_stock_stats', backref=db.backref('users', lazy='dynamic'))
     user_settings = db.relationship('UserSettings', backref='owner', lazy=True, uselist=False)
     jwt_tokens = db.relationship('UserJWT', backref='user', lazy=True)
-    roles = db.relationship('Role', secondary='user_roles', backref=db.backref('users', lazy='dynamic'))
+    roles = db.relationship('Role', secondary='user_roles', back_populates='users', lazy='dynamic')
+    payments = db.relationship('Payment', backref='user', lazy=True)
+    subscriptions = db.relationship('Subscription', backref='user', lazy=True)
 
     @property
     def is_google_user(self):
         return self.google_id is not None
+
+    def __init__(self, username, email, password=None, is_admin=False, budget=0.0):
+        self.username = username
+        self.email = email
+        self.is_admin = is_admin
+        self.budget = budget
+        if password:
+            self.set_password(password)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -252,20 +262,22 @@ class UserJWT(db.Model):
         return f'<UserJWT {self.user_id}>'
 
 class Payment(db.Model):
+    __tablename__ = 'payment'
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
-    currency = db.Column(db.String(3), nullable=False, default='USD')
-    payment_method = db.Column(db.String(50), nullable=False)  # e.g., 'credit_card', 'paypal', 'bank_transfer'
-    status = db.Column(db.String(20), nullable=False, default='pending')  # pending, completed, failed, refunded
-    transaction_id = db.Column(db.String(100), unique=True)
-    description = db.Column(db.String(255))
-    payment_metadata = db.Column(db.JSON)  # For storing additional payment-related data
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    currency = db.Column(db.String(3))
+    payment_method = db.Column(db.String(50), nullable=False)
+    transaction_id = db.Column(db.String(100))
+    status = db.Column(db.String(20))
+    description = db.Column(db.Text)
+    payment_metadata = db.Column(db.JSON)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    user = db.relationship('User', backref=db.backref('payments', lazy=True))
+    subscriptions = db.relationship('Subscription', backref='payment', lazy=True)
     
     def __repr__(self):
         return f'<Payment {self.id} - {self.amount} {self.currency}>'
@@ -277,12 +289,12 @@ class Payment(db.Model):
             'amount': self.amount,
             'currency': self.currency,
             'payment_method': self.payment_method,
-            'status': self.status,
             'transaction_id': self.transaction_id,
+            'status': self.status,
             'description': self.description,
             'payment_metadata': self.payment_metadata,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
     def update_status(self, new_status):
@@ -308,16 +320,16 @@ class Product(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     price = db.Column(db.Float, nullable=False)
-    currency = db.Column(db.String(3), default='USD')
+    currency = db.Column(db.String(3))
     interval = db.Column(db.String(20), nullable=False)  # monthly, yearly, one-time
     features = db.Column(db.JSON)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
+    roles = db.relationship('Role', secondary='product_roles', backref=db.backref('products', lazy='dynamic'), lazy='dynamic')
     subscriptions = db.relationship('Subscription', backref='product', lazy=True)
-    roles = db.relationship('Role', secondary='product_roles', backref=db.backref('products', lazy='dynamic'))
     
     def __repr__(self):
         return f'<Product {self.name}>'
@@ -332,9 +344,9 @@ class Product(db.Model):
             'interval': self.interval,
             'features': self.features,
             'is_active': self.is_active,
-            'roles': [role.to_dict() for role in self.roles],
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'roles': [role.to_dict() for role in self.roles]
         }
 
 # Add association table for Product-Role many-to-many relationship
@@ -351,18 +363,14 @@ class Subscription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    status = db.Column(db.String(20), default='active')  # active, suspended, cancelled, expired
+    status = db.Column(db.String(20))
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime)
     auto_renew = db.Column(db.Boolean, default=True)
     payment_id = db.Column(db.Integer, db.ForeignKey('payment.id'))
     subscription_metadata = db.Column(db.JSON)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    
-    # Relationships
-    user = db.relationship('User', backref=db.backref('subscriptions', lazy=True))
-    payment = db.relationship('Payment', backref=db.backref('subscriptions', lazy=True))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     def __repr__(self):
         return f'<Subscription {self.id}>'
@@ -378,7 +386,7 @@ class Subscription(db.Model):
             'end_date': self.end_date.isoformat() if self.end_date else None,
             'auto_renew': self.auto_renew,
             'payment_id': self.payment_id,
-            'metadata': self.subscription_metadata,
+            'subscription_metadata': self.subscription_metadata,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'roles': [role.to_dict() for role in self.get_user_roles()]
@@ -477,13 +485,12 @@ class Role(db.Model):
     name = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Many-to-many relationship with permissions
-    permissions = db.relationship('Permission', secondary=role_permissions, backref=db.backref('roles', lazy='dynamic'))
-    # Many-to-many relationship with users
-    users = db.relationship('User', secondary=user_roles, backref=db.backref('roles', lazy='dynamic'))
+    # Relationships
+    permissions = db.relationship('Permission', secondary='role_permissions', backref=db.backref('roles', lazy='dynamic'), lazy='dynamic')
+    users = db.relationship('User', secondary='user_roles', back_populates='roles', lazy='dynamic', overlaps='roles')
     
     def __repr__(self):
         return f'<Role {self.name}>'
@@ -494,9 +501,9 @@ class Role(db.Model):
             'name': self.name,
             'description': self.description,
             'is_active': self.is_active,
-            'permissions': [permission.to_dict() for permission in self.permissions],
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'permissions': [permission.to_dict() for permission in self.permissions]
         }
 
 class Permission(db.Model):
@@ -509,8 +516,8 @@ class Permission(db.Model):
     resource = db.Column(db.String(50), nullable=False)  # e.g., 'user', 'product', 'subscription'
     action = db.Column(db.String(20), nullable=False)    # e.g., 'create', 'read', 'update', 'delete'
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     def __repr__(self):
         return f'<Permission {self.name}>'
