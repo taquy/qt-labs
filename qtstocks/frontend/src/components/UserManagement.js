@@ -28,6 +28,8 @@ import {
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsers, updateUser, createUser, deleteUser, toggleActiveRequest, toggleAdminRequest } from '../store/actions/user';
+import { setUsersQuery } from '../store/slices/user';
+import { LoaderActions } from '../store/slices/user';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -43,38 +45,33 @@ const UserManagement = () => {
   const [loadingStates, setLoadingStates] = useState({});
   const [showError, setShowError] = useState(false);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
   const observer = useRef();
 
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
-  const { users, error, hasMore: apiHasMore, total, pages, currentPage } = useSelector(state => state.user);
+  const { users, error, users_query, loaders } = useSelector(state => state.user);
   
   const lastUserElementRef = useCallback(node => {
-    if (loading) return;
+    if (loaders[LoaderActions.FETCH_USERS]) return;
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
+      if (entries[0].isIntersecting && users_query.has_next) {
         setPage(prevPage => prevPage + 1);
-        setLoading(true);
-        dispatch(fetchUsers(page + 1, ITEMS_PER_PAGE))
-          .then(() => {
-            setLoading(false);
-          })
-          .catch(() => {
-            setLoading(false);
-          });
+        dispatch(fetchUsers())
       }
     });
     if (node) observer.current.observe(node);
-  }, [loading, hasMore, page, dispatch]);
+  }, [users_query, loaders, dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch, page, users_query]);
 
   useEffect(() => {
     if (page === 1) {
-      dispatch(fetchUsers(1, ITEMS_PER_PAGE));
+      setUsersQuery({...users_query, page: 1});
     }
-  }, [dispatch, page]);
+  }, [page, dispatch, users_query]);
 
   useEffect(() => {
     if (error) {
@@ -121,17 +118,12 @@ const UserManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.email) return;
-
-    try {
-      if (selectedUser) {
-        await dispatch(updateUser(selectedUser.id, formData));
-      } else {
-        await dispatch(createUser(formData));
-      }
-      handleCloseDialog();
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    if (selectedUser) {
+      await dispatch(updateUser(selectedUser.id, formData));
+    } else {
+      await dispatch(createUser(formData));
     }
+    handleCloseDialog();
   };
 
   const handleInputChange = (e) => {
@@ -338,7 +330,7 @@ const UserManagement = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {loading && (
+            {loaders[LoaderActions.FETCH_USERS] && (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 1 }}>
                   <CircularProgress size={20} />
@@ -349,10 +341,24 @@ const UserManagement = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>{selectedUser ? 'Edit User' : 'Create User'}</DialogTitle>
-        <DialogContent>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseDialog}
+        aria-labelledby="dialog-title"
+        aria-describedby="dialog-description"
+        keepMounted={false}
+        disablePortal
+      >
+        <DialogTitle id="dialog-title">
+          {selectedUser ? 'Edit User' : 'Create User'}
+        </DialogTitle>
+        <DialogContent id="dialog-description">
+          <Box 
+            component="form" 
+            onSubmit={handleSubmit} 
+            sx={{ mt: 2 }}
+            noValidate
+          >
             <TextField
               fullWidth
               label="Name"
@@ -361,6 +367,7 @@ const UserManagement = () => {
               onChange={handleInputChange}
               margin="normal"
               required
+              autoFocus
             />
             <TextField
               fullWidth
@@ -396,7 +403,12 @@ const UserManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained" 
+            color="primary"
+            type="submit"
+          >
             {selectedUser ? 'Update' : 'Create'}
           </Button>
         </DialogActions>

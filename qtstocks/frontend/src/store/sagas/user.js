@@ -1,10 +1,10 @@
 import * as effects from 'redux-saga/effects';
 import api from '../apis/user';
-import { setUsers, setError } from '../slices/user';
+import { setUsers, setError, setLoader, getUsersQuery } from '../slices/user';
+import { LoaderActions, ErrorActions } from '../slices/user';
+import { handleApiError } from '../utils';
 import {
   FETCH_USERS,
-  FETCH_USERS_SUCCESS,
-  FETCH_USERS_FAILURE,
   CREATE_USER,
   UPDATE_USER,
   DELETE_USER,
@@ -16,27 +16,23 @@ import {
   TOGGLE_ADMIN_FAILURE
 } from '../actions/user';
 
-function* fetchUsersSaga(action) {
+function* fetchUsersSaga() {
   try {
-    const response = yield effects.call(api.fetchUsers, action.page, action.limit);
-    const users = Array.isArray(response.items) ? response.items : [];
-    const hasMore = response.has_next || false;
-    yield effects.put({ 
-      type: FETCH_USERS_SUCCESS, 
-      payload: {
-        users,
-        hasMore,
-        page: response.current_page,
-        total: response.total,
-        pages: response.pages
-      }
-    });
+    const state_query = yield effects.select(getUsersQuery);
+    const query = {...state_query.payload.users.users_query};
+    yield effects.put(setLoader(LoaderActions.FETCH_USERS, true));
+    const results = yield effects.call(api.fetchUsers, query);
+    let refresh = query.search.trim() !== "" || query.page === 1;
+    refresh = refresh && results.items.length > 0;
+    yield effects.put(setUsers({...results, refresh}));
   } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message;
-    yield effects.put({ 
-      type: FETCH_USERS_FAILURE, 
-      payload: { error: errorMessage }
-    });
+    yield effects.put(setError({
+      action: ErrorActions.STOCK_SELECTOR,
+      message: 'Failed to fetch users',
+    }));
+    yield effects.call(handleApiError, error, 'fetchStocksSaga');
+  } finally {
+    yield effects.put(setLoader(LoaderActions.FETCH_USERS, false));
   }
 }
 
@@ -53,12 +49,8 @@ function* createUserSaga(action) {
 
 function* updateUserSaga(action) {
   try {
-    // First update the user
     yield effects.call(api.updateUser, action.userId, action.userData);
-    // Then fetch the updated users list
-    const usersResponse = yield effects.call(api.fetchUsers, 1, 20);
-    const users = Array.isArray(usersResponse.items) ? usersResponse.items : [];
-    yield effects.put(setUsers(users));
+    yield effects.call(fetchUsersSaga);
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
     yield effects.put(setError(errorMessage));
@@ -67,12 +59,8 @@ function* updateUserSaga(action) {
 
 function* deleteUserSaga(action) {
   try {
-    // First delete the user
     yield effects.call(api.deleteUser, action.userId);
-    // Then fetch the updated users list
-    const usersResponse = yield effects.call(api.fetchUsers, 1, 20);
-    const users = Array.isArray(usersResponse.items) ? usersResponse.items : [];
-    yield effects.put(setUsers(users));
+    yield effects.call(fetchUsersSaga);
   } catch (error) {
     const errorMessage = error.response?.data?.message || error.message;
     yield effects.put(setError(errorMessage));

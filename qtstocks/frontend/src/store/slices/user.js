@@ -1,7 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
-  FETCH_USERS_SUCCESS,
-  FETCH_USERS_FAILURE,
   CREATE_USER,
   UPDATE_USER,
   DELETE_USER,
@@ -11,19 +9,38 @@ import {
   TOGGLE_ADMIN_FAILURE
 } from '../actions/user';
 
+const ErrorActions = {
+  'FETCH_USERS': 'fetchUsers',
+}
+
+const LoaderActions = {
+  'FETCH_USERS': 'fetchUsers',
+}
+
 const initialState = {
   users: [],
+  users_query: {
+    page: 1,
+    per_page: 20,
+    search: '',
+    refresh: false
+  },
   error: null,
-  hasMore: true,
-  total: 0,
-  pages: 0,
-  currentPage: 1
+  loaders: {
+    [LoaderActions.FETCH_USERS]: false
+  }
 };
 
 const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
+    setUsersQuery: (state, action) => {
+      state.users_query = action.payload;
+    },
+    getUsersQuery: (state) => {
+      return state.users_query;
+    },
     setUsers: (state, action) => {
       state.users = action.payload;
       state.error = null;
@@ -31,36 +48,12 @@ const userSlice = createSlice({
     setError: (state, action) => {
       state.error = action.payload;
     },
-    appendUsers: (state, action) => {
-      state.users = [...state.users, ...action.payload];
-      state.error = null;
-    },
-    setHasMore: (state, action) => {
-      state.hasMore = action.payload;
-    },
-    setPagination: (state, action) => {
-      state.total = action.payload.total;
-      state.pages = action.payload.pages;
-      state.currentPage = action.payload.currentPage;
+    setLoader: (state, action) => {
+      state.loaders[action.payload.action] = action.payload.value;
     }
   },
   extraReducers: (builder) => {
     builder
-      .addCase(FETCH_USERS_SUCCESS, (state, action) => {
-        if (action.payload.page === 1) {
-          state.users = action.payload.users;
-        } else {
-          state.users = [...state.users, ...action.payload.users];
-        }
-        state.hasMore = action.payload.hasMore;
-        state.total = action.payload.total;
-        state.pages = action.payload.pages;
-        state.currentPage = action.payload.page;
-        state.error = null;
-      })
-      .addCase(FETCH_USERS_FAILURE, (state, action) => {
-        state.error = action.payload.error;
-      })
       .addCase(CREATE_USER, (state, action) => {
         if (action.payload) {
           state.users = [...state.users, action.payload];
@@ -109,5 +102,13 @@ const userSlice = createSlice({
   }
 });
 
-export const { setUsers, setError, appendUsers, setHasMore, setPagination } = userSlice.actions;
+export const { 
+  setUsers, 
+  setError, 
+  setUsersQuery, 
+  getUsersQuery,
+  setLoader,
+} = userSlice.actions;
 export default userSlice.reducer;
+
+export { ErrorActions, LoaderActions };
