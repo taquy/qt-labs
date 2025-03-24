@@ -9,29 +9,29 @@ def init_payment_routes(app, token_required, payments_ns):
         'id': fields.Integer(readonly=True, description='Payment ID'),
         'user_id': fields.Integer(required=True, description='User ID'),
         'amount': fields.Float(required=True, description='Payment amount'),
-        'currency': fields.String(required=True, description='Currency code (e.g., USD)'),
+        'currency': fields.String(required=True, description='Currency code'),
         'payment_method': fields.String(required=True, description='Payment method'),
         'status': fields.String(required=True, description='Payment status'),
         'transaction_id': fields.String(description='Transaction ID'),
         'description': fields.String(description='Payment description'),
-        'metadata': fields.Raw(description='Additional payment data'),
+        'payment_metadata': fields.Raw(description='Additional payment data'),
         'created_at': fields.DateTime(readonly=True, description='Creation date'),
         'updated_at': fields.DateTime(readonly=True, description='Last update date')
     })
 
     payment_create_model = payments_ns.model('PaymentCreate', {
         'amount': fields.Float(required=True, description='Payment amount'),
-        'currency': fields.String(description='Currency code (e.g., USD)', default='USD'),
+        'currency': fields.String(description='Currency code (defaults to USD)'),
         'payment_method': fields.String(required=True, description='Payment method'),
         'transaction_id': fields.String(description='Transaction ID'),
         'description': fields.String(description='Payment description'),
-        'metadata': fields.Raw(description='Additional payment data')
+        'payment_metadata': fields.Raw(description='Additional payment data')
     })
 
     payment_update_model = payments_ns.model('PaymentUpdate', {
         'status': fields.String(description='Payment status'),
         'description': fields.String(description='Payment description'),
-        'metadata': fields.Raw(description='Additional payment data')
+        'payment_metadata': fields.Raw(description='Additional payment data')
     })
 
     @payments_ns.route('')
@@ -102,7 +102,7 @@ def init_payment_routes(app, token_required, payments_ns):
                     payment_method=data['payment_method'],
                     transaction_id=data.get('transaction_id'),
                     description=data.get('description'),
-                    metadata=data.get('metadata'),
+                    payment_metadata=data.get('payment_metadata'),
                     status='pending'
                 )
                 
@@ -140,14 +140,17 @@ def init_payment_routes(app, token_required, payments_ns):
                 data = request.get_json()
                 
                 if 'status' in data:
-                    payment.status = data['status']
+                    payment.update_status(data['status'])
                 if 'description' in data:
                     payment.description = data['description']
-                if 'metadata' in data:
-                    payment.metadata = data['metadata']
+                if 'payment_metadata' in data:
+                    payment.payment_metadata = data['payment_metadata']
                 
                 db.session.commit()
                 return payment
+            except ValueError as e:
+                db.session.rollback()
+                payments_ns.abort(400, message=str(e))
             except Exception as e:
                 db.session.rollback()
                 payments_ns.abort(500, message=str(e))

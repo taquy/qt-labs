@@ -1,6 +1,6 @@
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from extensions import db
 
 class User(UserMixin, db.Model):
@@ -14,6 +14,7 @@ class User(UserMixin, db.Model):
     google_id = db.Column(db.String(100), unique=True)
     is_admin = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=False)
+    budget = db.Column(db.Float, default=0.0)  # User's current budget
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login = db.Column(db.DateTime)
@@ -77,6 +78,7 @@ class User(UserMixin, db.Model):
             'is_admin': self.is_admin,
             'is_active': self.is_active,
             'is_google_user': self.is_google_user,
+            'budget': self.budget,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None,
             'last_login': self.last_login.strftime('%Y-%m-%d %H:%M:%S') if self.last_login else None
@@ -244,7 +246,7 @@ class Payment(db.Model):
     status = db.Column(db.String(20), nullable=False, default='pending')  # pending, completed, failed, refunded
     transaction_id = db.Column(db.String(100), unique=True)
     description = db.Column(db.String(255))
-    metadata = db.Column(db.JSON)  # For storing additional payment-related data
+    payment_metadata = db.Column(db.JSON)  # For storing additional payment-related data
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
@@ -264,10 +266,125 @@ class Payment(db.Model):
             'status': self.status,
             'transaction_id': self.transaction_id,
             'description': self.description,
-            'metadata': self.metadata,
+            'payment_metadata': self.payment_metadata,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
+
+    def update_status(self, new_status):
+        """Update payment status and handle budget changes"""
+        old_status = self.status
+        self.status = new_status
+        
+        if new_status == 'completed' and old_status != 'completed':
+            # Add amount to user's budget when payment is completed
+            self.user.budget += self.amount
+        elif old_status == 'completed' and new_status != 'completed':
+            # Remove amount from user's budget if payment is no longer completed
+            self.user.budget -= self.amount
+        elif new_status == 'refunded' and old_status == 'completed':
+            # Remove amount from user's budget when payment is refunded
+            self.user.budget -= self.amount
+
+class Subscription(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    plan_type = db.Column(db.String(50), nullable=False)  # e.g., 'free', 'basic', 'premium', 'enterprise'
+    status = db.Column(db.String(20), nullable=False, default='active')  # active, cancelled, expired, suspended
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=True)
+    auto_renew = db.Column(db.Boolean, default=True)
+    payment_id = db.Column(db.Integer, db.ForeignKey('payment.id'), nullable=True)
+    subscription_metadata = db.Column(db.JSON)  # For storing additional subscription data
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    user = db.relationship('User', backref=db.backref('subscriptions', lazy=True))
+    payment = db.relationship('Payment', backref=db.backref('subscriptions', lazy=True))
+    
+    # Plan prices in USD
+    PLAN_PRICES = {
+        'free': 0.0,
+        'basic': 9.99,
+        'premium': 19.99,
+        'enterprise': 49.99
+    }
+    
+    def __repr__(self):
+        return f'<Subscription {self.id} - {self.plan_type}>'
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'plan_type': self.plan_type,
+            'status': self.status,
+            'start_date': self.start_date.isoformat(),
+            'end_date': self.end_date.isoformat() if self.end_date else None,
+            'auto_renew': self.auto_renew,
+            'payment_id': self.payment_id,
+            'subscription_metadata': self.subscription_metadata,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'price': self.PLAN_PRICES.get(self.plan_type, 0.0)
+        }
+    
+    @property
+    def is_active(self):
+        """Check if subscription is currently active"""
+        now = datetime.now(timezone.utc)
+        return (
+            self.status == 'active' and
+            self.start_date <= now and
+            (self.end_date is None or self.end_date > now)
+        )
+    
+    def cancel(self):
+        """Cancel the subscription"""
+        self.status = 'cancelled'
+        self.auto_renew = False
+        if self.end_date is None:
+            # Set end date to current date if not set
+            self.end_date = datetime.now(timezone.utc)
+    
+    def suspend(self):
+        """Suspend the subscription"""
+        self.status = 'suspended'
+    
+    def reactivate(self):
+        """Reactivate a suspended subscription"""
+        if self.status == 'suspended':
+            self.status = 'active'
+    
+    def extend(self, days):
+        """Extend the subscription by specified number of days"""
+        if self.end_date is None:
+            self.end_date = datetime.now(timezone.utc)
+        self.end_date += timedelta(days=days)
+        self.status = 'active'
+        self.auto_renew = True
+
+    def update_plan(self, new_plan_type):
+        """Update subscription plan and handle budget changes"""
+        if new_plan_type not in self.PLAN_PRICES:
+            raise ValueError(f"Invalid plan type: {new_plan_type}")
+            
+        old_price = self.PLAN_PRICES.get(self.plan_type, 0.0)
+        new_price = self.PLAN_PRICES[new_plan_type]
+        
+        # Calculate price difference
+        price_diff = new_price - old_price
+        
+        # Check if user has enough budget for the upgrade
+        if price_diff > 0 and self.user.budget < price_diff:
+            raise ValueError("Insufficient budget for plan upgrade")
+        
+        # Update user's budget
+        self.user.budget -= price_diff
+        
+        # Update plan type
+        self.plan_type = new_plan_type
 
 class StockExchanges(db.Model):
     __tablename__ = 'stock_exchanges'
