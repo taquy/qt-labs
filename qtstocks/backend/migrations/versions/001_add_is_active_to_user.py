@@ -1,6 +1,6 @@
-"""1_add_is_active_to_user
+"""001_add_is_active_to_user
 
-Revision ID: 1
+Revision ID: 001
 Revises: 
 Create Date: 2024-03-22 09:02:00.000000
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1'
+revision = '001'
 down_revision = None
 branch_labels = None
 depends_on = None
