@@ -138,9 +138,7 @@ const UserManagement = () => {
     setLoadingStates(prev => ({ ...prev, [`delete_${userId}`]: true }));
     try {
       await dispatch(deleteUser(userId));
-      // Reset to first page and refresh
-      setPage(1);
-      dispatch(fetchUsers(1, ITEMS_PER_PAGE));
+      dispatch(fetchUsers());
     } catch (error) {
       console.error('Error deleting user:', error);
     } finally {

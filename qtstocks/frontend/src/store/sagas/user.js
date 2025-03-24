@@ -1,6 +1,6 @@
 import * as effects from 'redux-saga/effects';
 import api from '../apis/user';
-import { setUsers, setError, setLoader, getUsersQuery } from '../slices/user';
+import { setUsers, setError, setLoader, getUsersQuery, setCreateUser, setUpdateUser, setDeleteUser, setToggleActive, setToggleAdmin } from '../slices/user';
 import { LoaderActions, ErrorActions } from '../slices/user';
 import { handleApiError } from '../utils';
 import {
@@ -8,12 +8,8 @@ import {
   CREATE_USER,
   UPDATE_USER,
   DELETE_USER,
-  TOGGLE_ACTIVE_REQUEST,
-  TOGGLE_ACTIVE_SUCCESS,
-  TOGGLE_ACTIVE_FAILURE,
-  TOGGLE_ADMIN_REQUEST,
-  TOGGLE_ADMIN_SUCCESS,
-  TOGGLE_ADMIN_FAILURE
+  TOGGLE_ACTIVE,
+  TOGGLE_ADMIN,
 } from '../actions/user';
 
 function* fetchUsersSaga() {
@@ -39,63 +35,60 @@ function* fetchUsersSaga() {
 function* createUserSaga(action) {
   try {
     const response = yield effects.call(api.createUser, action.user);
-    const users = Array.isArray(response) ? response : [];
-    yield effects.put(setUsers(users));
+    yield effects.put(setCreateUser(response));
   } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message;
-    yield effects.put(setError(errorMessage));
+    yield effects.put(setError({
+      action: ErrorActions.CREATE_USER,
+      message: "Failed to create user",
+    }));
   }
 }
 
 function* updateUserSaga(action) {
   try {
     yield effects.call(api.updateUser, action.userId, action.userData);
-    yield effects.call(fetchUsersSaga);
+    yield effects.put(setUpdateUser(action.userData));
   } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message;
-    yield effects.put(setError(errorMessage));
+    yield effects.put(setError({
+      action: ErrorActions.UPDATE_USER,
+      message: "Failed to update user",
+    }));
   }
 }
 
 function* deleteUserSaga(action) {
   try {
-    yield effects.call(api.deleteUser, action.userId);
-    yield effects.call(fetchUsersSaga);
+    const response = yield effects.call(api.deleteUser, action.userId);
+    yield effects.put(setDeleteUser(response));
   } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message;
-    yield effects.put(setError(errorMessage));
+    yield effects.put(setError({
+      action: ErrorActions.DELETE_USER,
+      message: "Failed to delete user",
+    }));
   }
 }
 
 function* toggleActiveSaga(action) {
   try {
     yield effects.call(api.toggleActive, action.payload.id);
-    yield effects.put({ 
-      type: TOGGLE_ACTIVE_SUCCESS, 
-      payload: { id: action.payload.id }
-    });
+    yield effects.put(setToggleActive(action.payload.id));
   } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message;
-    yield effects.put({ 
-      type: TOGGLE_ACTIVE_FAILURE, 
-      payload: { error: errorMessage }
-    });
+    yield effects.put(setError({
+      action: ErrorActions.TOGGLE_ACTIVE,
+      message: "Failed to toggle active",
+    }));
   }
 }
 
 function* toggleAdminSaga(action) {
   try {
     yield effects.call(api.toggleAdmin, action.payload.id);
-    yield effects.put({ 
-      type: TOGGLE_ADMIN_SUCCESS, 
-      payload: { id: action.payload.id }
-    });
+    yield effects.put(setToggleAdmin(action.payload.id));
   } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message;
-    yield effects.put({ 
-      type: TOGGLE_ADMIN_FAILURE, 
-      payload: { error: errorMessage }
-    });
+    yield effects.put(setError({
+      action: ErrorActions.TOGGLE_ADMIN,
+      message: "Failed to toggle admin",
+    }));
   }
 }
 
@@ -104,6 +97,6 @@ export function* userSaga() {
   yield effects.takeLatest(CREATE_USER, createUserSaga);
   yield effects.takeLatest(UPDATE_USER, updateUserSaga);
   yield effects.takeLatest(DELETE_USER, deleteUserSaga);
-  yield effects.takeLatest(TOGGLE_ACTIVE_REQUEST, toggleActiveSaga);
-  yield effects.takeLatest(TOGGLE_ADMIN_REQUEST, toggleAdminSaga);
+  yield effects.takeLatest(TOGGLE_ACTIVE, toggleActiveSaga);
+  yield effects.takeLatest(TOGGLE_ADMIN, toggleAdminSaga);
 }

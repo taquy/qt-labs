@@ -11,6 +11,11 @@ import {
 
 const ErrorActions = {
   'FETCH_USERS': 'fetchUsers',
+  'CREATE_USER': 'createUser',
+  'UPDATE_USER': 'updateUser',
+  'DELETE_USER': 'deleteUser',
+  'TOGGLE_ACTIVE': 'toggleActive',
+  'TOGGLE_ADMIN': 'toggleAdmin',
 }
 
 const LoaderActions = {
@@ -46,59 +51,40 @@ const userSlice = createSlice({
       state.error = null;
     },
     setError: (state, action) => {
-      state.error = action.payload;
+      state.error[action.payload.action] = action.payload.message;
     },
     setLoader: (state, action) => {
       state.loaders[action.payload.action] = action.payload.value;
-    }
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(CREATE_USER, (state, action) => {
-        if (action.payload) {
-          state.users = [...state.users, action.payload];
-        }
-        state.error = null;
-      })
-      .addCase(UPDATE_USER, (state, action) => {
-        if (action.payload && action.payload.id) {
-          const index = state.users.findIndex(user => user.id === action.payload.id);
-          if (index !== -1) {
-            state.users[index] = action.payload;
-          }
-        }
-        state.error = null;
-      })
-      .addCase(DELETE_USER, (state, action) => {
-        if (action.payload) {
-          state.users = state.users.filter(user => user.id !== action.payload);
-        }
-        state.error = null;
-      })
-      .addCase(TOGGLE_ACTIVE_SUCCESS, (state, action) => {
-        if (action.payload && action.payload.id) {
-          const index = state.users.findIndex(user => user.id === action.payload.id);
-          if (index !== -1) {
-            state.users[index].is_active = !state.users[index].is_active;
-          }
-        }
-        state.error = null;
-      })
-      .addCase(TOGGLE_ACTIVE_FAILURE, (state, action) => {
-        state.error = action.payload.error;
-      })
-      .addCase(TOGGLE_ADMIN_SUCCESS, (state, action) => {
-        if (action.payload && action.payload.id) {
-          const index = state.users.findIndex(user => user.id === action.payload.id);
-          if (index !== -1) {
-            state.users[index].is_admin = !state.users[index].is_admin;
-          }
-        }
-        state.error = null;
-      })
-      .addCase(TOGGLE_ADMIN_FAILURE, (state, action) => {
-        state.error = action.payload.error;
-      });
+    },
+    setCreateUser: (state, action) => {
+      state.users = [...state.users, action.payload];
+      state.error[ErrorActions.CREATE_USER] = null;
+    },
+    setUpdateUser: (state, action) => {
+      const index = state.users.findIndex(user => user.id === action.payload.id);
+      if (index !== -1) {
+        state.users[index] = action.payload;
+      }
+      state.error[ErrorActions.UPDATE_USER] = null;
+    },
+    setDeleteUser: (state, action) => {
+      state.users = state.users.filter(user => user.id !== action.payload);
+      state.error[ErrorActions.DELETE_USER] = null;
+    },
+    setToggleActive: (state, action) => {
+      const index = state.users.findIndex(user => user.id === action.payload.id);
+      if (index !== -1) {
+        state.users[index].is_active = !state.users[index].is_active;
+      }
+      state.error[ErrorActions.TOGGLE_ACTIVE] = null;
+    },
+    setToggleAdmin: (state, action) => {
+      const index = state.users.findIndex(user => user.id === action.payload.id);
+      if (index !== -1) {
+        state.users[index].is_admin = !state.users[index].is_admin;
+      }
+      state.error[ErrorActions.TOGGLE_ADMIN] = null;
+    },
   }
 });
 
@@ -108,6 +94,11 @@ export const {
   setUsersQuery, 
   getUsersQuery,
   setLoader,
+  setCreateUser,
+  setUpdateUser,
+  setDeleteUser,
+  setToggleActive,
+  setToggleAdmin
 } = userSlice.actions;
 export default userSlice.reducer;
 
