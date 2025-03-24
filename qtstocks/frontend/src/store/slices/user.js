@@ -89,17 +89,15 @@ const userSlice = createSlice({
       state.error[ErrorActions.DELETE_USER] = "";
     },
     setToggleActive: (state, action) => {
-      const index = state.users.findIndex(user => user.id === action.payload.id);
-      if (index !== -1) {
-        state.users[index].is_active = !state.users[index].is_active;
-      }
+      const index = state.users.items.findIndex(user => user.id === action.payload.id);
+      if (index === -1) return;
+      state.users.items[index] = action.payload;
       state.error[ErrorActions.TOGGLE_ACTIVE] = "";
     },
     setToggleAdmin: (state, action) => {
-      const index = state.users.findIndex(user => user.id === action.payload.id);
-      if (index !== -1) {
-        state.users[index].is_admin = !state.users[index].is_admin;
-      }
+      const index = state.users.items.findIndex(user => user.id === action.payload.id);
+      if (index === -1) return;
+      state.users.items[index] = action.payload;
       state.error[ErrorActions.TOGGLE_ADMIN] = "";
     },
   }

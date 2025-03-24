@@ -80,8 +80,8 @@ function* deleteUserSaga(action) {
 function* toggleActiveSaga(action) {
   try {
     yield effects.put(setLoader(LoaderActions.TOGGLE_ACTIVE, true));
-    yield effects.call(api.toggleActive, action.payload.id);
-    yield effects.put(setToggleActive(action.payload.id));
+    const response = yield effects.call(api.toggleActive, action.payload.id);
+    yield effects.put(setToggleActive(response));
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.TOGGLE_ACTIVE, "Failed to toggle active");
   } finally {
@@ -92,8 +92,8 @@ function* toggleActiveSaga(action) {
 function* toggleAdminSaga(action) {
   try {
     yield effects.put(setLoader(LoaderActions.TOGGLE_ADMIN, true));
-    yield effects.call(api.toggleAdmin, action.payload.id);
-    yield effects.put(setToggleAdmin(action.payload.id));
+    const response = yield effects.call(api.toggleAdmin, action.payload.id);
+    yield effects.put(setToggleAdmin(response));
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.TOGGLE_ADMIN, "Failed to toggle admin");
   } finally {
