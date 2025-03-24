@@ -45,16 +45,17 @@ const UserManagement = () => {
   const { users, error, users_query, loaders } = useSelector(state => state.user);
 
   useEffect(() => {
-    dispatch(fetchUsers());
-  }, [users_query, dispatch]);
+    if (users.has_next) {
+      dispatch(fetchUsers());
+    }
+  }, [users_query, dispatch, users.has_next]);
 
   const handleScroll = useCallback((event) => {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     // Check if scrolled to bottom (with 20px threshold)
     if (scrollHeight - scrollTop <= clientHeight + 20) {
-      if (!loaders[LoaderActions.FETCH_USERS]) {
-        dispatch(setUsersQuery({ ...users_query, page: users_query.page + 1 }));
-      }
+      if (loaders[LoaderActions.FETCH_USERS]) return
+      dispatch(setUsersQuery({ ...users_query, page: users_query.page + 1 }));
     }
   }, [dispatch, loaders, users_query]);
 
