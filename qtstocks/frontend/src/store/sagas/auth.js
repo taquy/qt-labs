@@ -7,7 +7,8 @@ import {
   LOGIN,
   GOOGLE_LOGIN,
   CHECK_IS_LOGGED_IN,
-  GET_USER_INFO
+  GET_USER_INFO,
+  RESET_STATE
 } from '../actions/auth';
 
 import api from '../apis/auth';
@@ -32,6 +33,9 @@ function* checkIsLoggedInSaga() {
     yield effects.put(setError(''));
   } else {
     yield effects.put(setIsLoggedIn(false));
+    yield effects.put({
+      type: RESET_STATE
+    });
   }
   yield effects.put(setCheckingLogin(false));
 }
