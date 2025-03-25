@@ -64,3 +64,5 @@ secrets/
 credentials/
 config.json
 settings.json
+
+*.zip

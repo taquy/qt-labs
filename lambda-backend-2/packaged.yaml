@@ -107,12 +107,49 @@ Resources:
               - Arn
             UserPoolClientId:
               Ref: UserPoolClient
+      Cors:
+        AllowMethods: '''*'''
+        AllowHeaders: '''*'''
+        AllowOrigin: '''*'''
+      EndpointConfiguration: REGIONAL
+      BinaryMediaTypes:
+      - '*/*'
+      OpenApiVersion: 3.0.1
+      Models:
+        RegisterUserRequest:
+          Type: object
+          Properties:
+            email:
+              Type: string
+              Format: email
+            password:
+              Type: string
+              MinLength: 8
+            name:
+              Type: string
+              MinLength: 1
+          Required:
+          - email
+          - password
+          - name
+        LoginUserRequest:
+          Type: object
+          Properties:
+            email:
+              Type: string
+              Format: email
+            password:
+              Type: string
+              MinLength: 8
+          Required:
+          - email
+          - password
     Metadata:
       SamResourceId: ApiGatewayRestApi
   CreateIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
+      CodeUri: s3://idea-management-package-dev/6c5f672223e35ad378339905c543c6fc
       Handler: createIdea.handler
       Runtime: nodejs18.x
       Architectures:
@@ -138,7 +175,7 @@ Resources:
   GetIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
+      CodeUri: s3://idea-management-package-dev/6c5f672223e35ad378339905c543c6fc
       Handler: getIdea.handler
       Runtime: nodejs18.x
       Architectures:
@@ -164,7 +201,7 @@ Resources:
   UpdateIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
+      CodeUri: s3://idea-management-package-dev/6c5f672223e35ad378339905c543c6fc
       Handler: updateIdea.handler
       Runtime: nodejs18.x
       Architectures:
@@ -190,7 +227,7 @@ Resources:
   DeleteIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
+      CodeUri: s3://idea-management-package-dev/6c5f672223e35ad378339905c543c6fc
       Handler: deleteIdea.handler
       Runtime: nodejs18.x
       Architectures:
@@ -216,7 +253,7 @@ Resources:
   RegisterUserFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
+      CodeUri: s3://idea-management-package-dev/6c5f672223e35ad378339905c543c6fc
       Handler: registerUser.handler
       Runtime: nodejs18.x
       Architectures:
@@ -232,7 +269,9 @@ Resources:
         - Effect: Allow
           Action:
           - cognito-idp:SignUp
+          - cognito-idp:ConfirmSignUp
           - cognito-idp:AdminConfirmSignUp
+          - cognito-idp:AdminSetUserPassword
           Resource:
             Fn::GetAtt:
             - UserPool
@@ -245,12 +284,18 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /auth/register
             Method: POST
+            Auth:
+              Authorizer: NONE
+            RequestParameters:
+              method.request.header.Content-Type: true
+            RequestModels:
+              application/json: RegisterUserRequest
     Metadata:
       SamResourceId: RegisterUserFunction
   LoginUserFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
+      CodeUri: s3://idea-management-package-dev/6c5f672223e35ad378339905c543c6fc
       Handler: loginUser.handler
       Runtime: nodejs18.x
       Architectures:
@@ -279,6 +324,12 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /auth/login
             Method: POST
+            Auth:
+              Authorizer: NONE
+            RequestParameters:
+              method.request.header.Content-Type: true
+            RequestModels:
+              application/json: LoginUserRequest
     Metadata:
       SamResourceId: LoginUserFunction
 Outputs:

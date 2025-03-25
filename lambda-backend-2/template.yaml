@@ -101,6 +101,43 @@ Resources:
           CognitoAuthorizer:
             UserPoolArn: !GetAtt UserPool.Arn
             UserPoolClientId: !Ref UserPoolClient
+      Cors:
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+      EndpointConfiguration: REGIONAL
+      BinaryMediaTypes:
+        - '*/*'
+      OpenApiVersion: '3.0.1'
+      Models:
+        RegisterUserRequest:
+          Type: object
+          Properties:
+            email:
+              Type: string
+              Format: email
+            password:
+              Type: string
+              MinLength: 8
+            name:
+              Type: string
+              MinLength: 1
+          Required:
+            - email
+            - password
+            - name
+        LoginUserRequest:
+          Type: object
+          Properties:
+            email:
+              Type: string
+              Format: email
+            password:
+              Type: string
+              MinLength: 8
+          Required:
+            - email
+            - password
 
   # Lambda Functions
   CreateIdeaFunction:
@@ -208,7 +245,9 @@ Resources:
             - Effect: Allow
               Action:
                 - cognito-idp:SignUp
+                - cognito-idp:ConfirmSignUp
                 - cognito-idp:AdminConfirmSignUp
+                - cognito-idp:AdminSetUserPassword
               Resource: !GetAtt UserPool.Arn
       Events:
         RegisterUser:
@@ -217,6 +256,12 @@ Resources:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /auth/register
             Method: POST
+            Auth:
+              Authorizer: NONE
+            RequestParameters:
+              method.request.header.Content-Type: true
+            RequestModels:
+              application/json: RegisterUserRequest
 
   LoginUserFunction:
     Type: AWS::Serverless::Function
@@ -244,6 +289,12 @@ Resources:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /auth/login
             Method: POST
+            Auth:
+              Authorizer: NONE
+            RequestParameters:
+              method.request.header.Content-Type: true
+            RequestModels:
+              application/json: LoginUserRequest
 
 Outputs:
   ApiEndpoint:

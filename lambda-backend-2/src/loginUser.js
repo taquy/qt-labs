@@ -1,34 +1,86 @@
-const AWS = require('aws-sdk');
-const cognito = new AWS.CognitoIdentityServiceProvider();
+const { CognitoIdentityProviderClient, InitiateAuthCommand } = require("@aws-sdk/client-cognito-identity-provider");
+
+const cognitoClient = new CognitoIdentityProviderClient();
 
 exports.handler = async (event) => {
     try {
-        const { email, password } = JSON.parse(event.body);
+        // Log the entire event object
+        console.log('Received event:', JSON.stringify(event, null, 2));
+        console.log('Event type:', typeof event);
+        console.log('Event body type:', typeof event.body);
         
-        // Step 1: Initiate Auth
+        // Parse event body
+        let body;
+        try {
+            if (!event.body) {
+                console.log('No body in event');
+                return {
+                    statusCode: 400,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    body: JSON.stringify({
+                        message: 'Request body is required'
+                    })
+                };
+            }
+
+            // Handle base64 encoded body
+            const decodedBody = event.isBase64Encoded ? 
+                Buffer.from(event.body, 'base64').toString('utf8') : 
+                event.body;
+            
+            console.log('Decoded body:', decodedBody);
+            
+            // Try to parse the body
+            body = typeof decodedBody === 'string' ? JSON.parse(decodedBody) : decodedBody;
+            console.log('Parsed body:', JSON.stringify(body, null, 2));
+        } catch (parseError) {
+            console.error('Error parsing event body:', parseError);
+            console.error('Raw body that caused error:', event.body);
+            return {
+                statusCode: 400,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    message: 'Invalid JSON in request body',
+                    error: parseError.message
+                })
+            };
+        }
+
+        const { email, password } = body;
+
+        if (!email || !password) {
+            return {
+                statusCode: 400,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                body: JSON.stringify({
+                    message: 'Email and password are required'
+                })
+            };
+        }
+        
+        // Use USER_PASSWORD_AUTH flow
         const initiateAuthParams = {
-            AuthFlow: 'USER_SRP_AUTH',
+            AuthFlow: 'USER_PASSWORD_AUTH',
             ClientId: process.env.USER_POOL_CLIENT_ID,
             AuthParameters: {
                 USERNAME: email,
-                SRP_A: password // In a real implementation, this would be the SRP A value
+                PASSWORD: password
             }
         };
 
-        const initiateAuthResult = await cognito.initiateAuth(initiateAuthParams).promise();
-        
-        // Step 2: Respond to Auth Challenge
-        const respondToAuthChallengeParams = {
-            ChallengeName: initiateAuthResult.ChallengeName,
-            ClientId: process.env.USER_POOL_CLIENT_ID,
-            ChallengeResponses: {
-                USERNAME: email,
-                SRP_B: password // In a real implementation, this would be the SRP B value
-            },
-            Session: initiateAuthResult.Session
-        };
-
-        const authResult = await cognito.respondToAuthChallenge(respondToAuthChallengeParams).promise();
+        console.log('Attempting login for user:', email);
+        const initiateAuthCommand = new InitiateAuthCommand(initiateAuthParams);
+        const authResult = await cognitoClient.send(initiateAuthCommand);
+        console.log('Login successful for user:', email);
         
         return {
             statusCode: 200,
@@ -44,15 +96,32 @@ exports.handler = async (event) => {
             })
         };
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Login error:', error);
+        
+        // Handle specific Cognito errors
+        let statusCode = 500;
+        let message = 'Internal server error';
+        
+        if (error.name === 'NotAuthorizedException') {
+            statusCode = 401;
+            message = 'Invalid email or password';
+        } else if (error.name === 'UserNotFoundException') {
+            statusCode = 404;
+            message = 'User not found';
+        } else if (error.name === 'UserNotConfirmedException') {
+            statusCode = 403;
+            message = 'User is not confirmed';
+        }
+
         return {
-            statusCode: error.statusCode || 500,
+            statusCode,
             headers: {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
             body: JSON.stringify({
-                message: error.message || 'Internal server error'
+                message,
+                error: error.name || 'UnknownError'
             })
         };
     }
