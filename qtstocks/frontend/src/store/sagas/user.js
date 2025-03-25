@@ -56,8 +56,8 @@ function* createUserSaga(action) {
 function* updateUserSaga(action) {
   try {
     yield effects.put(setLoader(LoaderActions.UPDATE_USER, true));
-    yield effects.call(api.updateUser, action.userId, action.userData);
-    yield effects.put(setUpdateUser(action.userData));
+    const response = yield effects.call(api.updateUser, action.payload);
+    yield effects.put(setUpdateUser(response));
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.UPDATE_USER, "Failed to update user");
   } finally {

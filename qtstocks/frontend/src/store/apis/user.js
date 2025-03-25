@@ -16,8 +16,8 @@ const api = {
     const response = await axios.post(API_USER_ENDPOINTS.createUser, user, getRequestConfig());
     return response.data;
   },
-  updateUser: async (userId, userData) => { 
-    const response = await axios.put(API_USER_ENDPOINTS.updateUser(userId), userData, getRequestConfig());
+  updateUser: async (payload) => { 
+    const response = await axios.put(API_USER_ENDPOINTS.updateUser(payload.id), payload, getRequestConfig());
     return response.data;
   },
   deleteUser: async (userId) => {

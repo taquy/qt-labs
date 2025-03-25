@@ -80,7 +80,6 @@ const UserManagement = () => {
         name: user.name || '',
         email: user.email || '',
         password: '',
-        is_admin: user.is_admin || false
       });
     } else {
       setSelectedUser(null);
@@ -88,7 +87,6 @@ const UserManagement = () => {
         name: '',
         email: '',
         password: '',
-        is_admin: false
       });
     }
     setOpenDialog(true);
@@ -101,7 +99,6 @@ const UserManagement = () => {
       name: '',
       email: '',
       password: '',
-      is_admin: false
     });
   };
 
@@ -353,16 +350,6 @@ const UserManagement = () => {
               onChange={handleInputChange}
               margin="normal"
               required={!selectedUser}
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  name="is_admin"
-                  checked={formData.is_admin}
-                  onChange={handleInputChange}
-                />
-              }
-              label="Admin"
             />
           </Box>
         </DialogContent>

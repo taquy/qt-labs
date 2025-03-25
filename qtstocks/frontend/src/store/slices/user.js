@@ -78,10 +78,8 @@ const userSlice = createSlice({
       state.error[ErrorActions.CREATE_USER] = "";
     },
     setUpdateUser: (state, action) => {
-      const index = state.users.findIndex(user => user.id === action.payload.id);
-      if (index !== -1) {
-        state.users[index] = action.payload;
-      }
+      const index = state.users.items.findIndex(user => user.id === action.payload.id);
+      if (index !== -1) state.users.items[index] = action.payload;
       state.error[ErrorActions.UPDATE_USER] = "";
     },
     setDeleteUser: (state, action) => {
