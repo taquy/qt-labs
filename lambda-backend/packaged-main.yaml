@@ -90,7 +90,7 @@ Resources:
   RegisterFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://608495931393-ap-1742893210/6029fe271265c3decee7446d7722ea20
+      CodeUri: s3://608495931393-ap-1742895301/6029fe271265c3decee7446d7722ea20
       Handler: app.lambda_handler
       Runtime: python3.8
       Environment:

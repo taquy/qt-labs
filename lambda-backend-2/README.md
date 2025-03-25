@@ -14,23 +14,109 @@ The application consists of the following AWS services:
 ## Prerequisites
 
 - AWS CLI installed and configured
+- AWS SAM CLI installed (for packaging and deploying Lambda functions)
 - Node.js 18.x or later
 - npm or yarn package manager
+- AWS credentials configured with appropriate permissions
 
 ## Deployment
+
+### Using Deployment Script
+
+The project includes a deployment script (`deploy.sh`) that automates the deployment process:
+
+1. Make the script executable:
+```bash
+chmod +x deploy.sh
+```
+
+2. Run the deployment script:
+```bash
+./deploy.sh
+```
+
+The script will:
+- Check for required prerequisites (AWS CLI, npm, SAM CLI)
+- Create an S3 bucket for packaging (if it doesn't exist)
+- Install project dependencies
+- Package the Lambda functions
+- Deploy the CloudFormation stack
+- Display stack outputs upon successful deployment
+
+### Manual Deployment
+
+If you prefer to deploy manually:
 
 1. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Deploy the CloudFormation stack:
+2. Package the application:
 ```bash
-aws cloudformation deploy \
+sam package \
   --template-file template.yaml \
+  --output-template-file packaged.yaml \
+  --s3-bucket your-package-bucket \
+  --region ap-southeast-1
+```
+
+3. Deploy the CloudFormation stack:
+```bash
+sam deploy \
+  --template-file packaged.yaml \
   --stack-name idea-management-stack \
   --capabilities CAPABILITY_IAM \
-  --parameter-overrides EnvironmentName=dev
+  --parameter-overrides EnvironmentName=dev \
+  --region ap-southeast-1
+```
+
+## Cleanup
+
+### Using Cleanup Script
+
+The project includes a cleanup script (`cleanup.sh`) that safely removes all resources:
+
+1. Make the script executable:
+```bash
+chmod +x cleanup.sh
+```
+
+2. Run the cleanup script:
+```bash
+./cleanup.sh
+```
+
+The script will:
+- Check for required prerequisites (AWS CLI)
+- Verify stack existence
+- Ask for confirmation before deletion
+- Delete the CloudFormation stack
+- Clean up all related S3 buckets (including the packaging bucket)
+- Remove local files (node_modules, package-lock.json, packaged.yaml)
+
+Note: The cleanup script will remove all S3 buckets that start with 'idea-management' prefix. Make sure you don't have any other important buckets with this prefix.
+
+### Manual Cleanup
+
+To remove all resources manually:
+
+1. Delete the CloudFormation stack:
+```bash
+aws cloudformation delete-stack --stack-name idea-management-stack --region ap-southeast-1
+```
+
+2. Empty and delete the packaging bucket:
+```bash
+aws s3api delete-objects \
+  --bucket idea-management-package-dev \
+  --delete "$(aws s3api list-object-versions \
+    --bucket idea-management-package-dev \
+    --output json \
+    --query '{Objects: [].{Key:Key,VersionId:VersionId}}')" \
+  --region ap-southeast-1
+
+aws s3api delete-bucket --bucket idea-management-package-dev --region ap-southeast-1
 ```
 
 ## API Endpoints
@@ -103,9 +189,18 @@ The application includes comprehensive error handling for:
 - DynamoDB metrics
 - Cognito user pool metrics
 
-## Cleanup
+## Configuration
 
-To remove all resources:
+The deployment and cleanup scripts use the following default values:
+- Stack Name: `idea-management-stack`
+- Environment: `dev`
+- Region: `ap-southeast-1` (Singapore)
+
+You can modify these values in the respective scripts if needed:
+- `deploy.sh`: Edit the variables at the top of the file
+- `cleanup.sh`: Edit the variables at the top of the file
+
+Note: Make sure your AWS CLI is configured to use the correct region. You can set it using:
 ```bash
-aws cloudformation delete-stack --stack-name idea-management-stack
+aws configure set region ap-southeast-1
 ``` 

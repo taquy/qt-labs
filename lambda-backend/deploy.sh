@@ -9,16 +9,9 @@ if ! command -v aws &> /dev/null; then
     exit 1
 fi
 
-# Check if stack name is provided
-if [ -z "$1" ]; then
-    echo "Usage: ./deploy.sh <stack-name> [region]"
-    echo "Example: ./deploy.sh my-idea-management-stack us-east-1"
-    exit 1
-fi
-
 # Set variables
-STACK_NAME=$1
-REGION="${2:-us-east-1}"  # Default to us-east-1 if region not specified
+STACK_NAME=idea-management-q
+REGION="ap-southeast-1"
 TEMPLATE_FILE="template.yaml"
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 S3_BUCKET="${ACCOUNT_ID}-$(echo ${REGION} | cut -d'-' -f1)-$(date +%s)"

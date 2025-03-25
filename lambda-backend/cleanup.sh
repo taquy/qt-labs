@@ -19,7 +19,7 @@ STACK_NAME=$1
 
 # Get list of deployment buckets associated with the stack
 echo "Finding deployment buckets..."
-BUCKETS=$(aws s3 ls | grep "$STACK_NAME" | awk '{print $3}')
+BUCKETS=$(aws cloudformation describe-stack-resources --stack-name $STACK_NAME --query "StackResources[?ResourceType=='AWS::S3::Bucket'].PhysicalResourceId" --output text)
 
 # Empty and delete any found buckets
 if [ ! -z "$BUCKETS" ]; then
