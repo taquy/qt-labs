@@ -51,6 +51,14 @@ Resources:
         AllowAdminCreateUserOnly: false
       AutoVerifiedAttributes:
       - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
       Schema:
       - Name: email
         AttributeDataType: String
@@ -80,6 +88,8 @@ Resources:
       - ALLOW_USER_SRP_AUTH
       - ALLOW_REFRESH_TOKEN_AUTH
       - ALLOW_USER_PASSWORD_AUTH
+      - ALLOW_ADMIN_USER_PASSWORD_AUTH
+      PreventUserExistenceErrors: ENABLED
     Metadata:
       SamResourceId: UserPoolClient
   ApiGatewayRestApi:
@@ -102,7 +112,7 @@ Resources:
   CreateIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
       Handler: createIdea.handler
       Runtime: nodejs18.x
       Architectures:
@@ -128,7 +138,7 @@ Resources:
   GetIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
       Handler: getIdea.handler
       Runtime: nodejs18.x
       Architectures:
@@ -154,7 +164,7 @@ Resources:
   UpdateIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
       Handler: updateIdea.handler
       Runtime: nodejs18.x
       Architectures:
@@ -180,7 +190,7 @@ Resources:
   DeleteIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
       Handler: deleteIdea.handler
       Runtime: nodejs18.x
       Architectures:
@@ -206,7 +216,7 @@ Resources:
   RegisterUserFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
       Handler: registerUser.handler
       Runtime: nodejs18.x
       Architectures:
@@ -240,7 +250,7 @@ Resources:
   LoginUserFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      CodeUri: s3://idea-management-package-dev/db96fc369cb6f6e189b0772862e0796d
       Handler: loginUser.handler
       Runtime: nodejs18.x
       Architectures:

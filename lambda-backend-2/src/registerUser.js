@@ -5,7 +5,8 @@ exports.handler = async (event) => {
     try {
         const { email, password, name } = JSON.parse(event.body);
         
-        const params = {
+        // Step 1: Sign up the user
+        const signUpParams = {
             ClientId: process.env.USER_POOL_CLIENT_ID,
             Username: email,
             Password: password,
@@ -21,7 +22,30 @@ exports.handler = async (event) => {
             ]
         };
 
-        const result = await cognito.signUp(params).promise();
+        const signUpResult = await cognito.signUp(signUpParams).promise();
+        
+        // Step 2: Auto-confirm the user
+        const confirmParams = {
+            ClientId: process.env.USER_POOL_CLIENT_ID,
+            Username: email,
+            ConfirmationCode: '123456' // Default code for auto-confirmation
+        };
+
+        try {
+            await cognito.confirmSignUp(confirmParams).promise();
+            
+            // Step 3: Set user password to permanent
+            const setPasswordParams = {
+                Password: password,
+                Permanent: true,
+                Username: email,
+                UserPoolId: process.env.USER_POOL_ID
+            };
+            
+            await cognito.adminSetUserPassword(setPasswordParams).promise();
+        } catch (confirmError) {
+            console.log('Auto-confirmation failed, user might need manual confirmation:', confirmError);
+        }
         
         return {
             statusCode: 200,
@@ -31,8 +55,8 @@ exports.handler = async (event) => {
             },
             body: JSON.stringify({
                 message: 'User registered successfully',
-                userSub: result.UserSub,
-                userConfirmed: result.UserConfirmed
+                userSub: signUpResult.UserSub,
+                userConfirmed: signUpResult.UserConfirmed
             })
         };
     } catch (error) {

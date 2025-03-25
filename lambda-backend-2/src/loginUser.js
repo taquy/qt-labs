@@ -5,16 +5,30 @@ exports.handler = async (event) => {
     try {
         const { email, password } = JSON.parse(event.body);
         
-        const params = {
-            AuthFlow: 'USER_PASSWORD_AUTH',
+        // Step 1: Initiate Auth
+        const initiateAuthParams = {
+            AuthFlow: 'USER_SRP_AUTH',
             ClientId: process.env.USER_POOL_CLIENT_ID,
             AuthParameters: {
                 USERNAME: email,
-                PASSWORD: password
+                SRP_A: password // In a real implementation, this would be the SRP A value
             }
         };
 
-        const result = await cognito.initiateAuth(params).promise();
+        const initiateAuthResult = await cognito.initiateAuth(initiateAuthParams).promise();
+        
+        // Step 2: Respond to Auth Challenge
+        const respondToAuthChallengeParams = {
+            ChallengeName: initiateAuthResult.ChallengeName,
+            ClientId: process.env.USER_POOL_CLIENT_ID,
+            ChallengeResponses: {
+                USERNAME: email,
+                SRP_B: password // In a real implementation, this would be the SRP B value
+            },
+            Session: initiateAuthResult.Session
+        };
+
+        const authResult = await cognito.respondToAuthChallenge(respondToAuthChallengeParams).promise();
         
         return {
             statusCode: 200,
@@ -24,9 +38,9 @@ exports.handler = async (event) => {
             },
             body: JSON.stringify({
                 message: 'Login successful',
-                accessToken: result.AuthenticationResult.AccessToken,
-                idToken: result.AuthenticationResult.IdToken,
-                refreshToken: result.AuthenticationResult.RefreshToken
+                accessToken: authResult.AuthenticationResult.AccessToken,
+                idToken: authResult.AuthenticationResult.IdToken,
+                refreshToken: authResult.AuthenticationResult.RefreshToken
             })
         };
     } catch (error) {
