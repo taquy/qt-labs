@@ -194,8 +194,12 @@ Resources:
           USER_POOL_ID: !Ref UserPool
           USER_POOL_CLIENT_ID: !Ref UserPoolClient
       Policies:
-        - CognitoUserPoolPolicy:
-            UserPoolId: !Ref UserPool
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cognito-idp:SignUp
+                - cognito-idp:AdminConfirmSignUp
+              Resource: !GetAtt UserPool.Arn
       Events:
         RegisterUser:
           Type: Api
@@ -217,8 +221,12 @@ Resources:
           USER_POOL_ID: !Ref UserPool
           USER_POOL_CLIENT_ID: !Ref UserPoolClient
       Policies:
-        - CognitoUserPoolPolicy:
-            UserPoolId: !Ref UserPool
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cognito-idp:InitiateAuth
+                - cognito-idp:RespondToAuthChallenge
+              Resource: !GetAtt UserPool.Arn
       Events:
         LoginUser:
           Type: Api

@@ -1,0 +1,290 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Idea Management Application with Lambda, DynamoDB, Cognito, and API Gateway
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    Description: Environment name that will be prefixed to resource names
+Resources:
+  CloudFormationStateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: ${EnvironmentName}-idea-management-state
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+    Metadata:
+      SamResourceId: CloudFormationStateBucket
+  IdeasTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: ${EnvironmentName}-ideas
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: userId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      - AttributeName: userId
+        KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+    Metadata:
+      SamResourceId: IdeasTable
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName:
+        Fn::Sub: ${EnvironmentName}-idea-management-users
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      AutoVerifiedAttributes:
+      - email
+      Schema:
+      - Name: email
+        AttributeDataType: String
+        Mutable: true
+        Required: true
+        StringAttributeConstraints:
+          MinLength: 1
+          MaxLength: 256
+      - Name: name
+        AttributeDataType: String
+        Mutable: true
+        Required: true
+        StringAttributeConstraints:
+          MinLength: 1
+          MaxLength: 256
+    Metadata:
+      SamResourceId: UserPool
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId:
+        Ref: UserPool
+      ClientName:
+        Fn::Sub: ${EnvironmentName}-idea-management-client
+      GenerateSecret: false
+      ExplicitAuthFlows:
+      - ALLOW_USER_SRP_AUTH
+      - ALLOW_REFRESH_TOKEN_AUTH
+      - ALLOW_USER_PASSWORD_AUTH
+    Metadata:
+      SamResourceId: UserPoolClient
+  ApiGatewayRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName:
+        Ref: EnvironmentName
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn:
+              Fn::GetAtt:
+              - UserPool
+              - Arn
+            UserPoolClientId:
+              Ref: UserPoolClient
+    Metadata:
+      SamResourceId: ApiGatewayRestApi
+  CreateIdeaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      Handler: createIdea.handler
+      Runtime: nodejs18.x
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          IDEAS_TABLE:
+            Ref: IdeasTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: IdeasTable
+      Events:
+        CreateIdea:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /ideas
+            Method: POST
+    Metadata:
+      SamResourceId: CreateIdeaFunction
+  GetIdeaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      Handler: getIdea.handler
+      Runtime: nodejs18.x
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          IDEAS_TABLE:
+            Ref: IdeasTable
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: IdeasTable
+      Events:
+        GetIdea:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /ideas/{id}
+            Method: GET
+    Metadata:
+      SamResourceId: GetIdeaFunction
+  UpdateIdeaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      Handler: updateIdea.handler
+      Runtime: nodejs18.x
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          IDEAS_TABLE:
+            Ref: IdeasTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: IdeasTable
+      Events:
+        UpdateIdea:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /ideas/{id}
+            Method: PUT
+    Metadata:
+      SamResourceId: UpdateIdeaFunction
+  DeleteIdeaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      Handler: deleteIdea.handler
+      Runtime: nodejs18.x
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          IDEAS_TABLE:
+            Ref: IdeasTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: IdeasTable
+      Events:
+        DeleteIdea:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /ideas/{id}
+            Method: DELETE
+    Metadata:
+      SamResourceId: DeleteIdeaFunction
+  RegisterUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      Handler: registerUser.handler
+      Runtime: nodejs18.x
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          USER_POOL_ID:
+            Ref: UserPool
+          USER_POOL_CLIENT_ID:
+            Ref: UserPoolClient
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - cognito-idp:SignUp
+          - cognito-idp:AdminConfirmSignUp
+          Resource:
+            Fn::GetAtt:
+            - UserPool
+            - Arn
+      Events:
+        RegisterUser:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /auth/register
+            Method: POST
+    Metadata:
+      SamResourceId: RegisterUserFunction
+  LoginUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://idea-management-package-dev/1d224a32a291016d1919f9e40929e774
+      Handler: loginUser.handler
+      Runtime: nodejs18.x
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          USER_POOL_ID:
+            Ref: UserPool
+          USER_POOL_CLIENT_ID:
+            Ref: UserPoolClient
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - cognito-idp:InitiateAuth
+          - cognito-idp:RespondToAuthChallenge
+          Resource:
+            Fn::GetAtt:
+            - UserPool
+            - Arn
+      Events:
+        LoginUser:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /auth/login
+            Method: POST
+    Metadata:
+      SamResourceId: LoginUserFunction
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value:
+      Fn::Sub: https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value:
+      Ref: UserPool
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value:
+      Ref: UserPoolClient
+  CloudFormationStateBucket:
+    Description: S3 Bucket for CloudFormation state
+    Value:
+      Ref: CloudFormationStateBucket
