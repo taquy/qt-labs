@@ -11,17 +11,27 @@ import {
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, googleLogin } from '../store/actions/auth';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const googleButtonRef = useRef(null);
   const dispatch = useDispatch();
-  const { error } = useSelector(state => state.auth);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { error, isLoggedIn } = useSelector(state => state.auth);
 
   const handleGoogleLogin = useCallback(async (response) => {
     dispatch(googleLogin(response.credential));
   }, [dispatch]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      const from = location.state?.from || '/';
+      navigate(from, { replace: true });
+    }
+  }, [isLoggedIn, navigate, location.state]);
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -150,4 +160,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;
