@@ -1,42 +1,39 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: 'CloudFormation template for Idea Management System with Cognito, DynamoDB, and Lambda'
-
+Description: CloudFormation template for Idea Management System with Cognito, DynamoDB,
+  and Lambda
 Parameters:
   UserPoolName:
     Type: String
     Default: IdeaUserPool
     Description: Name for the Cognito User Pool
-
 Resources:
-  # DynamoDB Table
   IdeaTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: Ideas
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: ideaId
-          AttributeType: S
-        - AttributeName: userId
-          AttributeType: S
+      - AttributeName: ideaId
+        AttributeType: S
+      - AttributeName: userId
+        AttributeType: S
       KeySchema:
-        - AttributeName: ideaId
-          KeyType: HASH
-        - AttributeName: userId
-          KeyType: RANGE
+      - AttributeName: ideaId
+        KeyType: HASH
+      - AttributeName: userId
+        KeyType: RANGE
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
-
-  # Cognito User Pool
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: !Ref UserPoolName
+      UserPoolName:
+        Ref: UserPoolName
       AutoVerifiedAttributes:
-        - email
+      - email
       UsernameAttributes:
-        - email
+      - email
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -44,97 +41,106 @@ Resources:
           RequireNumbers: true
           RequireSymbols: true
           RequireUppercase: true
-
-  # Cognito User Pool Client
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      UserPoolId: !Ref CognitoUserPool
+      UserPoolId:
+        Ref: CognitoUserPool
       ClientName: idea-app-client
       GenerateSecret: false
       ExplicitAuthFlows:
-        - ALLOW_USER_SRP_AUTH
-        - ALLOW_REFRESH_TOKEN_AUTH
-
-  # IAM Role for Lambda
+      - ALLOW_USER_SRP_AUTH
+      - ALLOW_REFRESH_TOKEN_AUTH
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: DynamoDBAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - dynamodb:PutItem
-                  - dynamodb:GetItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:DeleteItem
-                  - dynamodb:Query
-                Resource: !GetAtt IdeaTable.Arn
-
-  # Updated Lambda Functions
+      - PolicyName: DynamoDBAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+            Resource:
+              Fn::GetAtt:
+              - IdeaTable
+              - Arn
   CreateIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: CreateIdea
       Runtime: nodejs18.x
       Handler: index.handler
-      CodeUri: functions/createIdea/
-      Role: !GetAtt LambdaExecutionRole.Arn
+      CodeUri: s3://idea-management-artifacts-1742888364/dfd020e66656728f62cf3a13dadef88b
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
       Timeout: 30
       MemorySize: 128
-
   GetIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: GetIdea
       Runtime: nodejs18.x
       Handler: index.handler
-      CodeUri: functions/getIdea/
-      Role: !GetAtt LambdaExecutionRole.Arn
+      CodeUri: s3://idea-management-artifacts-1742888364/7c50e316a8bd7ee2484bb341a927d725
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
       Timeout: 30
       MemorySize: 128
-
   UpdateIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: UpdateIdea
       Runtime: nodejs18.x
       Handler: index.handler
-      CodeUri: functions/updateIdea/
-      Role: !GetAtt LambdaExecutionRole.Arn
+      CodeUri: s3://idea-management-artifacts-1742888364/e9e1ff4fc91d500d39738decfe8125c2
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
       Timeout: 30
       MemorySize: 128
-
   DeleteIdeaFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: DeleteIdea
       Runtime: nodejs18.x
       Handler: index.handler
-      CodeUri: functions/deleteIdea/
-      Role: !GetAtt LambdaExecutionRole.Arn
+      CodeUri: s3://idea-management-artifacts-1742888364/beb984131f3073392112515245fa88f6
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
       Timeout: 30
       MemorySize: 128
-
 Outputs:
   UserPoolId:
     Description: ID of the Cognito User Pool
-    Value: !Ref CognitoUserPool
+    Value:
+      Ref: CognitoUserPool
   UserPoolClientId:
     Description: ID of the Cognito User Pool Client
-    Value: !Ref UserPoolClient
+    Value:
+      Ref: UserPoolClient
   IdeaTableName:
     Description: Name of the DynamoDB table
-    Value: !Ref IdeaTable
+    Value:
+      Ref: IdeaTable
