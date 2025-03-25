@@ -31,11 +31,16 @@ function* checkIsLoggedInSaga() {
     yield effects.put(setIsLoggedIn(true));
     yield effects.put(setAuthToken(authToken));
     yield effects.put(setError(''));
+    // Set axios default header for subsequent requests
+    axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+    // Get user info after confirming login
+    yield effects.call(getUserInfoSaga);
   } else {
     yield effects.put(setIsLoggedIn(false));
     yield effects.put({
       type: RESET_STATE
     });
+    delete axios.defaults.headers.common['Authorization'];
   }
   yield effects.put(setCheckingLogin(false));
 }
@@ -59,9 +64,13 @@ function* googleLoginSaga(action) {
 function* loginSaga(action) {
   try {
     const response = yield effects.call(api.login, action.payload);
-    yield effects.put(setIsLoggedIn(true));
-    yield effects.put(setAuthToken(response.token));
-    yield effects.call(getUserInfoSaga);
+    if (response.token) {
+      yield effects.put(setIsLoggedIn(true));
+      yield effects.put(setAuthToken(response.token));
+      yield effects.call(getUserInfoSaga);
+    } else {
+      yield effects.put(setError('Failed to login'));
+    }
   } catch (error) {
     yield effects.put(setError('Failed to login'));
     yield effects.call(handleApiError, error, 'loginSaga');

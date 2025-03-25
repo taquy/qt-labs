@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkIsLoggedIn } from '../store/actions/auth';
 import PageLoader from './PageLoader';
+
 const PrivateRoute = ({ children }) => {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -13,20 +14,19 @@ const PrivateRoute = ({ children }) => {
   }, [dispatch]);
 
   if (checkingLogin) {
-    return (
-     <PageLoader/>
-    );
+    return <PageLoader />;
   }
 
   if (!isLoggedIn) {
-    // Redirect to login page but save the attempted url
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Save the attempted URL and redirect to login
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
-  // Check if user is admin for /users path
+
   const adminRoutes = ['/users', '/settings'];
   if (adminRoutes.includes(location.pathname) && !userInfo?.is_admin) {
     return <Navigate to="/" replace />;
   }
+
   return children;
 };
 
