@@ -304,12 +304,14 @@ const UserManagement = () => {
       </TableContainer>
 
       <Dialog 
-        open={openDialog} 
+        open={openDialog}
         onClose={handleCloseDialog}
         aria-labelledby="dialog-title"
         aria-describedby="dialog-description"
         keepMounted={false}
         disablePortal
+        disableEnforceFocus
+        disableAutoFocus
       >
         <DialogTitle id="dialog-title">
           {selectedUser ? 'Edit User' : 'Create User'}
