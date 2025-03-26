@@ -82,10 +82,6 @@ const userSlice = createSlice({
       if (index !== -1) state.users.items[index] = action.payload;
       state.error[ErrorActions.UPDATE_USER] = "";
     },
-    setDeleteUser: (state, action) => {
-      state.users = state.users.filter(user => user.id !== action.payload);
-      state.error[ErrorActions.DELETE_USER] = "";
-    },
     setToggleActive: (state, action) => {
       const index = state.users.items.findIndex(user => user.id === action.payload.id);
       if (index === -1) return;
@@ -109,7 +105,6 @@ export const {
   setLoader,
   setCreateUser,
   setUpdateUser,
-  setDeleteUser,
   setToggleActive,
   setToggleAdmin
 } = userSlice.actions;

@@ -1,6 +1,6 @@
 import * as effects from 'redux-saga/effects';
 import api from '../apis/user';
-import { setUsers, setError, setLoader, setCreateUser, setUpdateUser, setDeleteUser, setToggleActive, setToggleAdmin, setUsersQuery } from '../slices/user';
+import { setUsers, setError, setLoader, setCreateUser, setUpdateUser, setToggleActive, setToggleAdmin, setUsersQuery } from '../slices/user';
 import { LoaderActions, ErrorActions } from '../slices/user';
 import { handleApiError } from '../utils';
 import {
@@ -68,8 +68,8 @@ function* updateUserSaga(action) {
 function* deleteUserSaga(action) {
   try {
     yield effects.put(setLoader(LoaderActions.DELETE_USER, true));
-    const response = yield effects.call(api.deleteUser, action.payload);
-    yield effects.put(setDeleteUser(response));
+    yield effects.call(api.deleteUser, action.payload);
+    yield effects.call(fetchUsersSaga);
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.DELETE_USER, "Failed to delete user");
   } finally {

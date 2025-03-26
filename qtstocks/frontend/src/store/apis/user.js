@@ -21,7 +21,6 @@ const api = {
     return response.data;
   },
   deleteUser: async (userId) => {
-    console.log('userId', userId);
     const response = await axios.delete(API_USER_ENDPOINTS.deleteUser(userId), getRequestConfig());
     return response.data;
   },
