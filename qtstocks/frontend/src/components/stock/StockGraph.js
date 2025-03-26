@@ -60,7 +60,7 @@ const barLabelPlugin = {
         ctx.font = `${fontSize}px Arial`;
         ctx.textAlign = 'center';
 
-        ctx.fillText(label, xPos, yPos - 5);
+        ctx.fillText(label, xPos, yPos - 10);
 
         ctx.restore();
       });
@@ -217,7 +217,7 @@ const StockGraph = () => {
   }
 
   return (
-    <Paper sx={{ p: 2, mt: 3, mb: 3 }}>
+    <Paper sx={{ p: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">
           Stock Comparison Graph
@@ -375,7 +375,7 @@ const StockGraph = () => {
                     grid: { color: 'rgba(0, 0, 0, 0.1)' },
                     ticks: {
                       font: {
-                        size: 18
+                        size: 14
                       }
                     }
                   },
@@ -388,11 +388,12 @@ const StockGraph = () => {
                     grid: { display: false },
                     ticks: {
                       font: {
-                        size: 18
+                        size: 14
                       }
                     }
                   }
-                }
+                },
+                barThickness: 40
               }} 
             />
           </Box>
