@@ -102,7 +102,6 @@ const userSlice = createSlice({
     setLoader: (state, action) => {
       const { type, value } = action.payload;
       state.loaders[type] = value;
-      console.log(state.loaders[type]);
     },
     setCreateUser: (state, action) => {
       state.users = [...state.users, action.payload];
