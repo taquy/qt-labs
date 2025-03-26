@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Paper,
@@ -9,8 +9,8 @@ import {
   Link,
   Alert
 } from '@mui/material';
-import axios from 'axios';
-import { API_AUTH_ENDPOINTS } from '../../config';
+import { useDispatch, useSelector } from 'react-redux';
+import { register, setError } from '../../store/actions/auth';  
 
 const Register = () => {
   const navigate = useNavigate();
@@ -20,8 +20,8 @@ const Register = () => {
     password: '',
     confirmPassword: ''
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { error, loading } = useSelector(state => state.auth);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,31 +33,14 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      dispatch(setError('Passwords do not match'));
       return;
     }
-
-    setLoading(true);
-
-    try {
-      const response = await axios.post(API_AUTH_ENDPOINTS.register, {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password
-      });
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('isLoggedIn', 'true');
-      navigate('/');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to register. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    dispatch(register(formData.name, formData.email, formData.password));
+    navigate('/');
   };
-
+  
   return (
     <Box
       sx={{
@@ -90,9 +73,9 @@ const Register = () => {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <TextField
-            label="Username"
-            name="username"
-            value={formData.username}
+            label="Name"
+            name="name"
+            value={formData.name}
             onChange={handleChange}
             required
             fullWidth

@@ -119,17 +119,20 @@ def init_auth_routes(app, auth_ns):
         def post(self):
             """Register a new user"""
             data = request.get_json()
-            if not data or not data.get('email') or not data.get('password'):
+            email = data.get('email')
+            password = data.get('password')
+            name = data.get('name')
+            if not email or not password:
                 auth_ns.abort(400, "Missing email or password")
             
-            if User.query.filter_by(email=data['email']).first():
+            if User.query.filter_by(email=email).first():
                 auth_ns.abort(400, "Email already registered")
             
             user = User(
-                email=data['email'],
-                name=data.get('name', '')
+                email=email,
+                name=name,
+                password=password
             )
-            user.set_password(data['password'])
             
             db.session.add(user)
             db.session.commit()
@@ -169,7 +172,6 @@ def init_auth_routes(app, auth_ns):
                 if not user:
                     # Create new user
                     user = User(
-                        username=email,  # Use email as username for Google OAuth users
                         email=email,
                         google_id=idinfo['sub'],
                         name=idinfo.get('name', ''),

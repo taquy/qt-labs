@@ -6,12 +6,11 @@ import {
   Button, 
   Typography, 
   Alert,
-  Divider,
-  Link as RouterLink
+  Divider
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { login, googleLogin } from '../../store/actions/auth';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { login, googleLogin, setError } from '../../store/actions/auth';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -20,7 +19,7 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { error, isLoggedIn } = useSelector(state => state.auth);
+  const { error, isLoggedIn, message } = useSelector(state => state.auth);
 
   const handleGoogleLogin = useCallback(async (response) => {
     dispatch(googleLogin(response.credential));
@@ -56,7 +55,6 @@ const Login = () => {
           theme: 'outline',
           size: 'large',
           text: 'continue_with',
-          width: '100%',
           logo_alignment: 'left'
         }
       );
@@ -108,6 +106,12 @@ const Login = () => {
           </Alert>
         )}
 
+        {message && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {message}
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <TextField
             label="Email"
@@ -151,9 +155,9 @@ const Login = () => {
 
         <Typography variant="body2" align="center" sx={{ mt: 2 }}>
           Don't have an account?{' '}
-          <RouterLink to="/register">
+          <Link to="/register">
             Register here
-          </RouterLink>
+          </Link>
         </Typography>
       </Paper>
     </Box>

@@ -108,20 +108,19 @@ def create_app(config_class=Config):
     # Initialize database (comment out when run flask db upgrade)
     with app.app_context():
         # Create admin user if it doesn't exist
-        admin = User.query.filter_by(username=Config.ADMIN_USERNAME).first()
+        admin = User.query.filter_by(email=Config.ADMIN_EMAIL).first()
         if not admin:
             admin = User(
-                username=Config.ADMIN_USERNAME,
-                email='admin@example.com',
+                email=Config.ADMIN_EMAIL,
                 name='Admin',
                 is_admin=True
             )
             admin.set_password(Config.ADMIN_PASSWORD)
             db.session.add(admin)
             db.session.commit()
-            print(f"Admin user '{Config.ADMIN_USERNAME}' created successfully!")
+            print(f"Admin user '{Config.ADMIN_EMAIL}' created successfully!")
         else:
-            print(f"Admin user '{Config.ADMIN_USERNAME}' already exists.")
+            print(f"Admin user '{Config.ADMIN_EMAIL}' already exists.")
     
     return app
 

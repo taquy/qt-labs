@@ -7,10 +7,9 @@ class User(UserMixin, db.Model):
     __tablename__ = 'user'
     
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    name = db.Column(db.String(100), nullable=True)
-    password_hash = db.Column(db.String(128))
     email = db.Column(db.String(120), unique=True, nullable=False)
+    name = db.Column(db.String(120))
+    password_hash = db.Column(db.String(128))
     google_id = db.Column(db.String(100), unique=True)
     is_admin = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=False)
@@ -31,9 +30,9 @@ class User(UserMixin, db.Model):
     def is_google_user(self):
         return self.google_id is not None
 
-    def __init__(self, username, email, password=None, is_admin=False, budget=0.0):
-        self.username = username
+    def __init__(self, email, name, password=None, is_admin=False, budget=0.0):
         self.email = email
+        self.name = name
         self.is_admin = is_admin
         self.budget = budget
         if password:
@@ -106,7 +105,7 @@ class User(UserMixin, db.Model):
         }
 
     def __repr__(self):
-        return f'<User {self.username}>'
+        return f'<User {self.email}>'
 
 # Association table for User-StockStats many-to-many relationship
 user_stock_stats = db.Table('user_stock_stats',

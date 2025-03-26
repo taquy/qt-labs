@@ -48,11 +48,11 @@ def init_user_routes(app, token_required, users_ns):
     user_list_parser = users_ns.parser()
     user_list_parser.add_argument('page', type=int, location='args', help='Page number')
     user_list_parser.add_argument('per_page', type=int, location='args', help='Items per page')
-    user_list_parser.add_argument('search', type=str, location='args', help='Search term for username, email, or name')
+    user_list_parser.add_argument('search', type=str, location='args', help='Search term for email, or name')
     user_list_parser.add_argument('is_active', type=bool, location='args', help='Filter by active status')
     user_list_parser.add_argument('is_admin', type=bool, location='args', help='Filter by admin status')
     user_list_parser.add_argument('sort_by', type=str, location='args', required=False,
-        choices=['id', 'username', 'name', 'email', 'created_at', 'updated_at', 'last_login', 'is_active', 'is_admin'], 
+        choices=['id', 'email', 'name', 'created_at', 'updated_at', 'last_login', 'is_active', 'is_admin'], 
         help='Field to sort by (defaults to created_at)')
     user_list_parser.add_argument('sort_direction', type=str, location='args', 
         choices=['asc', 'desc'], help='Sort direction (asc or desc)')
@@ -83,7 +83,7 @@ def init_user_routes(app, token_required, users_ns):
                 sort_by = 'created_at'
             
             # Validate sort parameters
-            valid_sort_fields = ['id', 'username', 'email', 'name', 'is_admin', 'is_active', 'is_google_user', 
+            valid_sort_fields = ['id', 'email', 'name', 'is_admin', 'is_active', 'is_google_user', 
                                'budget', 'created_at', 'updated_at', 'last_login']
             if sort_by not in valid_sort_fields:
                 users_ns.abort(400, message=f"Invalid sort field. Must be one of: {', '.join(valid_sort_fields)}")
@@ -99,7 +99,6 @@ def init_user_routes(app, token_required, users_ns):
                 search_term = f"%{search}%"
                 query = query.filter(
                     db.or_(
-                        User.username.ilike(search_term),
                         User.email.ilike(search_term),
                         User.name.ilike(search_term)
                     )
