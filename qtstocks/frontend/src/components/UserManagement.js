@@ -28,6 +28,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsers, updateUser, createUser, deleteUser, toggleActive, toggleAdmin, setError, setUsersQuery } from '../store/actions/user';
 import { LoaderActions, ErrorActions } from '../store/slices/user';
 
+
 const UserManagement = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -37,18 +38,27 @@ const UserManagement = () => {
     password: '',
     is_admin: false
   });
+  const [forceFetchUsers, setForceFetchUsers] = useState(false);
+  const [fetchNextPage, setFetchNextPage] = useState(false);
+  const [firstLoad, setFirstLoad] = useState(true);
 
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
   const { users, error, users_query, loaders } = useSelector(state => state.user);
-  const isFetched = useRef(false);
 
   useEffect(() => {
-    if (users.has_next && !isFetched.current) {
+    if (!users_query) return;
+    const notAllowFetch = users_query.page === users.current_page && users.has_next && !fetchNextPage;
+    if (notAllowFetch) return;
+
+    const timer = setTimeout(() => {
       dispatch(fetchUsers());
-      isFetched.current = true;
-    }
-  }, [users_query, dispatch, users.has_next]);
+      setForceFetchUsers(false);
+      setFirstLoad(false);
+      setFetchNextPage(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [users_query, dispatch, users.has_next, fetchNextPage, firstLoad, forceFetchUsers, users.current_page]);
 
   useEffect(() => {
     const errorKeys = Object.keys(error);
@@ -64,14 +74,28 @@ const UserManagement = () => {
     }
   }, [error, dispatch]);
 
+  const handleSort = (column) => {
+    const sortDirection = users_query.sort_by === column && users_query.sort_direction === 'asc' ? 'desc' : 'asc';
+    dispatch(setUsersQuery({
+      ...users_query,
+      page: 1,
+      sort_by: column,
+      sort_direction: sortDirection,
+      refresh: true
+    }));
+    setForceFetchUsers(true);
+  };
+
   const handleScroll = useCallback((event) => {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     // Check if scrolled to bottom (with 20px threshold)
-    if (scrollHeight - scrollTop <= clientHeight + 20) {
-      if (loaders[LoaderActions.FETCH_USERS]) return
+    if (
+      users_query.page === users.current_page && users.has_next && !fetchNextPage &&
+      scrollHeight - scrollTop <= clientHeight + 20) {
       dispatch(setUsersQuery({ ...users_query, page: users_query.page + 1 }));
+      setFetchNextPage(true);
     }
-  }, [dispatch, loaders, users_query]);
+  }, [dispatch, users_query, users.current_page, users.has_next, fetchNextPage]);
 
   const handleOpenDialog = (user = null) => {
     if (user) {
@@ -181,12 +205,37 @@ const UserManagement = () => {
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
-              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Name</TableCell>
-              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Email</TableCell>
+              <TableCell 
+                sx={{ py: 1, fontSize: '0.875rem', cursor: 'pointer' }}
+                onClick={() => handleSort('name')}
+              >
+                Name {users_query.sort_by === 'name' && (users_query.sort_direction === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell 
+                sx={{ py: 1, fontSize: '0.875rem', cursor: 'pointer' }}
+                onClick={() => handleSort('email')}
+              >
+                Email {users_query.sort_by === 'email' && (users_query.sort_direction === 'asc' ? '↑' : '↓')}
+              </TableCell>
               <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Features</TableCell>
-              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Last Login</TableCell>
-              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Active</TableCell>
-              <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Admin</TableCell>
+              <TableCell 
+                sx={{ py: 1, fontSize: '0.875rem', cursor: 'pointer' }}
+                onClick={() => handleSort('last_login')}
+              >
+                Last Login {users_query.sort_by === 'last_login' && (users_query.sort_direction === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell 
+                sx={{ py: 1, fontSize: '0.875rem', cursor: 'pointer' }}
+                onClick={() => handleSort('is_active')}
+              >
+                Active {users_query.sort_by === 'is_active' && (users_query.sort_direction === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell 
+                sx={{ py: 1, fontSize: '0.875rem', cursor: 'pointer' }}
+                onClick={() => handleSort('is_admin')}
+              >
+                Admin {users_query.sort_by === 'is_admin' && (users_query.sort_direction === 'asc' ? '↑' : '↓')}
+              </TableCell>
               <TableCell sx={{ py: 1, fontSize: '0.875rem' }}>Actions</TableCell>
             </TableRow>
           </TableHead>

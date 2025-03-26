@@ -23,8 +23,8 @@ def init_user_routes(app, token_required, users_ns):
         'is_admin': fields.Boolean(description='Admin status'),
         'is_active': fields.Boolean(description='Active status'),
         'is_google_user': fields.Boolean(description='Google user status'),
-        'created_at': fields.DateTime(readonly=True, description='Account creation date'),
-        'last_login': fields.DateTime(description='Last login date')
+        'created_at': fields.DateTime(readonly=True, description='Account creation date', dt_format='iso8601'),
+        'last_login': fields.DateTime(description='Last login date', dt_format='iso8601')
     })
 
     paginated_user_model = users_ns.model('PaginatedUser', {
@@ -44,68 +44,92 @@ def init_user_routes(app, token_required, users_ns):
         'password': fields.String(description='New password')
     })
 
+    # Define parser for user list endpoint
+    user_list_parser = users_ns.parser()
+    user_list_parser.add_argument('page', type=int, location='args', help='Page number')
+    user_list_parser.add_argument('per_page', type=int, location='args', help='Items per page')
+    user_list_parser.add_argument('search', type=str, location='args', help='Search term for username, email, or name')
+    user_list_parser.add_argument('is_active', type=bool, location='args', help='Filter by active status')
+    user_list_parser.add_argument('is_admin', type=bool, location='args', help='Filter by admin status')
+    user_list_parser.add_argument('sort_by', type=str, location='args', required=False,
+        choices=['id', 'username', 'name', 'email', 'created_at', 'updated_at', 'last_login', 'is_active', 'is_admin'], 
+        help='Field to sort by (defaults to created_at)')
+    user_list_parser.add_argument('sort_direction', type=str, location='args', 
+        choices=['asc', 'desc'], help='Sort direction (asc or desc)')
+
     @users_ns.route('')
     class UserList(Resource):
-        @users_ns.doc('list_users', security='Bearer')
-        @users_ns.param('page', 'Page number (1-based)', type=int, default=1)
-        @users_ns.param('per_page', 'Items per page', type=int, default=10)
-        @users_ns.param('search', 'Search by email or name (partial match)', type=str)
-        @users_ns.param('is_active', 'Filter by active status', type=bool)
-        @users_ns.param('is_admin', 'Filter by admin status', type=bool)
-        @users_ns.param('is_google_user', 'Filter by Google user status', type=bool)
+        @users_ns.doc('list_users', security='bearer')
+        @users_ns.expect(user_list_parser)
         @users_ns.marshal_with(paginated_user_model)
         @token_required
-        @admin_required
         def get(self, current_user):
-            """List all users with pagination, search and filters"""
-            try:
-                page = request.args.get('page', 1, type=int)
-                per_page = request.args.get('per_page', 10, type=int)
-                search = request.args.get('search', '').strip()
-                is_active = request.args.get('is_active', type=bool)
-                is_admin = request.args.get('is_admin', type=bool)
-                is_google_user = request.args.get('is_google_user', type=bool)
-                
-                # Build query
-                query = User.query
-                
-                # Apply search filter if provided
-                if search:
-                    search_term = f"%{search}%"
-                    query = query.filter(
-                        db.or_(
-                            User.email.ilike(search_term),
-                            User.name.ilike(search_term)
-                        )
+            """List all users with pagination, filtering, and sorting"""
+            if not current_user.is_admin:
+                users_ns.abort(403, message="Only admin users can list all users")
+            
+            # Parse query parameters
+            args = user_list_parser.parse_args()
+            page = args.get('page', 1)
+            per_page = args.get('per_page', 10)
+            search = args.get('search')
+            is_active = args.get('is_active')
+            is_admin = args.get('is_admin')
+            sort_by = args.get('sort_by', 'created_at')  # Default sort by created_at
+            sort_direction = args.get('sort_direction', 'asc')  # Default ascending order
+            
+            # Handle empty string for sort_by
+            if sort_by == '':
+                sort_by = 'created_at'
+            
+            # Validate sort parameters
+            valid_sort_fields = ['id', 'username', 'email', 'name', 'is_admin', 'is_active', 'is_google_user', 
+                               'budget', 'created_at', 'updated_at', 'last_login']
+            if sort_by not in valid_sort_fields:
+                users_ns.abort(400, message=f"Invalid sort field. Must be one of: {', '.join(valid_sort_fields)}")
+            
+            if sort_direction not in ['asc', 'desc']:
+                users_ns.abort(400, message="Invalid sort direction. Must be 'asc' or 'desc'")
+            
+            # Build query
+            query = User.query
+            
+            # Apply filters
+            if search:
+                search_term = f"%{search}%"
+                query = query.filter(
+                    db.or_(
+                        User.username.ilike(search_term),
+                        User.email.ilike(search_term),
+                        User.name.ilike(search_term)
                     )
-                
-                # Apply filters if provided
-                if is_active is not None:
-                    query = query.filter(User.is_active == is_active)
-                if is_admin is not None:
-                    query = query.filter(User.is_admin == is_admin)
-                if is_google_user is not None:
-                    query = query.filter(User.google_id.isnot(None) == is_google_user)
-                
-                # Query with pagination
-                # Sort by email in ascending order
-                query = query.order_by(User.email.asc())
-                pagination = query.paginate(
-                    page=page,
-                    per_page=per_page,
-                    error_out=False
                 )
-                
-                return {
-                    'items': pagination.items,
-                    'total': pagination.total,
-                    'pages': pagination.pages,
-                    'current_page': page,
-                    'has_next': pagination.has_next,
-                    'has_prev': pagination.has_prev
-                }
-            except Exception as e:
-                users_ns.abort(500, message=str(e))
+            
+            if is_active is not None:
+                query = query.filter(User.is_active == is_active)
+            
+            if is_admin is not None:
+                query = query.filter(User.is_admin == is_admin)
+            
+            # Apply sorting
+            sort_column = getattr(User, sort_by)
+            if sort_direction == 'desc':
+                sort_column = sort_column.desc()
+            query = query.order_by(sort_column)
+            
+            # Execute query with pagination
+            pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+            users = pagination.items
+            
+            return {
+                'items': [user.to_dict() for user in users],
+                'total': pagination.total,
+                'pages': pagination.pages,
+                'current_page': page,
+                'per_page': per_page,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev
+            }
 
     @users_ns.route('/<int:user_id>')
     @users_ns.param('user_id', 'The user identifier')

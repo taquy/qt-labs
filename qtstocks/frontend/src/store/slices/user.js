@@ -28,7 +28,9 @@ const initialState = {
     page: 1,
     per_page: 20,
     search: '',
-    refresh: false
+    refresh: false,
+    sort_by: 'created_at',
+    sort_direction: 'desc'
   },
   error: {
     [ErrorActions.FETCH_USERS]: "",
@@ -48,6 +50,12 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     setUsersQuery: (state, action) => {
+      if (!action.payload.sort_by) {
+        action.payload.sort_by = 'created_at';
+      }
+      if (!action.payload.sort_direction) {
+        action.payload.sort_direction = 'desc';
+      }
       state.users_query = action.payload;
     },
     getUsersQuery: (state) => {

@@ -93,19 +93,16 @@ class User(UserMixin, db.Model):
         return any(role.name == role_name for role in self.roles)
 
     def to_dict(self):
+        """Convert user to dictionary"""
         return {
             'id': self.id,
-            'username': self.username,
             'email': self.email,
             'name': self.name,
             'is_admin': self.is_admin,
             'is_active': self.is_active,
             'is_google_user': self.is_google_user,
-            'budget': self.budget,
-            'roles': [role.to_dict() for role in self.roles],
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
-            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S') if self.updated_at else None,
-            'last_login': self.last_login.strftime('%Y-%m-%d %H:%M:%S') if self.last_login else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'last_login': self.last_login.isoformat() if self.last_login else None
         }
 
     def __repr__(self):
