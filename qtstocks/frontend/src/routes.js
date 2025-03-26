@@ -1,12 +1,12 @@
 import Login from './components/auth/Login';
 import Dashboard from './components/Dashboard';
-import StockManagement from './components/StockManagement';
-import UserManagement from './components/UserManagement';
+import StockManagement from './components/stock/StockManagement';
+import UserManagement from './components/user/UserManagement';
 import Layout from './components/Layout';
 import PublicRoute from './components/auth/PublicRoute';
 import PrivateRoute from './components/auth/PrivateRoute';
 import Register from './components/auth/Register';
-import Settings from './components/Settings';
+import Settings from './components/setting/Settings';
 
 const routes = [
   {

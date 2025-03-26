@@ -20,11 +20,11 @@ import {
   Tooltip
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchStats, removeStats, exportCsv } from '../store/actions/stocks';
-import { fetchSettings, saveSettings } from '../store/actions/settings';
+import { fetchStats, removeStats, exportCsv } from '../../store/actions/stocks';
+import { fetchSettings, saveSettings } from '../../store/actions/settings';
 import { Delete, Download, ViewColumn } from '@mui/icons-material';
-import { ErrorActions } from '../store/slices/stocks';
-import { SettingsTypes } from '../store/slices/settings';
+import { ErrorActions } from '../../store/slices/stocks';
+import { SettingsTypes } from '../../store/slices/settings';
 const StockTable = () => {
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);

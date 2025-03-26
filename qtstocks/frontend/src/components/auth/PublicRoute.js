@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkIsLoggedIn } from '../../store/actions/auth';
-import PageLoader from '../PageLoader';
+import PageLoader from './PageLoader';
 
 const PublicRoute = ({ children }) => {
   const dispatch = useDispatch();

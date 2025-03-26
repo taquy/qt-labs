@@ -13,13 +13,13 @@ import {
   Checkbox
 } from '@mui/material';
 
-import { fetchStocks, pullStockStats, pullStockList } from '../store/actions/stocks';
-import { fetchSettings } from '../store/actions/settings';
+import { fetchStocks, pullStockStats, pullStockList } from '../../store/actions/stocks';
+import { fetchSettings } from '../../store/actions/settings';
 import { useSelector, useDispatch } from 'react-redux';
-import { LoaderActions, ErrorActions, MessageActions } from '../store/slices/stocks';
-import { SettingsTypes } from '../store/slices/settings';
-import { saveSettings } from '../store/actions/settings';
-import { setMessage, setStocksQuery } from '../store/actions/stocks';
+import { LoaderActions, ErrorActions, MessageActions } from '../../store/slices/stocks';
+import { SettingsTypes } from '../../store/slices/settings';
+import { saveSettings } from '../../store/actions/settings';
+import { setMessage, setStocksQuery } from '../../store/actions/stocks';
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [loadLatestData, setLoadLatestData] = useState(false);

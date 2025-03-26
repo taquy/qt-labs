@@ -29,15 +29,15 @@ import {
 import {
   fetchStats,
   exportGraphPdf
-} from '../store/actions/stocks';
+} from '../../store/actions/stocks';
 
 import {
   fetchSettings,
   saveSettings
-} from '../store/actions/settings';
+} from '../../store/actions/settings';
 
-import { LoaderActions, ErrorActions } from '../store/slices/stocks';
-import { SettingsTypes } from '../store/slices/settings';
+import { LoaderActions, ErrorActions } from '../../store/slices/stocks';
+import { SettingsTypes } from '../../store/slices/settings';
 
 // Add custom plugin for bar labels
 const barLabelPlugin = {

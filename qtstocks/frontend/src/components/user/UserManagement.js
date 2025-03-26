@@ -25,8 +25,8 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchUsers, updateUser, createUser, deleteUser, toggleActive, toggleAdmin, setError, setUsersQuery } from '../store/actions/user';
-import { LoaderActions, ErrorActions } from '../store/slices/user';
+import { fetchUsers, updateUser, createUser, deleteUser, toggleActive, toggleAdmin, setError, setUsersQuery } from '../../store/actions/user';
+import { LoaderActions, ErrorActions } from '../../store/slices/user';
 
 
 const UserManagement = () => {
