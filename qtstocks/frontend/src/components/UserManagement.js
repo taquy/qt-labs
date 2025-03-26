@@ -46,7 +46,7 @@ const UserManagement = () => {
   const { users, error, users_query, loaders } = useSelector(state => state.user);
 
   useEffect(() => {
-    if (users_query.page === users.current_page && users.has_next && !fetchNextPage) return;
+    if (!forceFetchUsers && users_query.page === users.current_page && users.has_next && !fetchNextPage) return;
     const timer = setTimeout(() => {
       dispatch(fetchUsers());
       setForceFetchUsers(false);

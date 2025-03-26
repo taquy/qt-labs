@@ -32,7 +32,7 @@ function* fetchUsersSaga() {
     const results = yield effects.call(api.fetchUsers, query);
     let refresh = query.search.trim() !== "" || query.page === 1;
     refresh = refresh && results.items.length > 0;
-    yield effects.put(setUsers({...results, refresh}));
+    yield effects.put(setUsers({...results, ...query, refresh}));
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.FETCH_USERS, 'Failed to fetch users');
     yield effects.call(handleApiError, error, 'fetchStocksSaga');
