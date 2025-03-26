@@ -109,35 +109,157 @@ Resources:
       BinaryMediaTypes:
         - '*/*'
       OpenApiVersion: '3.0.1'
-      Models:
-        RegisterUserRequest:
-          Type: object
-          Properties:
-            email:
-              Type: string
-              Format: email
-            password:
-              Type: string
-              MinLength: 8
-            name:
-              Type: string
-              MinLength: 1
-          Required:
-            - email
-            - password
-            - name
-        LoginUserRequest:
-          Type: object
-          Properties:
-            email:
-              Type: string
-              Format: email
-            password:
-              Type: string
-              MinLength: 8
-          Required:
-            - email
-            - password
+      DefinitionBody:
+        openapi: 3.0.1
+        components:
+          schemas:
+            RegisterUserRequest:
+              type: object
+              required:
+                - email
+                - password
+                - name
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+                  minLength: 1
+            LoginUserRequest:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+        paths:
+          /auth/register:
+            post:
+              summary: Register a new user
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/RegisterUserRequest'
+              responses:
+                '200':
+                  description: User registered successfully
+                '400':
+                  description: Invalid request
+                '409':
+                  description: User already exists
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterUserFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+          /auth/login:
+            post:
+              summary: Login user
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/LoginUserRequest'
+              responses:
+                '200':
+                  description: Login successful
+                '400':
+                  description: Invalid request
+                '401':
+                  description: Invalid credentials
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LoginUserFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+          /ideas:
+            post:
+              summary: Create a new idea
+              responses:
+                '200':
+                  description: Idea created successfully
+                '400':
+                  description: Invalid request
+                '401':
+                  description: Unauthorized
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateIdeaFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+          /ideas/{id}:
+            get:
+              summary: Get an idea by ID
+              parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+              responses:
+                '200':
+                  description: Idea retrieved successfully
+                '404':
+                  description: Idea not found
+                '401':
+                  description: Unauthorized
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetIdeaFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+            put:
+              summary: Update an idea
+              parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+              responses:
+                '200':
+                  description: Idea updated successfully
+                '404':
+                  description: Idea not found
+                '401':
+                  description: Unauthorized
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateIdeaFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
+            delete:
+              summary: Delete an idea
+              parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+              responses:
+                '200':
+                  description: Idea deleted successfully
+                '404':
+                  description: Idea not found
+                '401':
+                  description: Unauthorized
+              x-amazon-apigateway-integration:
+                uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteIdeaFunction.Arn}/invocations
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                type: aws_proxy
 
   # Lambda Functions
   CreateIdeaFunction:
@@ -258,10 +380,6 @@ Resources:
             Method: POST
             Auth:
               Authorizer: NONE
-            RequestParameters:
-              method.request.header.Content-Type: true
-            RequestModels:
-              application/json: RegisterUserRequest
 
   LoginUserFunction:
     Type: AWS::Serverless::Function
@@ -291,10 +409,6 @@ Resources:
             Method: POST
             Auth:
               Authorizer: NONE
-            RequestParameters:
-              method.request.header.Content-Type: true
-            RequestModels:
-              application/json: LoginUserRequest
 
 Outputs:
   ApiEndpoint:
