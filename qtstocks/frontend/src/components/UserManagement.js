@@ -40,25 +40,20 @@ const UserManagement = () => {
   });
   const [forceFetchUsers, setForceFetchUsers] = useState(false);
   const [fetchNextPage, setFetchNextPage] = useState(false);
-  const [firstLoad, setFirstLoad] = useState(true);
 
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
   const { users, error, users_query, loaders } = useSelector(state => state.user);
 
   useEffect(() => {
-    if (!users_query) return;
-    const notAllowFetch = users_query.page === users.current_page && users.has_next && !fetchNextPage;
-    if (notAllowFetch) return;
-
+    if (users_query.page === users.current_page && users.has_next && !fetchNextPage) return;
     const timer = setTimeout(() => {
       dispatch(fetchUsers());
       setForceFetchUsers(false);
-      setFirstLoad(false);
       setFetchNextPage(false);
     }, 500);
     return () => clearTimeout(timer);
-  }, [users_query, dispatch, users.has_next, fetchNextPage, firstLoad, forceFetchUsers, users.current_page]);
+  }, [users_query, dispatch, users.has_next, fetchNextPage, forceFetchUsers, users.current_page]);
 
   useEffect(() => {
     const errorKeys = Object.keys(error);
@@ -92,8 +87,9 @@ const UserManagement = () => {
     if (
       users_query.page === users.current_page && users.has_next && !fetchNextPage &&
       scrollHeight - scrollTop <= clientHeight + 20) {
-      dispatch(setUsersQuery({ ...users_query, page: users_query.page + 1 }));
-      setFetchNextPage(true);
+        const page = users_query.page + 1;
+        dispatch(setUsersQuery({ ...users_query, page }));
+        setFetchNextPage(true);
     }
   }, [dispatch, users_query, users.current_page, users.has_next, fetchNextPage]);
 

@@ -64,7 +64,9 @@ const userSlice = createSlice({
     setUsers: (state, action) => {
       if (action.payload) {
         const { items, has_next, current_page, refresh } = action.payload;
-        state.users.items = refresh ? items : [...state.users.items, ...items];
+        const newItems = refresh ? items : [...state.users.items, ...items];
+        const uniqueItems = [...new Map(newItems.map(item => [item.id, item])).values()];
+        state.users.items = uniqueItems;
         state.users.has_next = refresh ? true : has_next;
         state.users.current_page = current_page;
       } else {

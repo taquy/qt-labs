@@ -51,8 +51,7 @@ const StockSelector = () => {
   // Add debounced search effect
   useEffect(() => {
     if (!stocks_query) return;
-    const notAllowFetch = stocks_query.search === '' && !forceFetchStocks && !firstLoad && !fetchNextPage;
-    if (notAllowFetch) return;
+    if (stocks_query.search === '' && !forceFetchStocks && !firstLoad && !fetchNextPage) return;
     const timer = setTimeout(() => {
       if (firstLoad || forceFetchStocks) {
         dispatch(fetchStocks({ ...stocks_query, page: 1, refresh: true }));
