@@ -1,12 +1,26 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+const ErrorActions = {
+  register: null,
+  login: null,
+  googleLogin: null,
+  logout: null,
+  getUserInfo: null,
+};
+
 const initialState = {
   isLoggedIn: false,
   authToken: null,
   checkingLogin: true,
   userInfo: null,
   loading: false,
-  error: null,
+  errors: {
+    [ErrorActions.register]: null,
+    [ErrorActions.login]: null,
+    [ErrorActions.googleLogin]: null,
+    [ErrorActions.logout]: null,
+    [ErrorActions.getUserInfo]: null,
+  },
   message: null,
 };
 
@@ -32,10 +46,7 @@ const authSlice = createSlice({
       state.loading = action.payload;
     },
     setError: (state, action) => {
-      state.error = action.payload;
-    },
-    clearError: (state) => {
-      state.error = null;
+      state.errors[action.payload.action] = action.payload.error;
     },
     setMessage: (state, action) => {
       state.message = action.payload;
@@ -50,8 +61,9 @@ export const {
   setUserInfo,
   setError,
   setLoading,
-  clearError,
   setMessage,
 } = authSlice.actions;
 
 export default authSlice.reducer;
+
+export { ErrorActions };

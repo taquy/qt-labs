@@ -10,18 +10,18 @@ import {
   Alert
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { register, setError } from '../../store/actions/auth';  
+import { register } from '../../store/actions/auth';  
 
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
   const dispatch = useDispatch();
-  const { error, loading } = useSelector(state => state.auth);
+  const { loading, error} = useSelector(state => state.auth);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,12 +33,8 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      dispatch(setError('Passwords do not match'));
-      return;
-    }
-    dispatch(register(formData.name, formData.email, formData.password));
-    navigate('/');
+    dispatch(register(formData));
+    // navigate('/');
   };
   
   return (

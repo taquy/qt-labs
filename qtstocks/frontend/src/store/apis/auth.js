@@ -19,6 +19,10 @@ const api = {
     const response = await axios.get(API_AUTH_ENDPOINTS.getUserInfo, getRequestConfig());
     return response.data;
   },
+  register: async (payload) => {
+    const response = await axios.post(API_AUTH_ENDPOINTS.register, payload);
+    return response.data;
+  }
 };
 
 export default api;

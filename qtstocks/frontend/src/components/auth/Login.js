@@ -15,11 +15,23 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
   const googleButtonRef = useRef(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { error, isLoggedIn, message } = useSelector(state => state.auth);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleGoogleLogin = useCallback(async (response) => {
     dispatch(googleLogin(response.credential));
@@ -73,7 +85,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(login(email, password));
+    dispatch(login(formData.email, formData.password));
   };
 
   return (
@@ -116,8 +128,8 @@ const Login = () => {
           <TextField
             label="Email"
             name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={handleChange}
             required
             fullWidth
           />
@@ -125,8 +137,8 @@ const Login = () => {
             label="Password"
             name="password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={handleChange}
             required
             fullWidth
           />
