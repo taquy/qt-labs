@@ -17,14 +17,176 @@ import {
   MenuItem,
   Chip,
   IconButton,
-  Tooltip
+  Tooltip,
+  Tabs,
+  Tab,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStats, removeStats, exportCsv } from '../../store/actions/stocks';
 import { fetchSettings, saveSettings } from '../../store/actions/settings';
-import { Delete, Download, ViewColumn } from '@mui/icons-material';
+import { Delete, Download, ViewColumn, Add as AddIcon } from '@mui/icons-material';
 import { ErrorActions } from '../../store/slices/stocks';
 import { SettingsTypes } from '../../store/slices/settings';
+
+// Portfolio Management Component
+const PortfolioManagement = ({ stats }) => {
+  const [portfolio, setPortfolio] = useState([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [newPosition, setNewPosition] = useState({
+    symbol: '',
+    shares: '',
+    purchasePrice: '',
+    purchaseDate: ''
+  });
+
+  const handleAddPosition = () => {
+    const stock = stats.find(s => s.symbol === newPosition.symbol);
+    if (stock) {
+      setPortfolio([...portfolio, {
+        ...newPosition,
+        shares: Number(newPosition.shares),
+        purchasePrice: Number(newPosition.purchasePrice),
+        currentPrice: stock.price,
+        name: stock.name
+      }]);
+      setOpenDialog(false);
+      setNewPosition({
+        symbol: '',
+        shares: '',
+        purchasePrice: '',
+        purchaseDate: ''
+      });
+    }
+  };
+
+  const calculateTotalValue = (position) => {
+    return position.shares * position.currentPrice;
+  };
+
+  const calculateGainLoss = (position) => {
+    const totalCost = position.shares * position.purchasePrice;
+    const currentValue = position.shares * position.currentPrice;
+    return currentValue - totalCost;
+  };
+
+  const calculateGainLossPercentage = (position) => {
+    const gainLoss = calculateGainLoss(position);
+    const totalCost = position.shares * position.purchasePrice;
+    return (gainLoss / totalCost) * 100;
+  };
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">Portfolio Positions</Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setOpenDialog(true)}
+        >
+          Add Position
+        </Button>
+      </Box>
+
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Symbol</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell align="right">Shares</TableCell>
+              <TableCell align="right">Purchase Price</TableCell>
+              <TableCell align="right">Current Price</TableCell>
+              <TableCell align="right">Total Value</TableCell>
+              <TableCell align="right">Gain/Loss</TableCell>
+              <TableCell align="right">Gain/Loss %</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {portfolio.map((position) => (
+              <TableRow key={`${position.symbol}-${position.purchaseDate}`}>
+                <TableCell>{position.symbol}</TableCell>
+                <TableCell>{position.name}</TableCell>
+                <TableCell align="right">{position.shares.toLocaleString()}</TableCell>
+                <TableCell align="right">${position.purchasePrice.toLocaleString()}</TableCell>
+                <TableCell align="right">${position.currentPrice.toLocaleString()}</TableCell>
+                <TableCell align="right">${calculateTotalValue(position).toLocaleString()}</TableCell>
+                <TableCell 
+                  align="right"
+                  sx={{ 
+                    color: calculateGainLoss(position) >= 0 ? 'success.main' : 'error.main'
+                  }}
+                >
+                  ${calculateGainLoss(position).toLocaleString()}
+                </TableCell>
+                <TableCell 
+                  align="right"
+                  sx={{ 
+                    color: calculateGainLossPercentage(position) >= 0 ? 'success.main' : 'error.main'
+                  }}
+                >
+                  {calculateGainLossPercentage(position).toFixed(2)}%
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Add New Position</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+            <TextField
+              label="Symbol"
+              value={newPosition.symbol}
+              onChange={(e) => setNewPosition({ ...newPosition, symbol: e.target.value.toUpperCase() })}
+              fullWidth
+            />
+            <TextField
+              label="Number of Shares"
+              type="number"
+              value={newPosition.shares}
+              onChange={(e) => setNewPosition({ ...newPosition, shares: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Purchase Price"
+              type="number"
+              value={newPosition.purchasePrice}
+              onChange={(e) => setNewPosition({ ...newPosition, purchasePrice: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Purchase Date"
+              type="date"
+              value={newPosition.purchaseDate}
+              onChange={(e) => setNewPosition({ ...newPosition, purchaseDate: e.target.value })}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handleAddPosition}
+            variant="contained"
+            disabled={!newPosition.symbol || !newPosition.shares || !newPosition.purchasePrice || !newPosition.purchaseDate}
+          >
+            Add Position
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
 const StockTable = () => {
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -33,6 +195,7 @@ const StockTable = () => {
     name: true,
     exchange: true
   });
+  const [tabValue, setTabValue] = useState(0);
 
   // Select state from Redux store
   const {
@@ -179,205 +342,220 @@ const StockTable = () => {
     setAnchorEl(null);
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
   return (
     <Paper sx={{ p: 2, mt: 3, mb: 3 }}>
       <Box sx={{ width: '100%' }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">
-            Selected Stocks
-          </Typography>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Tooltip title="Toggle Columns">
-              <IconButton onClick={handleMenuClick} color="primary">
-                <ViewColumn />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-            >
-              <MenuItem onClick={() => handleColumnToggle('symbol')}>
-                <Checkbox checked={visibleColumns.symbol} />
-                Symbol
-              </MenuItem>
-              <MenuItem onClick={() => handleColumnToggle('name')}>
-                <Checkbox checked={visibleColumns.name} />
-                Name
-              </MenuItem>
-              <MenuItem onClick={() => handleColumnToggle('exchange')}>
-                <Checkbox checked={visibleColumns.exchange} />
-                Exchange
-              </MenuItem>
-              {Object.entries(metrics).map(([key, label]) => (
-                <MenuItem key={key} onClick={() => handleColumnToggle(key)}>
-                  <Checkbox checked={visibleColumns[key]} />
-                  {label}
-                </MenuItem>
-              ))}
-            </Menu>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={handleExportCSV}
-              startIcon={<Download />}
-            >
-              Export CSV
-            </Button>
-            {selected.length > 0 && (
-              <Button
-                variant="outlined"
-                color="error"
-                onClick={handleRemoveSelected}
-                startIcon={<Delete />}
-              >
-                Remove Selected ({selected.length})
-              </Button>
-            )}
-          </Stack>
-        </Stack>
-        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-          {Object.entries(visibleColumns).map(([key, visible]) => (
-            visible && (
-              <Chip
-                key={key}
-                label={key === 'symbol' ? 'Symbol' : key === 'name' ? 'Name' : key === 'exchange' ? 'Exchange' : metrics[key]}
-                onDelete={() => handleColumnToggle(key)}
-                size="small"
-              />
-            )
-          ))}
-        </Box>
-        {errors[ErrorActions.STOCK_TABLE] && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="error">
-              {errors[ErrorActions.STOCK_TABLE]}
-            </Typography>
-          </Box>
-        )}  
-        <TableContainer 
-          component={Paper} 
-          sx={{ 
-            maxHeight: 400,
-            '&::-webkit-scrollbar': {
-              width: '8px',
-            },
-            '&::-webkit-scrollbar-track': {
-              background: '#f1f1f1',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: '#888',
-              borderRadius: '4px',
-            },
-          }}
-        >
-          <Table stickyHeader size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    indeterminate={selected.length > 0 && selected.length < stats.length}
-                    checked={stats.length > 0 && selected.length === stats.length}
-                    onChange={handleSelectAll}
-                  />
-                </TableCell>
-                {visibleColumns.symbol && (
-                  <TableCell>
-                    <TableSortLabel
-                      active={orderBy === 'symbol'}
-                      direction={orderBy === 'symbol' ? order : 'asc'}
-                      onClick={createSortHandler('symbol')}
-                    >
-                      Symbol
-                    </TableSortLabel>
-                  </TableCell>
-                )}
-                {visibleColumns.name && (
-                  <TableCell>
-                    <TableSortLabel
-                      active={orderBy === 'name'}
-                      direction={orderBy === 'name' ? order : 'asc'}
-                      onClick={createSortHandler('name')}
-                    >
-                      Name
-                    </TableSortLabel>
-                  </TableCell>
-                )}
-                {visibleColumns.exchange && (
-                  <TableCell>
-                    <TableSortLabel
-                      active={orderBy === 'exchange'}
-                      direction={orderBy === 'exchange' ? order : 'asc'}
-                      onClick={createSortHandler('exchange')}
-                    >
-                      Exchange
-                    </TableSortLabel>
-                  </TableCell>
-                )}
-                {Object.entries(metrics).map(([key, label]) => (
-                  visibleColumns[key] && (
-                    <TableCell key={key}>
-                      <TableSortLabel
-                        active={orderBy === key}
-                        direction={orderBy === key ? order : 'asc'}
-                        onClick={createSortHandler(key)}
-                      >
-                        {label}
-                      </TableSortLabel>
-                    </TableCell>
-                  )
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sortStocks(stats).map((stock) => (
-                <TableRow
-                  key={stock.symbol}
-                  hover
-                  selected={selected.includes(stock.symbol)}
-                  sx={{ cursor: 'pointer' }}
+        <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 2 }}>
+          <Tab label="Stock List" />
+          <Tab label="Portfolio Management" />
+        </Tabs>
+
+        {tabValue === 0 ? (
+          <>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="h6">
+                Selected Stocks
+              </Typography>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Tooltip title="Toggle Columns">
+                  <IconButton onClick={handleMenuClick} color="primary">
+                    <ViewColumn />
+                  </IconButton>
+                </Tooltip>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={handleMenuClose}
                 >
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={selected.includes(stock.symbol)}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        handleSelect(stock.symbol);
-                      }}
-                    />
-                  </TableCell>
-                  {visibleColumns.symbol && (
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <img 
-                          src={stock.icon} 
-                          alt={`${stock.symbol} icon`}
-                          style={{ width: 20, height: 20 }}
-                          onError={(e) => {
-                            e.target.onerror = null; // Prevent infinite loop
-                            e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                  <MenuItem onClick={() => handleColumnToggle('symbol')}>
+                    <Checkbox checked={visibleColumns.symbol} />
+                    Symbol
+                  </MenuItem>
+                  <MenuItem onClick={() => handleColumnToggle('name')}>
+                    <Checkbox checked={visibleColumns.name} />
+                    Name
+                  </MenuItem>
+                  <MenuItem onClick={() => handleColumnToggle('exchange')}>
+                    <Checkbox checked={visibleColumns.exchange} />
+                    Exchange
+                  </MenuItem>
+                  {Object.entries(metrics).map(([key, label]) => (
+                    <MenuItem key={key} onClick={() => handleColumnToggle(key)}>
+                      <Checkbox checked={visibleColumns[key]} />
+                      {label}
+                    </MenuItem>
+                  ))}
+                </Menu>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={handleExportCSV}
+                  startIcon={<Download />}
+                >
+                  Export CSV
+                </Button>
+                {selected.length > 0 && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={handleRemoveSelected}
+                    startIcon={<Delete />}
+                  >
+                    Remove Selected ({selected.length})
+                  </Button>
+                )}
+              </Stack>
+            </Stack>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+              {Object.entries(visibleColumns).map(([key, visible]) => (
+                visible && (
+                  <Chip
+                    key={key}
+                    label={key === 'symbol' ? 'Symbol' : key === 'name' ? 'Name' : key === 'exchange' ? 'Exchange' : metrics[key]}
+                    onDelete={() => handleColumnToggle(key)}
+                    size="small"
+                  />
+                )
+              ))}
+            </Box>
+            {errors[ErrorActions.STOCK_TABLE] && (
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Typography variant="body1" color="error">
+                  {errors[ErrorActions.STOCK_TABLE]}
+                </Typography>
+              </Box>
+            )}  
+            <TableContainer 
+              component={Paper} 
+              sx={{ 
+                maxHeight: 400,
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: '#f1f1f1',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: '#888',
+                  borderRadius: '4px',
+                },
+              }}
+            >
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        indeterminate={selected.length > 0 && selected.length < stats.length}
+                        checked={stats.length > 0 && selected.length === stats.length}
+                        onChange={handleSelectAll}
+                      />
+                    </TableCell>
+                    {visibleColumns.symbol && (
+                      <TableCell>
+                        <TableSortLabel
+                          active={orderBy === 'symbol'}
+                          direction={orderBy === 'symbol' ? order : 'asc'}
+                          onClick={createSortHandler('symbol')}
+                        >
+                          Symbol
+                        </TableSortLabel>
+                      </TableCell>
+                    )}
+                    {visibleColumns.name && (
+                      <TableCell>
+                        <TableSortLabel
+                          active={orderBy === 'name'}
+                          direction={orderBy === 'name' ? order : 'asc'}
+                          onClick={createSortHandler('name')}
+                        >
+                          Name
+                        </TableSortLabel>
+                      </TableCell>
+                    )}
+                    {visibleColumns.exchange && (
+                      <TableCell>
+                        <TableSortLabel
+                          active={orderBy === 'exchange'}
+                          direction={orderBy === 'exchange' ? order : 'asc'}
+                          onClick={createSortHandler('exchange')}
+                        >
+                          Exchange
+                        </TableSortLabel>
+                      </TableCell>
+                    )}
+                    {Object.entries(metrics).map(([key, label]) => (
+                      visibleColumns[key] && (
+                        <TableCell key={key}>
+                          <TableSortLabel
+                            active={orderBy === key}
+                            direction={orderBy === key ? order : 'asc'}
+                            onClick={createSortHandler(key)}
+                          >
+                            {label}
+                          </TableSortLabel>
+                        </TableCell>
+                      )
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sortStocks(stats).map((stock) => (
+                    <TableRow
+                      key={stock.symbol}
+                      hover
+                      selected={selected.includes(stock.symbol)}
+                      sx={{ cursor: 'pointer' }}
+                    >
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selected.includes(stock.symbol)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleSelect(stock.symbol);
                           }}
                         />
-                        {stock.symbol}
-                      </Box>
-                    </TableCell>
-                  )}
-                  {visibleColumns.name && (
-                    <TableCell>{stock.name}</TableCell>
-                  )}
-                  {visibleColumns.exchange && (
-                    <TableCell>{stock.exchange}</TableCell>
-                  )}
-                  {Object.entries(metrics).map(([key, label]) => (
-                    visibleColumns[key] && (
-                      <TableCell key={key}>{stock[key]}</TableCell>
-                    )
+                      </TableCell>
+                      {visibleColumns.symbol && (
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <img 
+                              src={stock.icon} 
+                              alt={`${stock.symbol} icon`}
+                              style={{ width: 20, height: 20 }}
+                              onError={(e) => {
+                                e.target.onerror = null; // Prevent infinite loop
+                                e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                              }}
+                            />
+                            {stock.symbol}
+                          </Box>
+                        </TableCell>
+                      )}
+                      {visibleColumns.name && (
+                        <TableCell>{stock.name}</TableCell>
+                      )}
+                      {visibleColumns.exchange && (
+                        <TableCell>{stock.exchange}</TableCell>
+                      )}
+                      {Object.entries(metrics).map(([key, label]) => (
+                        visibleColumns[key] && (
+                          <TableCell key={key}>{stock[key]}</TableCell>
+                        )
+                      ))}
+                    </TableRow>
                   ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </>
+        ) : (
+          <PortfolioManagement stats={stats} />
+        )}
       </Box>
     </Paper>
   );
