@@ -68,7 +68,7 @@ function* updateUserSaga(action) {
 function* deleteUserSaga(action) {
   try {
     yield effects.put(setLoader(LoaderActions.DELETE_USER, true));
-    const response = yield effects.call(api.deleteUser, action.userId);
+    const response = yield effects.call(api.deleteUser, action.payload);
     yield effects.put(setDeleteUser(response));
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.DELETE_USER, "Failed to delete user");

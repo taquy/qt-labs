@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Paper,
   Typography,
@@ -21,7 +21,6 @@ import {
   Chip,
   Tooltip,
   CircularProgress,
-  FormControlLabel,
   Switch
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
@@ -38,15 +37,16 @@ const UserManagement = () => {
     password: '',
     is_admin: false
   });
-  const prevQueryRef = useRef();
 
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector(state => state.auth);
   const { users, error, users_query, loaders } = useSelector(state => state.user);
+  const isFetched = useRef(false);
 
   useEffect(() => {
-    if (users.has_next) {
+    if (users.has_next && !isFetched.current) {
       dispatch(fetchUsers());
+      isFetched.current = true;
     }
   }, [users_query, dispatch, users.has_next]);
 
