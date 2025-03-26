@@ -182,13 +182,30 @@ const UserManagement = () => {
         <Typography variant="h6">
           User Management
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
-          Add User
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <TextField
+            size="small"
+            placeholder="Search users..."
+            value={users_query.search}
+            onChange={(e) => {
+              dispatch(setUsersQuery({
+                ...users_query,
+                search: e.target.value,
+                page: 1,
+                refresh: true
+              }));
+              setForceFetchUsers(true);
+            }}
+            sx={{ width: 300 }}
+          />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog()}
+          >
+            Add User
+          </Button>
+        </Box>
       </Box>
 
       {error[ErrorActions.FETCH_USERS] && (

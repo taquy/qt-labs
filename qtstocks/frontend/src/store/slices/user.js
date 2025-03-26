@@ -45,6 +45,24 @@ const initialState = {
   }
 };
 
+const filterUsers = (users, query) => {
+  if (!users) return [];
+  
+  // Remove duplicates
+  const uniqueUsers = [...new Map(users.map(item => [item.id, item])).values()];
+  
+  // Apply search filter if search term exists
+  if (query.search && query.search.trim()) {
+    const searchTerm = query.search.toLowerCase().trim();
+    return uniqueUsers.filter(user => 
+      user.name?.toLowerCase().includes(searchTerm) ||
+      user.email?.toLowerCase().includes(searchTerm)
+    );
+  }
+  
+  return uniqueUsers;
+};
+
 const userSlice = createSlice({
   name: 'user',
   initialState,
@@ -57,6 +75,8 @@ const userSlice = createSlice({
         action.payload.sort_direction = 'desc';
       }
       state.users_query = action.payload;
+      // Apply filter to current items when query changes
+      state.users.items = filterUsers(state.users.items, action.payload);
     },
     getUsersQuery: (state) => {
       return state.users_query;
@@ -64,9 +84,8 @@ const userSlice = createSlice({
     setUsers: (state, action) => {
       if (action.payload) {
         const { items, has_next, current_page, refresh } = action.payload;
-        let users = refresh ? items : [...state.users.items, ...items];
-        users = [...new Map(users.map(item => [item.id, item])).values()];
-        state.users.items = users;
+        const newItems = refresh ? items : [...state.users.items, ...items];
+        state.users.items = filterUsers(newItems, state.users_query);
         state.users.has_next = refresh ? true : has_next;
         state.users.current_page = current_page;
       } else {
