@@ -10,7 +10,7 @@ import {
   Link as RouterLink
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { login, googleLogin } from '../store/actions/auth';
+import { login, googleLogin } from '../../store/actions/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const Login = () => {

@@ -1,10 +1,11 @@
-import Login from './components/Login';
+import Login from './components/auth/Login';
 import Dashboard from './components/Dashboard';
-import StockAnalysis from './components/StockAnalysis';
+import StockManagement from './components/StockManagement';
 import UserManagement from './components/UserManagement';
 import Layout from './components/Layout';
-import PublicRoute from './components/PublicRoute';
-import PrivateRoute from './components/PrivateRoute';
+import PublicRoute from './components/auth/PublicRoute';
+import PrivateRoute from './components/auth/PrivateRoute';
+import Register from './components/auth/Register';
 import Settings from './components/Settings';
 
 const routes = [
@@ -13,6 +14,14 @@ const routes = [
     element: (
       <PublicRoute>
         <Login />
+      </PublicRoute>
+    )
+  },
+  {
+    path: '/register',
+    element: (
+      <PublicRoute>
+        <Register />
       </PublicRoute>
     )
   },
@@ -30,7 +39,7 @@ const routes = [
       },
       {
         path: 'stocks',
-        element: <StockAnalysis />
+        element: <StockManagement />
       },
       {
         path: 'users',

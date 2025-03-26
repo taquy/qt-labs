@@ -10,7 +10,7 @@ import {
   Alert
 } from '@mui/material';
 import axios from 'axios';
-import { API_AUTH_ENDPOINTS } from '../config';
+import { API_AUTH_ENDPOINTS } from '../../config';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -48,7 +48,6 @@ const Register = () => {
         email: formData.email,
         password: formData.password
       });
-      
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('isLoggedIn', 'true');
       navigate('/');
