@@ -11,9 +11,8 @@ import {
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { register } from '../../store/actions/auth';  
-
+import { ErrorActions } from '../../store/slices/auth';
 const Register = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -21,7 +20,8 @@ const Register = () => {
     confirmPassword: ''
   });
   const dispatch = useDispatch();
-  const { loading, error} = useSelector(state => state.auth);
+  const navigate = useNavigate();
+  const { loading, errors, isRegistered } = useSelector(state => state.auth);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,9 +34,14 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(register(formData));
-    // navigate('/');
   };
-  
+
+  useEffect(() => {
+    if (isRegistered) {
+      navigate('/login');
+    }
+  }, [isRegistered, navigate]);
+
   return (
     <Box
       sx={{
@@ -61,9 +66,9 @@ const Register = () => {
           Register
         </Typography>
 
-        {error && (
+        {errors[ErrorActions.REGISTER] && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+            {errors[ErrorActions.REGISTER]}
           </Alert>
         )}
 

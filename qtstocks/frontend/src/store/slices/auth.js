@@ -1,27 +1,28 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const ErrorActions = {
-  register: null,
-  login: null,
-  googleLogin: null,
-  logout: null,
-  getUserInfo: null,
+  REGISTER: "register",
+  LOGIN: "login",
+  GOOGLE_LOGIN: "googleLogin",
+  LOGOUT: "logout",
+  GET_USER_INFO: "getUserInfo",
 };
 
 const initialState = {
   isLoggedIn: false,
+  isRegistered: false,
   authToken: null,
   checkingLogin: true,
   userInfo: null,
   loading: false,
   errors: {
-    [ErrorActions.register]: null,
-    [ErrorActions.login]: null,
-    [ErrorActions.googleLogin]: null,
-    [ErrorActions.logout]: null,
-    [ErrorActions.getUserInfo]: null,
+    [ErrorActions.REGISTER]: "",
+    [ErrorActions.LOGIN]: "",
+    [ErrorActions.GOOGLE_LOGIN]: "",
+    [ErrorActions.LOGOUT]: "",
+    [ErrorActions.GET_USER_INFO]: "",
   },
-  message: null,
+  message: "",
 };
 
 const authSlice = createSlice({
@@ -46,11 +47,14 @@ const authSlice = createSlice({
       state.loading = action.payload;
     },
     setError: (state, action) => {
-      state.errors[action.payload.action] = action.payload.error;
+      state.errors[action.payload.action] = action.payload.message;
     },
     setMessage: (state, action) => {
       state.message = action.payload;
     },
+    setIsRegistered: (state, action) => {
+      state.isRegistered = action.payload;
+    }
   }
 });
 
@@ -62,6 +66,7 @@ export const {
   setError,
   setLoading,
   setMessage,
+  setIsRegistered,
 } = authSlice.actions;
 
 export default authSlice.reducer;

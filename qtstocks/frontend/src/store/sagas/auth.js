@@ -1,5 +1,5 @@
 import * as effects from 'redux-saga/effects';
-import { setIsLoggedIn, setAuthToken, setCheckingLogin, setError, setUserInfo, setMessage, setLoading } from '../slices/auth';
+import { setIsLoggedIn, setAuthToken, setCheckingLogin, setError, setUserInfo, setMessage, setLoading, setIsRegistered } from '../slices/auth';
 import { handleApiError } from '../utils';
 import { ErrorActions } from '../slices/auth';
 import axios from 'axios';
@@ -21,19 +21,20 @@ function* registerSaga(action) {
 
     if (action.payload.password !== action.payload.confirmPassword) {
       yield effects.put(setError({
-        action: ErrorActions.register,
+        action: ErrorActions.REGISTER,
         message: 'Passwords do not match',
       }));
       yield effects.put(setLoading(false));
       return;
     }
-
     const response = yield effects.call(api.register, action.payload);
-    yield effects.put(setMessage(response.message.message));
+    yield effects.put(setMessage(response.message));
+    yield effects.put(setIsRegistered(true));
   } catch (error) {
+    const errorMessage = error.response.data.message;
     yield effects.put(setError({
-      action: ErrorActions.register,
-      message: error.response.data.message,
+      action: ErrorActions.REGISTER,
+      message: errorMessage,
     }));
     yield effects.call(handleApiError, error, 'registerSaga');
   } finally {
@@ -48,7 +49,7 @@ function* getUserInfoSaga() {
     yield effects.put(setUserInfo(response));
   } catch (error) {
     yield effects.put(setError({
-      action: ErrorActions.getUserInfo,
+      action: ErrorActions.GET_USER_INFO,
       message: 'Failed to get user info',
     }));
     yield effects.call(handleApiError, error, 'getUserInfoSaga');
@@ -91,13 +92,13 @@ function* googleLoginSaga(action) {
       yield effects.call(getUserInfoSaga);
     } else {
       yield effects.put(setError({
-        action: ErrorActions.googleLogin,
+        action: ErrorActions.GOOGLE_LOGIN,
         message: 'Failed to login',
       }));
     }
   } catch (error) {
     yield effects.put(setError({
-      action: ErrorActions.googleLogin,
+      action: ErrorActions.GOOGLE_LOGIN,
       message: 'Failed to login',
     }));
     yield effects.call(handleApiError, error, 'googleLoginSaga');
@@ -116,13 +117,13 @@ function* loginSaga(action) {
       yield effects.call(getUserInfoSaga);
     } else {
       yield effects.put(setError({
-        action: ErrorActions.login,
+        action: ErrorActions.LOGIN,
         message: 'Failed to login',
       }));
     }
   } catch (error) {
     yield effects.put(setError({
-      action: ErrorActions.login,
+      action: ErrorActions.LOGIN,
       message: 'Failed to login',
     }));
     yield effects.call(handleApiError, error, 'loginSaga');
@@ -141,7 +142,7 @@ function* logoutSaga() {
     yield effects.put(setIsLoggedIn(false));
   } catch (error) {
     yield effects.put(setError({
-      action: ErrorActions.logout,
+      action: ErrorActions.LOGOUT,
       message: 'Failed to logout',
     }));
     yield effects.call(handleApiError, error, 'logoutSaga');

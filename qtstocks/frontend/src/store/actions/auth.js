@@ -13,4 +13,4 @@ export const googleLogin = (token) => ({ type: GOOGLE_LOGIN, payload: { token } 
 export const checkIsLoggedIn = () => ({ type: CHECK_IS_LOGGED_IN });
 export const getUserInfo = () => ({ type: GET_USER_INFO });
 export const resetState = () => ({ type: RESET_STATE });
-export const register = (name, email, password) => ({ type: REGISTER, payload: { name, email, password } });
+export const register = (payload) => ({ type: REGISTER, payload });
