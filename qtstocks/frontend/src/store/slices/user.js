@@ -100,7 +100,9 @@ const userSlice = createSlice({
       state.error[action.payload.action] = action.payload.message;
     },
     setLoader: (state, action) => {
-      state.loaders[action.payload.action] = action.payload.value;
+      const { type, value } = action.payload;
+      state.loaders[type] = value;
+      console.log(state.loaders[type]);
     },
     setCreateUser: (state, action) => {
       state.users = [...state.users, action.payload];

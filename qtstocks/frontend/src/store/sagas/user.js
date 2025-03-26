@@ -10,9 +10,13 @@ import {
   DELETE_USER,
   TOGGLE_ACTIVE,
   TOGGLE_ADMIN,
-  SET_ERROR,
+  SET_ERROR,  
   SET_USERS_QUERY,
 } from '../actions/user';
+
+function* setLoaderSaga(action, status) {
+  yield effects.put(setLoader({ type: action, value: status }));
+}
 
 function *setUsersQuerySaga(action) {
   yield effects.put(setUsersQuery(action.payload));
@@ -26,9 +30,9 @@ function* setErrorSaga(action, message) {
 }
 
 function* fetchUsersSaga() {
+  yield effects.call(setLoaderSaga, LoaderActions.FETCH_USERS, true);
   try {
     const query = yield effects.select((state) => state.user.users_query);
-    yield effects.put(setLoader(LoaderActions.FETCH_USERS, true));
     const results = yield effects.call(api.fetchUsers, query);
     let refresh = query.search.trim() !== "" || query.page === 1;
     refresh = refresh && results.items.length > 0;
@@ -37,67 +41,67 @@ function* fetchUsersSaga() {
     yield effects.call(setErrorSaga, ErrorActions.FETCH_USERS, 'Failed to fetch users');
     yield effects.call(handleApiError, error, 'fetchStocksSaga');
   } finally {
-    yield effects.put(setLoader(LoaderActions.FETCH_USERS, false));
+    yield effects.call(setLoaderSaga, LoaderActions.FETCH_USERS, false);
   }
 }
 
 function* createUserSaga(action) {
   try {
-    yield effects.put(setLoader(LoaderActions.CREATE_USER, true));
+    yield effects.call(setLoaderSaga, LoaderActions.CREATE_USER, true);
     const response = yield effects.call(api.createUser, action.user);
     yield effects.put(setCreateUser(response));
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.CREATE_USER, "Failed to create user");
   } finally {
-    yield effects.put(setLoader(LoaderActions.CREATE_USER, false));
+    yield effects.call(setLoaderSaga, LoaderActions.CREATE_USER, false);
   }
 }
 
 function* updateUserSaga(action) {
   try {
-    yield effects.put(setLoader(LoaderActions.UPDATE_USER, true));
+    yield effects.call(setLoaderSaga, LoaderActions.UPDATE_USER, true);
     const response = yield effects.call(api.updateUser, action.payload);
     yield effects.put(setUpdateUser(response));
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.UPDATE_USER, "Failed to update user");
   } finally {
-    yield effects.put(setLoader(LoaderActions.UPDATE_USER, false));
+    yield effects.call(setLoaderSaga, LoaderActions.UPDATE_USER, false);
   }
 }
 
 function* deleteUserSaga(action) {
   try {
-    yield effects.put(setLoader(LoaderActions.DELETE_USER, true));
+    yield effects.call(setLoaderSaga, LoaderActions.DELETE_USER, true);
     yield effects.call(api.deleteUser, action.payload);
     yield effects.call(fetchUsersSaga);
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.DELETE_USER, "Failed to delete user");
   } finally {
-    yield effects.put(setLoader(LoaderActions.DELETE_USER, false));
+    yield effects.call(setLoaderSaga, LoaderActions.DELETE_USER, false);
   }
 }
 
 function* toggleActiveSaga(action) {
   try {
-    yield effects.put(setLoader(LoaderActions.TOGGLE_ACTIVE, true));
+    yield effects.call(setLoaderSaga, LoaderActions.TOGGLE_ACTIVE, true);
     const response = yield effects.call(api.toggleActive, action.payload.id);
     yield effects.put(setToggleActive(response));
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.TOGGLE_ACTIVE, "Failed to toggle active");
   } finally {
-    yield effects.put(setLoader(LoaderActions.TOGGLE_ACTIVE, false));
+    yield effects.call(setLoaderSaga, LoaderActions.TOGGLE_ACTIVE, false);
   }
 }
 
 function* toggleAdminSaga(action) {
   try {
-    yield effects.put(setLoader(LoaderActions.TOGGLE_ADMIN, true));
+    yield effects.call(setLoaderSaga, LoaderActions.TOGGLE_ADMIN, true);
     const response = yield effects.call(api.toggleAdmin, action.payload.id);
     yield effects.put(setToggleAdmin(response));
   } catch (error) {
     yield effects.call(setErrorSaga, ErrorActions.TOGGLE_ADMIN, "Failed to toggle admin");
   } finally {
-    yield effects.put(setLoader(LoaderActions.TOGGLE_ADMIN, false));
+    yield effects.call(setLoaderSaga, LoaderActions.TOGGLE_ADMIN, false);
   }
 }
 

@@ -214,7 +214,7 @@ const UserManagement = () => {
         </Alert>
       )}
 
-      <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)' }} onScroll={handleScroll}>
+      <TableContainer sx={{ maxHeight: 'calc(100vh - 200px)', position: 'relative' }} onScroll={handleScroll}>
         <Table stickyHeader size="small">
           <TableHead>
             <TableRow>

@@ -6,7 +6,6 @@ export const TOGGLE_ACTIVE = 'TOGGLE_ACTIVE';
 export const TOGGLE_ADMIN = 'TOGGLE_ADMIN';
 export const SET_ERROR = 'SET_ERROR';
 export const SET_USERS_QUERY = 'SET_USERS_QUERY';
-
 export const setUsersQuery = (query) => ({
   type: SET_USERS_QUERY,
   payload: query

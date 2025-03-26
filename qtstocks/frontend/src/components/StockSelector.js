@@ -79,6 +79,10 @@ const StockSelector = () => {
   }, [settings]);
 
   useEffect(() => {
+    console.log(loaders[LoaderActions.FETCH_STOCKS]);
+  }, [loaders]);
+
+  useEffect(() => {
     if (messages[MessageActions.PULL_STOCK_LIST]) {
       setTimeout(() => {
         dispatch(setMessage({ action: MessageActions.PULL_STOCK_LIST, message: "" }));
