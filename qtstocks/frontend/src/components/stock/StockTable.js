@@ -20,117 +20,15 @@ import {
   Tooltip,
   Tabs,
   Tab,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStats, removeStats, exportCsv } from '../../store/actions/stocks';
 import { fetchSettings, saveSettings } from '../../store/actions/settings';
-import { Delete, Download, ViewColumn, Add as AddIcon } from '@mui/icons-material';
+import { Delete, Download, ViewColumn } from '@mui/icons-material';
 import { ErrorActions } from '../../store/slices/stocks';
 import { SettingsTypes } from '../../store/slices/settings';
+import PortfolioManagement from './portfolio/StockPortfolio';
 
-// Portfolio Management Component
-const PortfolioManagement = ({ stats }) => {
-  const [portfolio, setPortfolio] = useState([]);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [newPosition, setNewPosition] = useState({
-    symbol: '',
-    shares: '',
-    purchasePrice: '',
-    purchaseDate: '',
-    description: ''
-  });
-
-  const handleAddPosition = () => {
-    const stock = stats.find(s => s.symbol === newPosition.symbol);
-    if (stock) {
-      setPortfolio([...portfolio, {
-        ...newPosition,
-        name: stock.name
-      }]);
-      setOpenDialog(false);
-      setNewPosition({
-        name: '',
-        description: ''
-      });
-    }
-  };
-
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Portfolios</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setOpenDialog(true)}
-        >
-          Add Portfolio
-        </Button>
-      </Box>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Description</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {portfolio.map((position) => (
-              <TableRow key={`${position.name}`}>
-                <TableCell>{position.name}</TableCell>
-                <TableCell>{position.description}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Dialog 
-        open={openDialog} 
-        onClose={() => setOpenDialog(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>New Portfolio</DialogTitle>
-        <DialogContent sx={{ minWidth: 400 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
-            <TextField
-              label="Name"
-              value={newPosition.name}
-              onChange={(e) => setNewPosition({ ...newPosition, symbol: e.target.value.toUpperCase() })}
-              fullWidth
-            />
-            <TextField
-              label="Description"
-              multiline
-              rows={4}
-              value={newPosition.description}
-              onChange={(e) => setNewPosition({ ...newPosition, description: e.target.value })}
-              fullWidth
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={handleAddPosition}
-            variant="contained"
-            disabled={!newPosition.name || !newPosition.description}
-          >
-            Add
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-  );
-};
 
 const StockTable = () => {
   const dispatch = useDispatch();
