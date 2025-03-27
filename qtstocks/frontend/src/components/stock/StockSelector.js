@@ -10,7 +10,8 @@ import {
   Chip,
   CircularProgress,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  Tooltip
 } from '@mui/material';
 
 import { fetchStocks, pullStockStats, pullStockList } from '../../store/actions/stocks';
@@ -26,6 +27,7 @@ const StockSelector = () => {
   const [forceFetchStocks, setForceFetchStocks] = useState(false);
   const [fetchNextPage, setFetchNextPage] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
+  const [selectedExchanges, setSelectedExchanges] = useState([]);
   const dispatch = useDispatch();
 
   // Add UUID generator function
@@ -67,14 +69,22 @@ const StockSelector = () => {
 
   useEffect(() => {
     if (firstLoad) return;
-    dispatch(saveSettings(SettingsTypes.STOCK_SELECTOR, { exchanges: stocks_query.exchanges, loadLatestData }));
-  }, [stocks_query.exchanges, loadLatestData, dispatch, firstLoad]);
+    dispatch(saveSettings(SettingsTypes.STOCK_SELECTOR, { 
+      exchanges: selectedExchanges, 
+      loadLatestData 
+    }));
+  }, [selectedExchanges, loadLatestData, dispatch, firstLoad]);
 
   useEffect(() => {
     if (settings && settings[SettingsTypes.STOCK_SELECTOR]) {
       const currentSettings = settings[SettingsTypes.STOCK_SELECTOR];
       setLoadLatestData(currentSettings.loadLatestData || false);
-      setStocksQuery(prevQuery => ({ ...prevQuery, exchanges: currentSettings.exchanges || [], loadLatestData: currentSettings.loadLatestData || false }));
+      setSelectedExchanges(currentSettings.exchanges || []);
+      setStocksQuery(prevQuery => ({ 
+        ...prevQuery, 
+        exchanges: currentSettings.exchanges || [], 
+        loadLatestData: currentSettings.loadLatestData || false 
+      }));
     }
   }, [settings]);
 
@@ -129,6 +139,20 @@ const StockSelector = () => {
      setForceFetchStocks(true);     
     }
   }; 
+
+  const handleExchangeChange = (exchange) => (event) => {
+    const newExchanges = event.target.checked 
+      ? [...selectedExchanges, exchange] 
+      : selectedExchanges.filter(ex => ex !== exchange);
+    setSelectedExchanges(newExchanges);
+    setStocksQuery(prevQuery => ({ 
+      ...prevQuery, 
+      exchanges: newExchanges, 
+      page: 1 
+    }));
+    setForceFetchStocks(true);
+  };
+
   const safeOptions = Array.isArray(stocks?.items) ? stocks.items : [];
   return (
     <Paper sx={{ p: 2 }}>
@@ -152,6 +176,7 @@ const StockSelector = () => {
             value={selectedStocks.map(symbol => safeOptions.find(s => s?.symbol === symbol) || { symbol, name: '' })}
             onChange={handleOnChange}
             onInputChange={handleOnInputChange}
+            isOptionEqualToValue={(option, value) => option.symbol === value.symbol}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -173,51 +198,83 @@ const StockSelector = () => {
               />
             )}
             renderOption={(props, option) => {
-              if (!option) return null;
               const { key, ...otherProps } = props;
+              const isSelected = selectedStocks.includes(option.symbol);
               return (
-                <Box component="li" key={generateUniqueId()} {...otherProps}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <img 
-                      src={option.icon} 
-                      alt={`${option.symbol} icon`}
-                      style={{ width: 20, height: 20 }}
-                      onError={(e) => {
-                        e.target.onerror = null; // Prevent infinite loop
-                        e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
-                      }}
-                    />
-                    <Typography variant="body1">
-                      {highlightMatch(option.symbol || '', stocks_query?.search || '')}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {highlightMatch((option.name || '') + ' (' + (option.exchange || '') + ')', stocks_query?.search || '')}
-                    </Typography>
+                <Tooltip 
+                  key={`tooltip-${option.symbol}`}
+                  title={`Last updated: ${new Date(option.last_updated).toLocaleString()}`}
+                  placement="right"
+                >
+                  <Box component="li" {...otherProps}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          const newSelected = isSelected
+                            ? selectedStocks.filter(s => s !== option.symbol)
+                            : [...selectedStocks, option.symbol];
+                          setSelectedStocks(newSelected);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        size="small"
+                      />
+                      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <img 
+                            src={option.icon} 
+                            alt={`${option.symbol} icon`}
+                            style={{ width: 20, height: 20, borderRadius: '50%' }}
+                            onError={(e) => {
+                              e.target.onerror = null; // Prevent infinite loop
+                              e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                            }}
+                          />
+                          <Typography variant="body1">
+                            {option.symbol}
+                          </Typography>
+                        </Box>
+                        <Typography variant="caption" color="text.secondary">
+                          {option.name} ({option.exchange})
+                        </Typography>
+                      </Box>
+                    </Box>
                   </Box>
-                </Box>
+                </Tooltip>
               );
             }}
             renderTags={(tagValue, getTagProps) =>
               tagValue.map((option, index) => {
-                const { key, ...chipProps } = getTagProps({ index });
+                const { key, onDelete, ...chipProps } = getTagProps({ index });
                 return (
-                  <Chip
-                    key={key}
-                    label={option.symbol}
-                    {...chipProps}
-                    size="small"
-                    avatar={
-                      <img 
-                        src={option.icon} 
-                        alt={`${option.symbol} icon`}
-                        style={{ width: 20, height: 20, borderRadius: '50%' }}
-                        onError={(e) => {
-                          e.target.onerror = null; // Prevent infinite loop
-                          e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
-                        }}
-                      />
-                    }
-                  />
+                  <Tooltip 
+                    key={`tag-tooltip-${option.symbol}-${index}`}
+                    title={`Last updated: ${new Date(option.last_updated).toLocaleString()}`}
+                    placement="top"
+                  >
+                    <Chip
+                      key={key}
+                      {...chipProps}
+                      icon={
+                        <img 
+                          src={option.icon} 
+                          alt={`${option.symbol} icon`}
+                          style={{ width: 16, height: 16, borderRadius: '50%' }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                          }}
+                        />
+                      }
+                      label={option.symbol}
+                      onDelete={(e) => {
+                        e.stopPropagation();
+                        onDelete(e);
+                      }}
+                      size="small"
+                    />
+                  </Tooltip>
                 );
               })
             }
@@ -306,12 +363,8 @@ const StockSelector = () => {
               key={exchange}
               control={
                 <Checkbox
-                  checked={stocks_query.exchanges.includes(exchange)}
-                  onChange={(e) => {
-                    const newExchanges = e.target.checked ? [...stocks_query.exchanges, exchange] : stocks_query.exchanges.filter(ex => ex !== exchange);
-                    setStocksQuery(prevQuery => ({ ...prevQuery, exchanges: newExchanges, page: 1 }));
-                    setForceFetchStocks(true);
-                  }}
+                  checked={selectedExchanges.includes(exchange)}
+                  onChange={handleExchangeChange(exchange)}
                   name={exchange}
                   color="primary"
                 />
