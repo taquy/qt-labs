@@ -41,7 +41,8 @@ const PortfolioManagement = ({ stats }) => {
     symbol: '',
     shares: '',
     purchasePrice: '',
-    purchaseDate: ''
+    purchaseDate: '',
+    description: ''
   });
 
   const handleAddPosition = () => {
@@ -49,47 +50,26 @@ const PortfolioManagement = ({ stats }) => {
     if (stock) {
       setPortfolio([...portfolio, {
         ...newPosition,
-        shares: Number(newPosition.shares),
-        purchasePrice: Number(newPosition.purchasePrice),
-        currentPrice: stock.price,
         name: stock.name
       }]);
       setOpenDialog(false);
       setNewPosition({
-        symbol: '',
-        shares: '',
-        purchasePrice: '',
-        purchaseDate: ''
+        name: '',
+        description: ''
       });
     }
-  };
-
-  const calculateTotalValue = (position) => {
-    return position.shares * position.currentPrice;
-  };
-
-  const calculateGainLoss = (position) => {
-    const totalCost = position.shares * position.purchasePrice;
-    const currentValue = position.shares * position.currentPrice;
-    return currentValue - totalCost;
-  };
-
-  const calculateGainLossPercentage = (position) => {
-    const gainLoss = calculateGainLoss(position);
-    const totalCost = position.shares * position.purchasePrice;
-    return (gainLoss / totalCost) * 100;
   };
 
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Portfolio Positions</Typography>
+        <Typography variant="h6">Portfolios</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setOpenDialog(true)}
         >
-          Add Position
+          Add Portfolio
         </Button>
       </Box>
 
@@ -97,78 +77,43 @@ const PortfolioManagement = ({ stats }) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Symbol</TableCell>
               <TableCell>Name</TableCell>
-              <TableCell align="right">Shares</TableCell>
-              <TableCell align="right">Purchase Price</TableCell>
-              <TableCell align="right">Current Price</TableCell>
-              <TableCell align="right">Total Value</TableCell>
-              <TableCell align="right">Gain/Loss</TableCell>
-              <TableCell align="right">Gain/Loss %</TableCell>
+              <TableCell>Description</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {portfolio.map((position) => (
-              <TableRow key={`${position.symbol}-${position.purchaseDate}`}>
-                <TableCell>{position.symbol}</TableCell>
+              <TableRow key={`${position.name}`}>
                 <TableCell>{position.name}</TableCell>
-                <TableCell align="right">{position.shares.toLocaleString()}</TableCell>
-                <TableCell align="right">${position.purchasePrice.toLocaleString()}</TableCell>
-                <TableCell align="right">${position.currentPrice.toLocaleString()}</TableCell>
-                <TableCell align="right">${calculateTotalValue(position).toLocaleString()}</TableCell>
-                <TableCell 
-                  align="right"
-                  sx={{ 
-                    color: calculateGainLoss(position) >= 0 ? 'success.main' : 'error.main'
-                  }}
-                >
-                  ${calculateGainLoss(position).toLocaleString()}
-                </TableCell>
-                <TableCell 
-                  align="right"
-                  sx={{ 
-                    color: calculateGainLossPercentage(position) >= 0 ? 'success.main' : 'error.main'
-                  }}
-                >
-                  {calculateGainLossPercentage(position).toFixed(2)}%
-                </TableCell>
+                <TableCell>{position.description}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Add New Position</DialogTitle>
-        <DialogContent>
+      <Dialog 
+        open={openDialog} 
+        onClose={() => setOpenDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>New Portfolio</DialogTitle>
+        <DialogContent sx={{ minWidth: 400 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
             <TextField
-              label="Symbol"
-              value={newPosition.symbol}
+              label="Name"
+              value={newPosition.name}
               onChange={(e) => setNewPosition({ ...newPosition, symbol: e.target.value.toUpperCase() })}
               fullWidth
             />
             <TextField
-              label="Number of Shares"
-              type="number"
-              value={newPosition.shares}
-              onChange={(e) => setNewPosition({ ...newPosition, shares: e.target.value })}
+              label="Description"
+              multiline
+              rows={4}
+              value={newPosition.description}
+              onChange={(e) => setNewPosition({ ...newPosition, description: e.target.value })}
               fullWidth
-            />
-            <TextField
-              label="Purchase Price"
-              type="number"
-              value={newPosition.purchasePrice}
-              onChange={(e) => setNewPosition({ ...newPosition, purchasePrice: e.target.value })}
-              fullWidth
-            />
-            <TextField
-              label="Purchase Date"
-              type="date"
-              value={newPosition.purchaseDate}
-              onChange={(e) => setNewPosition({ ...newPosition, purchaseDate: e.target.value })}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
             />
           </Box>
         </DialogContent>
@@ -177,9 +122,9 @@ const PortfolioManagement = ({ stats }) => {
           <Button 
             onClick={handleAddPosition}
             variant="contained"
-            disabled={!newPosition.symbol || !newPosition.shares || !newPosition.purchasePrice || !newPosition.purchaseDate}
+            disabled={!newPosition.name || !newPosition.description}
           >
-            Add Position
+            Add
           </Button>
         </DialogActions>
       </Dialog>
@@ -195,7 +140,7 @@ const StockTable = () => {
     name: true,
     exchange: true
   });
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(1);
 
   // Select state from Redux store
   const {
