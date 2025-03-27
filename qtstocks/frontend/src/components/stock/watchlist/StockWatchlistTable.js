@@ -22,12 +22,11 @@ import {
   Tab,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchStats, removeStats, exportCsv } from '../../store/actions/stocks';
-import { fetchSettings, saveSettings } from '../../store/actions/settings';
+import { fetchStats, removeStats, exportCsv } from '../../../store/actions/stocks';
+import { fetchSettings, saveSettings } from '../../../store/actions/settings';
 import { Delete, Download, ViewColumn } from '@mui/icons-material';
-import { ErrorActions } from '../../store/slices/stocks';
-import { SettingsTypes } from '../../store/slices/settings';
-import StockPortfolio from './portfolio/StockPortfolio';
+import { ErrorActions } from '../../../store/slices/stocks';
+import { SettingsTypes } from '../../../store/slices/settings';
 
 
 const StockWatchlist = () => {
@@ -38,8 +37,6 @@ const StockWatchlist = () => {
     name: true,
     exchange: true
   });
-  const [tabValue, setTabValue] = useState(1);
-
   // Select state from Redux store
   const {
     stats,
@@ -183,10 +180,6 @@ const StockWatchlist = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
   };
 
   return (

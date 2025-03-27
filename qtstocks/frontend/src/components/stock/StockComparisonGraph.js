@@ -79,7 +79,7 @@ ChartJS.register(
   barLabelPlugin
 );
 
-const StockGraph = () => {
+const StockComparisonGraph = () => {
   const dispatch = useDispatch();
   const [selectedMetric, setSelectedMetric] = useState('market_cap');
   const [currentChartData, setCurrentChartData] = useState();
@@ -407,4 +407,4 @@ const StockGraph = () => {
   );
 };
 
-export default StockGraph; 
+export default StockComparisonGraph; 

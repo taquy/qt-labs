@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box, Grid } from '@mui/material';
 import StockSelector from './StockSelector';
-import StockGraph from './StockGraph';
-import StockTable from './StockTable';
+import StockComparisonGraph from './StockComparisonGraph';
+import StockWatchlist from './watchlist/StockWatchlist';
 
 const StockManagement = () => {
   return (
@@ -12,10 +12,10 @@ const StockManagement = () => {
           <StockSelector />
         </Grid>
         <Grid item xs={12}>
-          <StockTable />
+          <StockWatchlist />
         </Grid>
         <Grid item xs={12}>
-          <StockGraph />
+          <StockComparisonGraph />
         </Grid>
       </Grid>
     </Box>
