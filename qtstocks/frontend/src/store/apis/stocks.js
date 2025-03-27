@@ -4,6 +4,16 @@ import { getRequestConfig } from '../utils';
 
 // API calls
 const api = {
+  // stock watchlist
+  fetchPortfolios: async () => {
+    const response = await axios.get(API_STOCK_ENDPOINTS.portfolios, getRequestConfig());
+    return response.data;
+  },
+  createPortfolio: async (payload) => {
+    const response = await axios.post(API_STOCK_ENDPOINTS.portfolios, payload, getRequestConfig());
+    return response.data;
+  },
+  // stock selector
   fetchStocks: async (payload) => {
     const query = new URLSearchParams(payload);
     const endpoint = API_STOCK_ENDPOINTS.stocks + `?${query.toString()}`;
@@ -14,6 +24,11 @@ const api = {
     const response = await axios.get(API_STOCK_ENDPOINTS.exchanges, getRequestConfig());
     return response.data;
   },
+  pullStockList: async () => {
+    const response = await axios.get(API_STOCK_ENDPOINTS.pullStockList, getRequestConfig());
+    return response.data;
+  },
+  // stock stats
   fetchStats: async () => {
     const response = await axios.get(API_STOCK_ENDPOINTS.stats, getRequestConfig());
     return response.data;
@@ -32,12 +47,9 @@ const api = {
     const response = await axios.get(API_STOCK_ENDPOINTS.exportCsv, getRequestConfig());
     return response.data;
   },
+  // stock comparison graph
   exportGraphPdf: async () => {
     const response = await axios.get(API_STOCK_ENDPOINTS.exportGraphPdf, getRequestConfig());
-    return response.data;
-  },
-  pullStockList: async () => {
-    const response = await axios.get(API_STOCK_ENDPOINTS.pullStockList, getRequestConfig());
     return response.data;
   },
 };

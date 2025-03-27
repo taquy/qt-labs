@@ -15,6 +15,7 @@ const API_SETTINGS_ENDPOINTS = {
 }
 
 const API_STOCK_ENDPOINTS = {
+    portfolios: `${API_BASE_URL}/portfolios`,
     stats: `${API_BASE_URL}/stocks/stats`,
     stocks: `${API_BASE_URL}/stocks`,
     pullStockList: `${API_BASE_URL}/stocks/pull_stock_list`,

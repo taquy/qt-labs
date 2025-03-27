@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -20,35 +20,41 @@ import {
   DialogContent
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
+import { fetchPortfolios, createPortfolio } from '../../../store/actions/stocks';
+import { useDispatch, useSelector } from 'react-redux';
 
 const StockPortfolioTable = ({ stats }) => {
-  const [portfolio, setPortfolio] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedStocks, setSelectedStocks] = useState([]);
-  const [newPosition, setNewPosition] = useState({
+  const [newPortfolio, setNewPortfolio] = useState({
     name: '',
     description: '',
     stocks: []
   });
+  const dispatch = useDispatch();
+  const { portfolios } = useSelector(state => state.stocks);
+
+  useEffect(() => {
+    dispatch(fetchPortfolios());
+  }, [dispatch]);
 
   const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setNewPosition({
-      name: '',
-      description: '',
-      stocks: []
-    });
-    setSelectedStocks([]);
+    // setOpenDialog(false);
+    // setNewPosition({
+    //   name: '',
+    //   description: '',
+    //   stocks: []
+    // });
+    // setSelectedStocks([]);
   };
 
-  const handleAddPosition = () => {
-    if (selectedStocks.length > 0) {
-      setPortfolio([...portfolio, {
-        ...newPosition,
-        stocks: selectedStocks
-      }]);
-      handleCloseDialog();
-    }
+  const handleAddPortfolio = () => {
+    dispatch(createPortfolio({
+      name: newPortfolio.name,
+      description: newPortfolio.description,
+      stock_symbols: selectedStocks
+    }));
+    handleCloseDialog();
   };
 
   const handleRemoveStock = (stockToRemove) => {
@@ -82,7 +88,7 @@ const StockPortfolioTable = ({ stats }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {portfolio.map((position) => (
+            {portfolios.map((position) => (
               <TableRow key={`${position.name}`}>
                 <TableCell>{position.name}</TableCell>
                 <TableCell>{position.description}</TableCell>
@@ -126,8 +132,8 @@ const StockPortfolioTable = ({ stats }) => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
             <TextField
               label="Name"
-              value={newPosition.name}
-              onChange={(e) => setNewPosition({ ...newPosition, name: e.target.value })}
+              value={newPortfolio.name}
+              onChange={(e) => setNewPortfolio({ ...newPortfolio, name: e.target.value })}
               fullWidth
               autoFocus
             />
@@ -135,8 +141,8 @@ const StockPortfolioTable = ({ stats }) => {
               label="Description"
               multiline
               rows={4}
-              value={newPosition.description}
-              onChange={(e) => setNewPosition({ ...newPosition, description: e.target.value })}
+              value={newPortfolio.description}
+              onChange={(e) => setNewPortfolio({ ...newPortfolio, description: e.target.value })}
               fullWidth
             />
             <FormControl fullWidth>
@@ -159,15 +165,24 @@ const StockPortfolioTable = ({ stats }) => {
                   />
                 )}
                 renderOption={(props, option) => (
-                  <Box component="li" {...props} key={option.symbol}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Box component="li" {...props} key={`portfolio-stocks-${option.symbol}`}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <img 
+                        src={option.icon} 
+                        alt={`${option.symbol} icon`}
+                        style={{ width: 20, height: 20, borderRadius: '50%' }}
+                        onError={(e) => {
+                          e.target.onerror = null; // Prevent infinite loop
+                          e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                        }}
+                      />
                       <Typography variant="body1">
                         {option.symbol}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {option.name}
-                      </Typography>
                     </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                      {option.name} ({option.exchange})
+                    </Typography>
                   </Box>
                 )}
                 renderTags={(tagValue, getTagProps) =>
@@ -207,9 +222,9 @@ const StockPortfolioTable = ({ stats }) => {
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button 
-            onClick={handleAddPosition}
+            onClick={handleAddPortfolio}
             variant="contained"
-            disabled={!newPosition.name || !newPosition.description || selectedStocks.length === 0}
+            disabled={!newPortfolio.name || !newPortfolio.description || selectedStocks.length === 0}
           >
             Add
           </Button>

@@ -8,6 +8,8 @@ export const EXPORT_GRAPH_PDF = 'stocks/exportGraphPdf';
 export const PULL_STOCK_LIST = 'stocks/pullStockList';
 export const FETCH_EXCHANGES = 'stocks/fetchExchanges';
 export const SET_MESSAGE = 'stocks/setMessage';
+export const FETCH_PORTFOLIOS = 'stocks/fetchPortfolios';
+export const CREATE_PORTFOLIO = 'stocks/createPortfolio';
 // Action Creators
 export const fetchStats = () => ({ type: FETCH_STATS });
 export const fetchStocks = (payload) => ({ type: FETCH_STOCKS, payload });
@@ -18,3 +20,5 @@ export const exportGraphPdf = () => ({ type: EXPORT_GRAPH_PDF });
 export const pullStockList = () => ({ type: PULL_STOCK_LIST });
 export const fetchExchanges = () => ({ type: FETCH_EXCHANGES });
 export const setMessage = (payload) => ({ type: SET_MESSAGE, payload });
+export const fetchPortfolios = () => ({ type: FETCH_PORTFOLIOS });
+export const createPortfolio = (payload) => ({ type: CREATE_PORTFOLIO, payload });

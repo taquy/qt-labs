@@ -51,6 +51,7 @@ const initialState = {
     [ErrorActions.STOCK_GRAPH]: "",
     [ErrorActions.STOCK_TABLE]: "",
   },
+  portfolios: [],
 };
 
 const stocksSlice = createSlice({
@@ -97,6 +98,9 @@ const stocksSlice = createSlice({
     setError: (state, action) => {
       state.errors[action.payload.action] = action.payload.message;
     },
+    setPortfolios: (state, action) => {
+      state.portfolios = action.payload ? action.payload : [];
+    },
   }
 });
 
@@ -110,6 +114,7 @@ export const {
   setExchanges,
   setMessages,
   removeStats,
+  setPortfolios,
 } = stocksSlice.actions;
 
 export default stocksSlice.reducer;

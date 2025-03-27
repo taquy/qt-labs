@@ -11,6 +11,7 @@ import {
   MessageActions,
   ErrorActions,
   setMessages,
+  setPortfolios,
 } from '../slices/stocks';
 
 import { handleApiError } from '../utils';
@@ -25,10 +26,30 @@ import {
   PULL_STOCK_LIST,
   FETCH_EXCHANGES,
   SET_MESSAGE,
+  FETCH_PORTFOLIOS,
+  CREATE_PORTFOLIO,
 } from '../actions/stocks';
 
 import api from '../apis/stocks';
 // Sagas
+function* createPortfolioSaga(action) {
+  try {
+    const response = yield effects.call(api.createPortfolio, action.payload);
+    yield effects.put(setPortfolios(response));
+  } catch (error) {
+    yield effects.call(handleApiError, error, 'createPortfolioSaga');
+  }
+}
+
+function* fetchPortfoliosSaga() {
+  try {
+    const response = yield effects.call(api.fetchPortfolios);
+    yield effects.put(setPortfolios(response));
+  } catch (error) {
+    yield effects.call(handleApiError, error, 'fetchPortfoliosSaga');
+  }
+}
+
 function* setMessagesSaga(action) {
   yield effects.put(setMessages(action.payload));
 }
@@ -207,5 +228,6 @@ export function* stocksSaga() {
   yield effects.takeLatest(PULL_STOCK_LIST, pullStockListSaga);
   yield effects.takeLatest(FETCH_EXCHANGES, fetchExchangesSaga);
   yield effects.takeLatest(SET_MESSAGE, setMessagesSaga);
-  
+  yield effects.takeLatest(FETCH_PORTFOLIOS, fetchPortfoliosSaga);
+  yield effects.takeLatest(CREATE_PORTFOLIO, createPortfolioSaga);
 }
