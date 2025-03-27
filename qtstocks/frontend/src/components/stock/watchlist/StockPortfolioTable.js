@@ -31,19 +31,23 @@ const StockPortfolioTable = ({ stats }) => {
     stocks: []
   });
 
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setNewPosition({
+      name: '',
+      description: '',
+      stocks: []
+    });
+    setSelectedStocks([]);
+  };
+
   const handleAddPosition = () => {
     if (selectedStocks.length > 0) {
       setPortfolio([...portfolio, {
         ...newPosition,
         stocks: selectedStocks
       }]);
-      setOpenDialog(false);
-      setNewPosition({
-        name: '',
-        description: '',
-        stocks: []
-      });
-      setSelectedStocks([]);
+      handleCloseDialog();
     }
   };
 
@@ -89,6 +93,17 @@ const StockPortfolioTable = ({ stats }) => {
                         key={stock}
                         label={stock}
                         size="small"
+                        avatar={
+                          <img 
+                            src={stats.find(s => s.symbol === stock)?.icon} 
+                            alt={`${stock} icon`}
+                            style={{ width: 20, height: 20, borderRadius: '50%' }}
+                            onError={(e) => {
+                              e.target.onerror = null; // Prevent infinite loop
+                              e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                            }}
+                          />
+                        }
                       />
                     ))}
                   </Box>
@@ -101,9 +116,10 @@ const StockPortfolioTable = ({ stats }) => {
 
       <Dialog 
         open={openDialog} 
-        onClose={() => setOpenDialog(false)}
+        onClose={handleCloseDialog}
         maxWidth="sm"
         fullWidth
+        disableRestoreFocus
       >
         <DialogTitle>New Portfolio</DialogTitle>
         <DialogContent sx={{ minWidth: 400 }}>
@@ -113,6 +129,7 @@ const StockPortfolioTable = ({ stats }) => {
               value={newPosition.name}
               onChange={(e) => setNewPosition({ ...newPosition, name: e.target.value })}
               fullWidth
+              autoFocus
             />
             <TextField
               label="Description"
@@ -162,6 +179,17 @@ const StockPortfolioTable = ({ stats }) => {
                         label={option.symbol}
                         {...chipProps}
                         size="small"
+                        avatar={
+                          <img 
+                            src={option.icon} 
+                            alt={`${option.symbol} icon`}
+                            style={{ width: 20, height: 20, borderRadius: '50%' }}
+                            onError={(e) => {
+                              e.target.onerror = null; // Prevent infinite loop
+                              e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                            }}
+                          />
+                        }
                         onDelete={() => handleRemoveStock(option.symbol)}
                       />
                     );
@@ -177,7 +205,7 @@ const StockPortfolioTable = ({ stats }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button 
             onClick={handleAddPosition}
             variant="contained"

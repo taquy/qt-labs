@@ -129,13 +129,7 @@ const StockSelector = () => {
      setForceFetchStocks(true);     
     }
   }; 
-
-  console.log('stocks:', stocks);
-  console.log('stocks?.items:', stocks?.items);
-
   const safeOptions = Array.isArray(stocks?.items) ? stocks.items : [];
-  console.log('safeOptions:', safeOptions);
-
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
@@ -183,7 +177,16 @@ const StockSelector = () => {
               const { key, ...otherProps } = props;
               return (
                 <Box component="li" key={generateUniqueId()} {...otherProps}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <img 
+                      src={option.icon} 
+                      alt={`${option.symbol} icon`}
+                      style={{ width: 20, height: 20 }}
+                      onError={(e) => {
+                        e.target.onerror = null; // Prevent infinite loop
+                        e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                      }}
+                    />
                     <Typography variant="body1">
                       {highlightMatch(option.symbol || '', stocks_query?.search || '')}
                     </Typography>
@@ -200,10 +203,20 @@ const StockSelector = () => {
                 return (
                   <Chip
                     key={key}
-                    label={option?.symbol || ''}
+                    label={option.symbol}
                     {...chipProps}
                     size="small"
-                    onDelete={() => handleRemoveStock(option?.symbol)}
+                    avatar={
+                      <img 
+                        src={option.icon} 
+                        alt={`${option.symbol} icon`}
+                        style={{ width: 20, height: 20, borderRadius: '50%' }}
+                        onError={(e) => {
+                          e.target.onerror = null; // Prevent infinite loop
+                          e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                        }}
+                      />
+                    }
                   />
                 );
               })

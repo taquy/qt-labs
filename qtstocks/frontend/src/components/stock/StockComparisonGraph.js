@@ -111,6 +111,7 @@ const StockComparisonGraph = () => {
     let colors = labels.map((_, index) =>
       `hsl(${(index * 360/ labels.length)}, 70%, 50%)`
     );
+    let icons = selectedStocks.map(stock => stock.icon);
     // Sort labels and dataPoints together based on dataPoints values
     const sortedIndices = dataPoints
       .map((value, index) => ({ value, index }))
@@ -120,6 +121,7 @@ const StockComparisonGraph = () => {
     labels = sortedIndices.map(i => labels[i]);
     dataPoints = sortedIndices.map(i => dataPoints[i]);
     colors = sortedIndices.map(i => colors[i]);
+    icons = sortedIndices.map(i => icons[i]);
     setCurrentChartData({
       labels,
       datasets: [{
@@ -130,6 +132,7 @@ const StockComparisonGraph = () => {
         borderColor: colors.map(color => color.replace('50%', '40%')),
         borderRadius: 5,
         hoverBackgroundColor: colors.map(color => color.replace('50%', '60%')),
+        icon: icons
       }],
       title: {
         display: true,
@@ -354,6 +357,29 @@ const StockComparisonGraph = () => {
                     labels: {
                       font: {
                         size: 14
+                      },
+                      generateLabels: (chart) => {
+                        const datasets = chart.data.datasets;
+                        return datasets.map((dataset, i) => ({
+                          text: dataset.label,
+                          fillStyle: dataset.backgroundColor,
+                          strokeStyle: dataset.borderColor,
+                          lineWidth: 1,
+                          hidden: !chart.isDatasetVisible(i),
+                          index: i,
+                          fontColor: '#000',
+                          padding: 10,
+                          usePointStyle: true,
+                          pointStyle: (ctx) => {
+                            const img = new Image();
+                            img.src = dataset.icon[ctx.index] || 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                            img.onerror = () => {
+                              img.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
+                            };
+                            img.style.borderRadius = '50%';
+                            return img;
+                          }
+                        }));
                       }
                     }
                   },
