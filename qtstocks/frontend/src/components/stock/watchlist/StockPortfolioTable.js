@@ -38,14 +38,15 @@ const StockPortfolioTable = ({ stats }) => {
     dispatch(fetchPortfolios());
   }, [dispatch]);
 
+
   const handleCloseDialog = () => {
-    // setOpenDialog(false);
-    // setNewPosition({
-    //   name: '',
-    //   description: '',
-    //   stocks: []
-    // });
-    // setSelectedStocks([]);
+    setOpenDialog(false);
+    setNewPortfolio({
+      name: '',
+      description: '',
+      stocks: []
+    });
+    setSelectedStocks([]);
   };
 
   const handleAddPortfolio = () => {
@@ -88,20 +89,20 @@ const StockPortfolioTable = ({ stats }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {portfolios.map((position) => (
-              <TableRow key={`${position.name}`}>
-                <TableCell>{position.name}</TableCell>
-                <TableCell>{position.description}</TableCell>
+            {portfolios.map((portfolio) => (
+              <TableRow key={`${portfolio.name}`}>
+                <TableCell>{portfolio.name}</TableCell>
+                <TableCell>{portfolio.description}</TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {position.stocks.map((stock) => (
+                    {portfolio.stocks.map((stock) => (
                       <Chip
-                        key={stock}
-                        label={stock}
+                        key={stock.symbol}
+                        label={stock.symbol}
                         size="small"
                         avatar={
                           <img 
-                            src={stats.find(s => s.symbol === stock)?.icon} 
+                            src={stock.icon} 
                             alt={`${stock} icon`}
                             style={{ width: 20, height: 20, borderRadius: '50%' }}
                             onError={(e) => {
