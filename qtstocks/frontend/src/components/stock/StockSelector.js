@@ -130,12 +130,17 @@ const StockSelector = () => {
     }
   }; 
 
+  console.log('stocks:', stocks);
+  console.log('stocks?.items:', stocks?.items);
+
+  const safeOptions = Array.isArray(stocks?.items) ? stocks.items : [];
+  console.log('safeOptions:', safeOptions);
+
   return (
     <Paper sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
         Stock Selection
       </Typography>
-      
       <Box sx={{ 
         display: 'flex', 
         gap: 2, 
@@ -145,12 +150,12 @@ const StockSelector = () => {
           <Autocomplete
             multiple
             freeSolo
-            options={stocks.items || []}
+            options={safeOptions}
             getOptionLabel={(option) => {
               if (typeof option === 'string') return option;
-              return `${option.symbol} - ${option.name} (${option.exchange})`;
+              return option?.symbol ? `${option.symbol} - ${option.name} (${option.exchange})` : '';
             }}
-            value={selectedStocks.map(symbol => (stocks.items || []).find(s => s.symbol === symbol) || { symbol, name: '' })}
+            value={selectedStocks.map(symbol => safeOptions.find(s => s?.symbol === symbol) || { symbol, name: '' })}
             onChange={handleOnChange}
             onInputChange={handleOnInputChange}
             renderInput={(params) => (
@@ -174,15 +179,16 @@ const StockSelector = () => {
               />
             )}
             renderOption={(props, option) => {
+              if (!option) return null;
               const { key, ...otherProps } = props;
               return (
                 <Box component="li" key={generateUniqueId()} {...otherProps}>
                   <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                     <Typography variant="body1">
-                      {highlightMatch(option.symbol, stocks_query.search)}
+                      {highlightMatch(option.symbol || '', stocks_query?.search || '')}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {highlightMatch(option.name + ' (' + option.exchange + ')', stocks_query.search)}
+                      {highlightMatch((option.name || '') + ' (' + (option.exchange || '') + ')', stocks_query?.search || '')}
                     </Typography>
                   </Box>
                 </Box>
@@ -194,10 +200,10 @@ const StockSelector = () => {
                 return (
                   <Chip
                     key={key}
-                    label={option.symbol}
+                    label={option?.symbol || ''}
                     {...chipProps}
                     size="small"
-                    onDelete={() => handleRemoveStock(option.symbol)}
+                    onDelete={() => handleRemoveStock(option?.symbol)}
                   />
                 );
               })
@@ -320,4 +326,4 @@ const StockSelector = () => {
   );
 };
 
-export default StockSelector; 
+export default StockSelector;

@@ -113,7 +113,7 @@ const StockWatchlist = () => {
   };
 
   const handleSelectAll = (event) => {
-    if (event.target.checked) {
+    if (event.target.checked && stats) {
       setSelected(stats.map((stock) => stock.symbol));
     } else {
       setSelected([]);
@@ -182,11 +182,19 @@ const StockWatchlist = () => {
     setAnchorEl(null);
   };
 
+  if (!stats) {
+    return (
+      <Box sx={{ width: '100%', textAlign: 'center', py: 3 }}>
+        <Typography variant="body1">Loading stocks data...</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ width: '100%' }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">
-          Selected Stocks
+          Selected Stocks ({stats.length})
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
           <Tooltip title="Toggle Columns">
@@ -332,7 +340,7 @@ const StockWatchlist = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {sortStocks(stats).map((stock) => (
+            {stats && sortStocks(stats).map((stock) => (
               <TableRow
                 key={stock.symbol}
                 hover

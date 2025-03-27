@@ -393,7 +393,7 @@ const StockComparisonGraph = () => {
                     }
                   }
                 },
-                barThickness: 40
+                maxBarThickness: 70
               }} 
             />
           </Box>
@@ -407,4 +407,4 @@ const StockComparisonGraph = () => {
   );
 };
 
-export default StockComparisonGraph; 
+export default StockComparisonGraph;

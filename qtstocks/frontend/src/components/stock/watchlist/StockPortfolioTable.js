@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -20,15 +19,9 @@ import {
   DialogTitle,
   DialogContent
 } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchStats, removeStats, exportCsv } from '../../../store/actions/stocks';
-import { fetchSettings, saveSettings } from '../../../store/actions/settings';
-import { Delete, Download, ViewColumn, Add as AddIcon } from '@mui/icons-material';
-import { ErrorActions } from '../../../store/slices/stocks';
-import { SettingsTypes } from '../../../store/slices/settings';
+import { Add as AddIcon } from '@mui/icons-material';
 
-// Portfolio Management Component
-const StockPortfolio = ({ stats }) => {
+const StockPortfolioTable = ({ stats }) => {
   const [portfolio, setPortfolio] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedStocks, setSelectedStocks] = useState([]);
@@ -55,15 +48,11 @@ const StockPortfolio = ({ stats }) => {
   };
 
   const handleRemoveStock = (stockToRemove) => {
-    setSelectedStocks(selectedStocks.filter(stock => stock !== stockToRemove));
+    setSelectedStocks((prevStocks) => prevStocks.filter(stock => stock !== stockToRemove));
   };
 
   const handleOnChange = (event, newValue) => {
     setSelectedStocks(newValue.map(stock => typeof stock === 'string' ? stock : stock.symbol));
-  };
-
-  const handleOnInputChange = (event, newInputValue) => {
-    // You can add search functionality here if needed
   };
 
   return (
@@ -143,7 +132,6 @@ const StockPortfolio = ({ stats }) => {
                 }}
                 value={selectedStocks.map(symbol => stats.find(s => s.symbol === symbol) || { symbol, name: '' })}
                 onChange={handleOnChange}
-                onInputChange={handleOnInputChange}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -153,21 +141,18 @@ const StockPortfolio = ({ stats }) => {
                     size="small"
                   />
                 )}
-                renderOption={(props, option) => {
-                  const { key, ...otherProps } = props;
-                  return (
-                    <Box component="li" {...otherProps}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                        <Typography variant="body1">
-                          {option.symbol}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {option.name}
-                        </Typography>
-                      </Box>
+                renderOption={(props, option) => (
+                  <Box component="li" {...props} key={option.symbol}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                      <Typography variant="body1">
+                        {option.symbol}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {option.name}
+                      </Typography>
                     </Box>
-                  );
-                }}
+                  </Box>
+                )}
                 renderTags={(tagValue, getTagProps) =>
                   tagValue.map((option, index) => {
                     const { key, ...chipProps } = getTagProps({ index });
@@ -206,4 +191,4 @@ const StockPortfolio = ({ stats }) => {
   );
 };
 
-export default StockPortfolio;
+export default StockPortfolioTable;

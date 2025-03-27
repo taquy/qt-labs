@@ -7,10 +7,11 @@ import {
 } from '@mui/material';
 import StockWatchlistTable from './StockWatchlistTable';
 import StockPortfolioTable from './StockPortfolioTable';
-
+import { useSelector } from 'react-redux';
 
 const StockTable = () => {
   const [tabValue, setTabValue] = useState(1);
+  const { stats } = useSelector(state => state.stocks);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -26,7 +27,7 @@ const StockTable = () => {
         {tabValue === 0 ? (
           <StockWatchlistTable/>
         ) : (
-          <StockPortfolioTable/>
+          <StockPortfolioTable stats={stats}/>
         )}
       </Box>
     </Paper>
