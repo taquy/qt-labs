@@ -33,13 +33,6 @@ const initialState = {
     current_page: 0,
     has_next: true,
   },
-  stocks_query: {
-    page: 1,
-    per_page: 20,
-    exchanges: [],
-    search: '',
-    refresh: false
-  },
   stats: [],
   metrics: METRICS,
   exportedCsv: null,
@@ -64,16 +57,17 @@ const stocksSlice = createSlice({
   name: 'stocks',
   initialState,
   reducers: {
-    setStocksQuery: (state, action) => {
-      state.stocks_query = action.payload;
-    },
-    getStocksQuery: (state) => {
-      return state.stocks_query;
-    },
     setStocks: (state, action) => {
       if (action.payload) {
         state.stocks.items = action.payload.refresh ? action.payload.items : [...state.stocks.items, ...action.payload.items];
-        state.stocks.has_next = action.payload.refresh ? true : action.payload.has_next;
+        // Create combined array of existing and new items
+        let combinedItems = action.payload.refresh ?
+          action.payload.items :
+          [...state.stocks.items, ...action.payload.items];
+        state.stocks.items = Array.from(
+          new Map(combinedItems.map(item => [item.symbol, item])).values()
+        );
+         state.stocks.has_next = action.payload.has_next;
         state.stocks.current_page = action.payload.current_page;
       } else {
         state.stocks = {
@@ -103,9 +97,6 @@ const stocksSlice = createSlice({
     setError: (state, action) => {
       state.errors[action.payload.action] = action.payload.message;
     },
-    clearError: (state, action) => {
-      state.errors[action.payload.action] = "";
-    },
   }
 });
 
@@ -113,15 +104,12 @@ export const {
   setStats,
   setStocks,
   setError,
-  clearError,
   setExportedCsv,
   setExportedGraphPdf,
   setLoader,
   setExchanges,
   setMessages,
   removeStats,
-  setStocksQuery,
-  getStocksQuery,
 } = stocksSlice.actions;
 
 export default stocksSlice.reducer;

@@ -18,8 +18,6 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  Tabs,
-  Tab,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStats, removeStats, exportCsv } from '../../../store/actions/stocks';

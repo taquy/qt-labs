@@ -14,26 +14,26 @@ import {
   Tooltip
 } from '@mui/material';
 
-import { fetchStocks, pullStockStats, pullStockList } from '../../store/actions/stocks';
+import { pullStockStats, pullStockList, fetchExchanges, fetchStocks } from '../../store/actions/stocks';
 import { fetchSettings } from '../../store/actions/settings';
 import { useSelector, useDispatch } from 'react-redux';
 import { LoaderActions, ErrorActions, MessageActions } from '../../store/slices/stocks';
 import { SettingsTypes } from '../../store/slices/settings';
 import { saveSettings } from '../../store/actions/settings';
-import { setMessage, setStocksQuery } from '../../store/actions/stocks';
+import { setMessage } from '../../store/actions/stocks';
 const StockSelector = () => {
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [loadLatestData, setLoadLatestData] = useState(false);
-  const [forceFetchStocks, setForceFetchStocks] = useState(false);
   const [fetchNextPage, setFetchNextPage] = useState(false);
   const [firstLoad, setFirstLoad] = useState(true);
-  const [selectedExchanges, setSelectedExchanges] = useState([]);
   const dispatch = useDispatch();
-
-  // Add UUID generator function
-  const generateUniqueId = () => {
-    return Math.random().toString(36).substring(2) + Date.now().toString(36);
-  };
+  const [query, setQuery] = useState({
+    page: 1,
+    per_page: 20,
+    exchanges: [],
+    search: '',
+    refresh: false
+  });
 
   const {
     stocks,
@@ -41,52 +41,47 @@ const StockSelector = () => {
     exchanges,
     errors,
     messages,
-    stocks_query
   } = useSelector(state => state.stocks);
 
   const { settings } = useSelector(state => state.settings);
 
   useEffect(() => {
     dispatch(fetchSettings(SettingsTypes.STOCK_SELECTOR));
+    dispatch(fetchExchanges());
   }, [dispatch]);
 
   // Add debounced search effect
   useEffect(() => {
-    if (!stocks_query) return;
-    if (stocks_query.search === '' && !forceFetchStocks && !firstLoad && !fetchNextPage) return;
+    if (!query) return;
     const timer = setTimeout(() => {
-      if (firstLoad || forceFetchStocks) {
-        dispatch(fetchStocks({ ...stocks_query, page: 1, refresh: true }));
+      if (firstLoad) {
+        dispatch(fetchStocks({ ...query, page: 1 }));
       } else {
-        dispatch(fetchStocks({ ...stocks_query, refresh: false }));
+        dispatch(fetchStocks({ ...query }));
       }
-      setForceFetchStocks(false);
-      setFirstLoad(false);
       setFetchNextPage(false);
     }, 500);
     return () => clearTimeout(timer);
-  }, [stocks_query, dispatch, forceFetchStocks, stocks.current_page, firstLoad, fetchNextPage]);
+  }, [query, dispatch, firstLoad, fetchNextPage]);
 
   useEffect(() => {
     if (firstLoad) return;
     dispatch(saveSettings(SettingsTypes.STOCK_SELECTOR, { 
-      exchanges: selectedExchanges, 
+      exchanges: query.exchanges, 
       loadLatestData 
     }));
-  }, [selectedExchanges, loadLatestData, dispatch, firstLoad]);
+  }, [query, loadLatestData, dispatch, firstLoad]);
 
   useEffect(() => {
-    if (settings && settings[SettingsTypes.STOCK_SELECTOR]) {
+    if (!settings || !settings[SettingsTypes.STOCK_SELECTOR] || !firstLoad) return
       const currentSettings = settings[SettingsTypes.STOCK_SELECTOR];
       setLoadLatestData(currentSettings.loadLatestData || false);
-      setSelectedExchanges(currentSettings.exchanges || []);
-      setStocksQuery(prevQuery => ({ 
-        ...prevQuery, 
+      setQuery(prevQuery => ({ ...prevQuery, 
         exchanges: currentSettings.exchanges || [], 
         loadLatestData: currentSettings.loadLatestData || false 
       }));
-    }
-  }, [settings]);
+      setFirstLoad(false);
+  }, [settings, firstLoad]);
 
   useEffect(() => {
     if (messages[MessageActions.PULL_STOCK_LIST]) {
@@ -99,22 +94,12 @@ const StockSelector = () => {
   const handleScroll = (event) => {
     const listbox = event.target;
     if (
-      stocks_query.page === stocks.current_page && stocks.has_next && !fetchNextPage &&
+      query.page === stocks.current_page && stocks.has_next && !fetchNextPage &&
       listbox.scrollTop + listbox.clientHeight >= listbox.scrollHeight - 10
     ) {
-      setStocksQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1 }));
+      setQuery(prevQuery => ({ ...prevQuery, page: prevQuery.page + 1, refresh: false  }));
       setFetchNextPage(true);
     }
-  };
-
-  // Function to highlight matching text
-  const highlightMatch = (text, search) => {
-    if (!search) return text;
-    const parts = text.split(new RegExp(`(${search})`, 'gi'));
-    return parts.map((part, index) =>
-      part.toLowerCase() === search.toLowerCase() ?
-        <span key={generateUniqueId()} style={{ backgroundColor: '#fff59d' }}>{part}</span> : part
-    );
   };
 
   const handleFetchStockData = () => {
@@ -124,33 +109,20 @@ const StockSelector = () => {
   const handlePullStockList = () => {
     dispatch(pullStockList());
   };
-  
-  const handleRemoveStock = (stockToRemove) => {
-    setSelectedStocks(selectedStocks.filter(stock => stock !== stockToRemove));
-  };
 
   const handleOnChange = (event, newValue) => {
     setSelectedStocks(newValue.map(stock => typeof stock === 'string' ? stock : stock.symbol));
   };
 
   const handleOnInputChange = (event, newInputValue) => {
-    setStocksQuery(prevQuery => ({ ...prevQuery, search: newInputValue, refresh: true }));
-    if (!newInputValue.trim()) {
-     setForceFetchStocks(true);     
-    }
-  }; 
+    setQuery({ ...query, search: newInputValue, refresh: true, page: 1 });
+  };
 
   const handleExchangeChange = (exchange) => (event) => {
-    const newExchanges = event.target.checked 
-      ? [...selectedExchanges, exchange] 
-      : selectedExchanges.filter(ex => ex !== exchange);
-    setSelectedExchanges(newExchanges);
-    setStocksQuery(prevQuery => ({ 
-      ...prevQuery, 
-      exchanges: newExchanges, 
-      page: 1 
-    }));
-    setForceFetchStocks(true);
+    const newExchanges = event.target.checked
+      ? [...query.exchanges, exchange] 
+      : query.exchanges.filter(ex => ex !== exchange);
+    setQuery({ ...query, exchanges: newExchanges, refresh: true });
   };
 
   const safeOptions = Array.isArray(stocks?.items) ? stocks.items : [];
@@ -363,7 +335,7 @@ const StockSelector = () => {
               key={exchange}
               control={
                 <Checkbox
-                  checked={selectedExchanges.includes(exchange)}
+                  checked={query.exchanges.includes(exchange)}
                   onChange={handleExchangeChange(exchange)}
                   name={exchange}
                   color="primary"

@@ -2,7 +2,6 @@ import * as effects from 'redux-saga/effects';
 import {
   setStats,
   setError,
-  clearError,
   setStocks,
   setExportedCsv,
   setExportedGraphPdf,
@@ -12,8 +11,6 @@ import {
   MessageActions,
   ErrorActions,
   setMessages,
-  setStocksQuery,
-  getStocksQuery
 } from '../slices/stocks';
 
 import { handleApiError } from '../utils';
@@ -28,15 +25,10 @@ import {
   PULL_STOCK_LIST,
   FETCH_EXCHANGES,
   SET_MESSAGE,
-  SET_STOCKS_QUERY
 } from '../actions/stocks';
 
 import api from '../apis/stocks';
 // Sagas
-function* setStocksQuerySaga(action) {
-  yield effects.put(setStocksQuery(action.payload));
-}
-
 function* setMessagesSaga(action) {
   yield effects.put(setMessages(action.payload));
 }
@@ -56,14 +48,15 @@ function* fetchExchangesSaga() {
 
 function* pullStockListSaga() {
   try {
-    yield effects.put(clearError({
+    yield effects.put(setError({
       action: ErrorActions.STOCK_SELECTOR,
+      message: '',
     }));
     yield effects.put(setLoader({ action: LoaderActions.PULL_STOCK_LIST, value: true }));
-    setMessages({
+    yield effects.put(setMessages({
       action: MessageActions.PULL_STOCK_LIST,
       message: 'Pulling stock list...',
-    });
+    }));
     const response = yield effects.call(api.pullStockList);
     yield effects.put(setMessages({
       action: MessageActions.PULL_STOCK_LIST,
@@ -83,8 +76,9 @@ function* pullStockListSaga() {
 
 function* exportGraphPdfSaga() {
   try {
-    yield effects.put(clearError({
+    yield effects.put(setError({
       action: ErrorActions.STOCK_GRAPH,
+      message: '',
     }));
     yield effects.put(setLoader({ action: LoaderActions.EXPORT_GRAPH_PDF, value: true }));
     const response = yield effects.call(api.exportGraphPdf);
@@ -102,8 +96,9 @@ function* exportGraphPdfSaga() {
 
 function* removeStatsSaga(action) {
   try {
-    yield effects.put(clearError({
+    yield effects.put(setError({
       action: ErrorActions.STOCK_TABLE,
+      message: '',
     } ));
     yield effects.put(setLoader({ action: LoaderActions.REMOVE_STATS, value: true }));
     yield effects.call(api.removeStats, action.payload);
@@ -120,8 +115,9 @@ function* removeStatsSaga(action) {
 
 function* exportCsvSaga() {
   try {
-    yield effects.put(clearError({
+    yield effects.put(setError({
       action: ErrorActions.STOCK_TABLE,
+      message: '',
     } ));
     yield effects.put(setLoader({ action: LoaderActions.EXPORT_STOCK_DATA, value: true }));
     const response = yield effects.call(api.exportCsv);
@@ -140,8 +136,9 @@ function* exportCsvSaga() {
 function* pullStockStatsSaga(action) {
   try {
     yield effects.put(setLoader({ action: LoaderActions.PULL_STOCK_STATS, value: true }));
-    yield effects.put(clearError({
+    yield effects.put(setError({
       action: ErrorActions.STOCK_SELECTOR,
+      message: '',
     }));
     yield effects.call(api.pullStockStats, action.payload);
     yield effects.call(fetchStatsSaga);
@@ -156,20 +153,17 @@ function* pullStockStatsSaga(action) {
   }
 }
 
-function* fetchStocksSaga() {
+function* fetchStocksSaga(action) {
   try {
-    yield effects.put(clearError({
+    const query = action.payload;
+    yield effects.put(setError({
       action: ErrorActions.STOCK_SELECTOR,
+      message: '',
     }));
-    const state_query = yield effects.select(getStocksQuery);
-    const query = {...state_query.payload.stocks.stocks_query};
     yield effects.put(setLoader({ action: LoaderActions.FETCH_STOCKS, value: true }));
     query["exchanges"] = query["exchanges"].join(',');
     const results = yield effects.call(api.fetchStocks, query);
-    let refresh = query.search.trim() !== "" || query.page === 1;
-    refresh = refresh && results.items.length > 0;
-    yield effects.put(setStocks({...results, refresh}));
-    yield effects.call(fetchExchangesSaga);
+    yield effects.put(setStocks({...results, refresh: query.refresh}));
   } catch (error) {
     yield effects.put(setError({
       action: ErrorActions.STOCK_SELECTOR,
@@ -185,8 +179,9 @@ function* fetchStocksSaga() {
 function* fetchStatsSaga() {
   try {
     yield effects.put(setLoader({ action: LoaderActions.FETCH_STATS, value: true }));
-    yield effects.put(clearError({
+    yield effects.put(setError({
       action: ErrorActions.STOCK_SELECTOR,
+      message: '',
     } ));
     const stocks = yield effects.call(api.fetchStats);
     yield effects.put(setStats(stocks));
@@ -212,5 +207,5 @@ export function* stocksSaga() {
   yield effects.takeLatest(PULL_STOCK_LIST, pullStockListSaga);
   yield effects.takeLatest(FETCH_EXCHANGES, fetchExchangesSaga);
   yield effects.takeLatest(SET_MESSAGE, setMessagesSaga);
-  yield effects.takeLatest(SET_STOCKS_QUERY, setStocksQuerySaga);
+  
 }
