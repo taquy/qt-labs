@@ -108,53 +108,83 @@ def test_google_login_error(mock_verify_token, client):
     assert response.status_code == 500
     assert 'Error in google_login' in response.json['message']
 
-@patch('models.UserJWT.query')
 @patch('extensions.db.session')
 def test_logout(mock_db_session, mock_user_jwt_query, client):
-    # Mock UserJWT query
-    mock_user_jwt = MagicMock()
-    mock_user_jwt_query.filter_by.return_value.first.return_value = mock_user_jwt
+    # Mock the UserJWT query
+    mock_user_jwt = MagicMock(spec=UserJWT)
+    mock_user_jwt.id = 1
+    mock_user_jwt.user_id = 1
+    mock_user_jwt.token = "test_token"
+    mock_user_jwt.is_active = True
+    mock_user_jwt.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+    mock_user_jwt.created_at = datetime.now(timezone.utc)
 
-    # Create a test token
-    token = 'test_token'
+    # Set up the mock query
+    mock_query = MagicMock()
+    mock_query.filter_by.return_value.first.return_value = mock_user_jwt
+    mock_user_jwt_query.return_value = mock_query
 
-    # Then, logout
-    response = client.post('/auth/logout', headers={'Authorization': f'Bearer {token}'})
+    # Make the API call
+    response = client.post('/auth/logout', headers={'Authorization': 'Bearer test_token'})
+
+    # Assert the response
     assert response.status_code == 200
-    assert response.json['message'] == 'Logged out successfully'
-    mock_user_jwt_query.filter_by.assert_called_once_with(token=token)
+    data = response.get_json()
+    assert data['message'] == "Successfully logged out"
+
+    # Verify that the UserJWT was deleted and committed
     mock_db_session.delete.assert_called_once_with(mock_user_jwt)
     mock_db_session.commit.assert_called_once()
 
+    # Verify that the query was called with the correct token
+    mock_query.filter_by.assert_called_once_with(token="test_token")
+
 @patch('models.UserJWT.query')
 @patch('models.User.query')
-@patch('sqlalchemy.func.now')
-def test_current_user(mock_func_now, mock_user_query, mock_user_jwt_query, client, app):
+def test_current_user(mock_user_query, mock_user_jwt_query, client):
     # Mock current time
-    current_time = datetime.now(timezone.utc)
-    mock_func_now.return_value = current_time
+    mock_now = datetime(2025, 3, 28, 12, 0, 0, tzinfo=timezone.utc)
+    with patch('controllers.auth.datetime') as mock_datetime:
+        mock_datetime.now.return_value = mock_now
 
-    # Mock User and UserJWT queries
-    mock_user = MagicMock()
-    mock_user.to_dict.return_value = {
-        'email': 'test@example.com',
-        'name': 'Test User'
-    }
-    mock_user_query.get.return_value = mock_user
+        # Mock the User query
+        mock_user = MagicMock(spec=User)
+        mock_user.id = 1
+        mock_user.email = "test@example.com"
+        mock_user.name = "Test User"
+        mock_user.is_admin = False
+        mock_user.is_active = True
+        mock_user.created_at = mock_now
+        mock_user.last_login = mock_now
 
-    mock_user_jwt = MagicMock()
-    mock_user_jwt.is_active = True
-    mock_user_jwt.expires_at = current_time + timedelta(days=1)
-    mock_user_jwt_query.filter_by.return_value.first.return_value = mock_user_jwt
+        # Mock the UserJWT query
+        mock_user_jwt = MagicMock(spec=UserJWT)
+        mock_user_jwt.id = 1
+        mock_user_jwt.user_id = mock_user.id
+        mock_user_jwt.token = "test_token"
+        mock_user_jwt.is_active = True
+        mock_user_jwt.expires_at = mock_now + timedelta(days=1)
+        mock_user_jwt.created_at = mock_now
 
-    # Create a test token
-    with app.app_context():
-        token = PyJWT.encode({'user_id': 1, 'exp': current_time + timedelta(days=1)}, app.config['SECRET_KEY'], algorithm="HS256")
+        # Set up the mock queries
+        mock_user_query.get.return_value = mock_user
+        mock_user_jwt_query.filter_by.return_value.first.return_value = mock_user_jwt
 
-    response = client.get('/auth/me', headers={'Authorization': f'Bearer {token}'})
-    assert response.status_code == 200
-    assert response.json['email'] == 'test@example.com'
-    assert response.json['name'] == 'Test User'
+        # Make the API call
+        response = client.get('/auth/current_user', headers={'Authorization': 'Bearer test_token'})
+
+        # Assert the response
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['id'] == 1
+        assert data['email'] == "test@example.com"
+        assert data['name'] == "Test User"
+        assert data['is_admin'] == False
+        assert data['is_active'] == True
+
+        # Verify that the queries were called correctly
+        mock_user_query.get.assert_called_once_with(1)
+        mock_user_jwt_query.filter_by.assert_called_once_with(token="test_token")
 
 def test_token_required_decorator(client):
     response = client.get('/auth/me')
