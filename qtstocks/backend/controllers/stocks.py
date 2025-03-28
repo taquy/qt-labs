@@ -45,6 +45,11 @@ def init_stock_routes(app, token_required, stocks_ns):
         'has_prev': fields.Boolean(description='Whether there is a previous page')
     })
 
+    portfolio_model = stocks_ns.model('Portfolio', {
+        'id': fields.Integer(description='Portfolio ID'),
+        'name': fields.String(description='Portfolio name')
+    })
+
     stock_stats_model = stocks_ns.model('StockStats', {
         'symbol': fields.String(required=True, description='Stock symbol'),
         'name': fields.String(required=True, description='Stock name'),
@@ -55,7 +60,8 @@ def init_stock_routes(app, token_required, stocks_ns):
         'eps': fields.Float(description='Earnings per share'),
         'pe': fields.Float(description='Price-to-earnings ratio'),
         'pb': fields.Float(description='Price-to-book ratio'),
-        'last_updated': fields.String(description='Last update timestamp')
+        'last_updated': fields.String(description='Last update timestamp'),
+        'portfolios': fields.List(fields.Nested(portfolio_model), description='List of portfolio names this stock belongs to')
     })
 
     stock_exchange_model = stocks_ns.model('StockExchange', {
@@ -166,6 +172,19 @@ def init_stock_routes(app, token_required, stocks_ns):
                     .join(StockStats, Stock.symbol == StockStats.symbol)\
                     .filter(Stock.symbol.in_(user_stock_symbols))\
                     .all()
+
+                # Get all portfolios for the current user
+                user_portfolios = current_user.portfolios
+                portfolio_map = {}
+                for portfolio in user_portfolios:
+                    for stock in portfolio.stocks:
+                        if stock.symbol not in portfolio_map:
+                            portfolio_map[stock.symbol] = []
+                        portfolio_map[stock.symbol].append({
+                            'id': portfolio.id,
+                            'name': portfolio.name,
+                        })
+
                 return [
                     {
                         'symbol': stock.symbol,
@@ -177,7 +196,8 @@ def init_stock_routes(app, token_required, stocks_ns):
                         'market_cap': stock.stats.market_cap,
                         'eps': stock.stats.eps,
                         'pe': stock.stats.pe,
-                        'pb': stock.stats.pb
+                        'pb': stock.stats.pb,
+                        'portfolios': portfolio_map.get(stock.symbol, [])
                     } for stock in stocks_with_stats
                 ]
             except Exception as e:

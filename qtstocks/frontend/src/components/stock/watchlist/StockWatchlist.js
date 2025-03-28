@@ -10,7 +10,7 @@ import StockPortfolioTable from './StockPortfolioTable';
 import { useSelector } from 'react-redux';
 
 const StockTable = () => {
-  const [tabValue, setTabValue] = useState(1);
+  const [tabValue, setTabValue] = useState(0);
   const { stats } = useSelector(state => state.stocks);
 
   const handleTabChange = (event, newValue) => {
