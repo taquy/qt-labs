@@ -33,7 +33,8 @@ const StockWatchlist = () => {
   const [visibleColumns, setVisibleColumns] = useState({
     symbol: true,
     name: true,
-    exchange: true
+    exchange: true,
+    portfolio: true
   });
   // Select state from Redux store
   const {
@@ -82,7 +83,7 @@ const StockWatchlist = () => {
 
   // Save column visibility settings when they change
   useEffect(() => {
-    if (Object.keys(visibleColumns).length > 3) { // Only save when we have metrics
+    if (Object.keys(visibleColumns).length === 9) { // Only save when we have full 9 metrics
       dispatch(saveSettings(SettingsTypes.STOCK_TABLE, { tableColumns: visibleColumns }));
     }
   }, [visibleColumns, dispatch]);
@@ -217,6 +218,10 @@ const StockWatchlist = () => {
               <Checkbox checked={visibleColumns.exchange} />
               Exchange
             </MenuItem>
+            <MenuItem onClick={() => handleColumnToggle('portfolio')}>
+              <Checkbox checked={visibleColumns.portfolio} />
+              Portfolio
+            </MenuItem>
             {Object.entries(metrics).map(([key, label]) => (
               <MenuItem key={key} onClick={() => handleColumnToggle(key)}>
                 <Checkbox checked={visibleColumns[key]} />
@@ -249,7 +254,7 @@ const StockWatchlist = () => {
           visible && (
             <Chip
               key={key}
-              label={key === 'symbol' ? 'Symbol' : key === 'name' ? 'Name' : key === 'exchange' ? 'Exchange' : metrics[key]}
+              label={key === 'symbol' ? 'Symbol' : key === 'name' ? 'Name' : key === 'exchange' ? 'Exchange' : key === 'portfolio' ? 'Portfolio' : metrics[key]}
               onDelete={() => handleColumnToggle(key)}
               size="small"
             />
@@ -322,6 +327,17 @@ const StockWatchlist = () => {
                   </TableSortLabel>
                 </TableCell>
               )}
+              {visibleColumns.portfolio && (
+                <TableCell>
+                  <TableSortLabel
+                    active={orderBy === 'portfolio'}
+                    direction={orderBy === 'portfolio' ? order : 'asc'}
+                    onClick={createSortHandler('portfolio')}
+                  >
+                    Portfolio
+                  </TableSortLabel>
+                </TableCell>
+              )}
               {Object.entries(metrics).map(([key, label]) => (
                 visibleColumns[key] && (
                   <TableCell key={key}>
@@ -375,6 +391,20 @@ const StockWatchlist = () => {
                 )}
                 {visibleColumns.exchange && (
                   <TableCell>{stock.exchange}</TableCell>
+                )}
+                {visibleColumns.portfolio && (
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {stock.portfolios.map(portfolio => (
+                          <Chip
+                            key={portfolio.id}
+                            label={portfolio.name}
+                            size="small"
+                            color="primary"
+                          />
+                        ))}
+                    </Box>
+                  </TableCell>
                 )}
                 {Object.entries(metrics).map(([key, label]) => (
                   visibleColumns[key] && (
