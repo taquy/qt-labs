@@ -18,9 +18,12 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchStats, removeStats, exportCsv } from '../../../store/actions/stocks';
+import { fetchStats, removeStats, exportCsv, fetchPortfolios } from '../../../store/actions/stocks';
 import { fetchSettings, saveSettings } from '../../../store/actions/settings';
 import { Delete, Download, ViewColumn } from '@mui/icons-material';
 import { ErrorActions } from '../../../store/slices/stocks';
@@ -30,6 +33,7 @@ import { SettingsTypes } from '../../../store/slices/settings';
 const StockWatchlist = () => {
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedPortfolio, setSelectedPortfolio] = useState('all');
   const [visibleColumns, setVisibleColumns] = useState({
     symbol: true,
     name: true,
@@ -42,6 +46,7 @@ const StockWatchlist = () => {
     metrics,
     exportedCsv,
     errors,
+    portfolios
   } = useSelector(state => state.stocks);
   const { settings } = useSelector(state => state.settings);
   const [selected, setSelected] = React.useState([]);
@@ -49,7 +54,12 @@ const StockWatchlist = () => {
   const [order, setOrder] = React.useState('asc');
 
   useEffect(() => {
+    console.log('portfolios', portfolios);
+  }, [portfolios]);
+
+  useEffect(() => {
     dispatch(fetchStats());
+    dispatch(fetchPortfolios());
     dispatch(fetchSettings(SettingsTypes.STOCK_TABLE));
   }, [dispatch]);
 
@@ -181,6 +191,14 @@ const StockWatchlist = () => {
     setAnchorEl(null);
   };
 
+  // Filter stocks based on selected portfolio
+  const filteredStats = React.useMemo(() => {
+    if (!stats || selectedPortfolio === 'all') return stats;
+    return stats.filter(stock => 
+      stock.portfolios.some(portfolio => portfolio.id === selectedPortfolio)
+    );
+  }, [stats, selectedPortfolio]);
+
   if (!stats) {
     return (
       <Box sx={{ width: '100%', textAlign: 'center', py: 3 }}>
@@ -193,9 +211,25 @@ const StockWatchlist = () => {
     <Box sx={{ width: '100%' }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6">
-          Selected Stocks ({stats.length})
+          Selected Stocks ({filteredStats?.length || 0})
         </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Filter by Portfolio</InputLabel>
+            <Select
+              value={selectedPortfolio}
+              label="Filter by Portfolio"
+              onChange={(e) => setSelectedPortfolio(e.target.value)}
+              sx={{ height: 40 }}
+            >
+              <MenuItem value="all">All Portfolios</MenuItem>
+              {portfolios?.map(portfolio => (
+                <MenuItem key={portfolio.id} value={portfolio.id}>
+                  {portfolio.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Tooltip title="Toggle Columns">
             <IconButton onClick={handleMenuClick} color="primary">
               <ViewColumn />
@@ -354,7 +388,7 @@ const StockWatchlist = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {stats && sortStocks(stats).map((stock) => (
+            {filteredStats && sortStocks(filteredStats).map((stock) => (
               <TableRow
                 key={stock.symbol}
                 hover
