@@ -37,10 +37,11 @@ def init_auth_routes(app, auth_ns):
                 auth_ns.abort(401, "Missing or invalid token format")
             
             token = token.split(' ')[1]
+            user_jwt = None
             try:
                 # Check if token exists and is valid in database
                 user_jwt = UserJWT.query.filter_by(token=token).first()
-                if not user_jwt or not user_jwt.is_active or user_jwt.expires_at < func.now():
+                if not user_jwt or not user_jwt.is_active or user_jwt.expires_at < datetime.now(timezone.utc):
                     if user_jwt:
                         db.session.delete(user_jwt)
                         db.session.commit()
@@ -48,14 +49,13 @@ def init_auth_routes(app, auth_ns):
                 
                 # Verify token signature
                 data = PyJWT.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
-                current_user = db.session.get(User, data['user_id'])
+                current_user = User.query.get(data['user_id'])
                 if not current_user:
                     db.session.delete(user_jwt)
                     db.session.commit()
                     auth_ns.abort(401, "User not found")
                 
-                kwargs['current_user'] = current_user
-                return f(*args, **kwargs)
+                return f(current_user=current_user, *args, **kwargs)
                 
             except PyJWT.ExpiredSignatureError:
                 if user_jwt:

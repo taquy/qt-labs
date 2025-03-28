@@ -66,3 +66,5 @@ config.json
 settings.json
 
 *.zip
+
+qtstocks/backend/.coverage
