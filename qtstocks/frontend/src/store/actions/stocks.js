@@ -10,6 +10,8 @@ export const FETCH_EXCHANGES = 'stocks/fetchExchanges';
 export const SET_MESSAGE = 'stocks/setMessage';
 export const FETCH_PORTFOLIOS = 'stocks/fetchPortfolios';
 export const CREATE_PORTFOLIO = 'stocks/createPortfolio';
+export const UPDATE_PORTFOLIO = 'stocks/updatePortfolio';
+export const DELETE_PORTFOLIO = 'stocks/deletePortfolio';
 // Action Creators
 export const fetchStats = () => ({ type: FETCH_STATS });
 export const fetchStocks = (payload) => ({ type: FETCH_STOCKS, payload });
@@ -22,3 +24,5 @@ export const fetchExchanges = () => ({ type: FETCH_EXCHANGES });
 export const setMessage = (payload) => ({ type: SET_MESSAGE, payload });
 export const fetchPortfolios = () => ({ type: FETCH_PORTFOLIOS });
 export const createPortfolio = (payload) => ({ type: CREATE_PORTFOLIO, payload });
+export const updatePortfolio = (payload) => ({ type: UPDATE_PORTFOLIO, payload });
+export const deletePortfolio = (payload) => ({ type: DELETE_PORTFOLIO, payload });

@@ -28,14 +28,38 @@ import {
   SET_MESSAGE,
   FETCH_PORTFOLIOS,
   CREATE_PORTFOLIO,
+  UPDATE_PORTFOLIO,
+  DELETE_PORTFOLIO,
 } from '../actions/stocks';
 
 import api from '../apis/stocks';
 // Sagas
+function* updatePortfolioSaga(action) {
+  try {
+    const response = yield effects.call(api.updatePortfolio, action.payload);
+    if (response.id) {
+      yield effects.call(fetchPortfoliosSaga);
+    }
+  } catch (error) {
+    yield effects.call(handleApiError, error, 'updatePortfolioSaga');
+  }
+}
+
+function* deletePortfolioSaga(action) {
+  try {
+    yield effects.call(api.deletePortfolio, action.payload);
+    yield effects.call(fetchPortfoliosSaga);
+  } catch (error) {
+    yield effects.call(handleApiError, error, 'deletePortfolioSaga');
+  }
+}
+
 function* createPortfolioSaga(action) {
   try {
     const response = yield effects.call(api.createPortfolio, action.payload);
-    yield effects.put(setPortfolios(response));
+    if (response.id) {
+      yield effects.call(fetchPortfoliosSaga);
+    }
   } catch (error) {
     yield effects.call(handleApiError, error, 'createPortfolioSaga');
   }
@@ -230,4 +254,6 @@ export function* stocksSaga() {
   yield effects.takeLatest(SET_MESSAGE, setMessagesSaga);
   yield effects.takeLatest(FETCH_PORTFOLIOS, fetchPortfoliosSaga);
   yield effects.takeLatest(CREATE_PORTFOLIO, createPortfolioSaga);
+  yield effects.takeLatest(UPDATE_PORTFOLIO, updatePortfolioSaga);
+  yield effects.takeLatest(DELETE_PORTFOLIO, deletePortfolioSaga);
 }

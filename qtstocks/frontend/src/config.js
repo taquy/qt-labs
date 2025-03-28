@@ -10,12 +10,12 @@ const API_AUTH_ENDPOINTS = {
 
 const API_SETTINGS_ENDPOINTS = {
     settings: (type) => `${API_BASE_URL}/settings/${type}`,
-    deleteSetting: (key) => `${API_BASE_URL}/settings/${key}`,
     updateSetting: (key) => `${API_BASE_URL}/settings/${key}`,
 }
 
 const API_STOCK_ENDPOINTS = {
     portfolios: `${API_BASE_URL}/portfolios`,
+    portfolio: (id) => `${API_BASE_URL}/portfolios/${id}`,
     stats: `${API_BASE_URL}/stocks/stats`,
     stocks: `${API_BASE_URL}/stocks`,
     pullStockList: `${API_BASE_URL}/stocks/pull_stock_list`,

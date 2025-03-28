@@ -17,14 +17,17 @@ import {
   TextField,
   Dialog,
   DialogTitle,
-  DialogContent
+  DialogContent,
+  IconButton,
+  Tooltip
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
-import { fetchPortfolios, createPortfolio } from '../../../store/actions/stocks';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { fetchPortfolios, createPortfolio, updatePortfolio, deletePortfolio } from '../../../store/actions/stocks';
 import { useDispatch, useSelector } from 'react-redux';
 
 const StockPortfolioTable = ({ stats }) => {
   const [openDialog, setOpenDialog] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [selectedStocks, setSelectedStocks] = useState([]);
   const [newPortfolio, setNewPortfolio] = useState({
     name: '',
@@ -38,9 +41,9 @@ const StockPortfolioTable = ({ stats }) => {
     dispatch(fetchPortfolios());
   }, [dispatch]);
 
-
   const handleCloseDialog = () => {
     setOpenDialog(false);
+    setIsEditing(false);
     setNewPortfolio({
       name: '',
       description: '',
@@ -50,12 +53,39 @@ const StockPortfolioTable = ({ stats }) => {
   };
 
   const handleAddPortfolio = () => {
-    dispatch(createPortfolio({
-      name: newPortfolio.name,
-      description: newPortfolio.description,
-      stock_symbols: selectedStocks
-    }));
+    if (isEditing) {
+      dispatch(updatePortfolio({
+        id: newPortfolio.id,
+        name: newPortfolio.name,
+        description: newPortfolio.description,
+        stock_symbols: selectedStocks
+      }));
+    } else {
+      dispatch(createPortfolio({
+        name: newPortfolio.name,
+        description: newPortfolio.description,
+        stock_symbols: selectedStocks
+      }));
+    }
     handleCloseDialog();
+  };
+
+  const handleEditPortfolio = (portfolio) => {
+    setIsEditing(true);
+    setNewPortfolio({
+      id: portfolio.id,
+      name: portfolio.name,
+      description: portfolio.description,
+      stocks: portfolio.stocks
+    });
+    setSelectedStocks(portfolio.stocks.map(stock => stock.symbol));
+    setOpenDialog(true);
+  };
+
+  const handleDeletePortfolio = (portfolioId) => {
+    if (window.confirm('Are you sure you want to delete this portfolio?')) {
+      dispatch(deletePortfolio(portfolioId));
+    }
   };
 
   const handleRemoveStock = (stockToRemove) => {
@@ -86,6 +116,7 @@ const StockPortfolioTable = ({ stats }) => {
               <TableCell>Name</TableCell>
               <TableCell>Description</TableCell>
               <TableCell>Stocks</TableCell>
+              <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -106,13 +137,35 @@ const StockPortfolioTable = ({ stats }) => {
                             alt={`${stock} icon`}
                             style={{ width: 20, height: 20, borderRadius: '50%' }}
                             onError={(e) => {
-                              e.target.onerror = null; // Prevent infinite loop
+                              e.target.onerror = null;
                               e.target.src = 'https://cdn-icons-gif.flaticon.com/7211/7211793.gif';
                             }}
                           />
                         }
                       />
                     ))}
+                  </Box>
+                </TableCell>
+                <TableCell align="right">
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                    <Tooltip title="Edit">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEditPortfolio(portfolio)}
+                        color="primary"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeletePortfolio(portfolio.id)}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </TableCell>
               </TableRow>
@@ -128,7 +181,7 @@ const StockPortfolioTable = ({ stats }) => {
         fullWidth
         disableRestoreFocus
       >
-        <DialogTitle>New Portfolio</DialogTitle>
+        <DialogTitle>{isEditing ? 'Edit Portfolio' : 'New Portfolio'}</DialogTitle>
         <DialogContent sx={{ minWidth: 400 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
             <TextField
@@ -225,9 +278,9 @@ const StockPortfolioTable = ({ stats }) => {
           <Button 
             onClick={handleAddPortfolio}
             variant="contained"
-            disabled={!newPortfolio.name || !newPortfolio.description || selectedStocks.length === 0}
+            disabled={!newPortfolio.name || !newPortfolio.description}
           >
-            Add
+            {isEditing ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
       </Dialog>

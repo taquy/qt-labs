@@ -13,6 +13,16 @@ const api = {
     const response = await axios.post(API_STOCK_ENDPOINTS.portfolios, payload, getRequestConfig());
     return response.data;
   },
+  updatePortfolio: async (payload) => {
+    const url = API_STOCK_ENDPOINTS.portfolio(payload.id);
+    const response = await axios.put(url, payload, getRequestConfig());
+    return response.data;
+  },
+  deletePortfolio: async (payload) => {
+    const url = API_STOCK_ENDPOINTS.portfolio(payload);
+    const response = await axios.delete(url, getRequestConfig());
+    return response.data;
+  },
   // stock selector
   fetchStocks: async (payload) => {
     const query = new URLSearchParams(payload);
