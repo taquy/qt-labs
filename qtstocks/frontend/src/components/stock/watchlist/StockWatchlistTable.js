@@ -54,10 +54,6 @@ const StockWatchlist = () => {
   const [order, setOrder] = React.useState('asc');
 
   useEffect(() => {
-    console.log('portfolios', portfolios);
-  }, [portfolios]);
-
-  useEffect(() => {
     dispatch(fetchStats());
     dispatch(fetchPortfolios());
     dispatch(fetchSettings(SettingsTypes.STOCK_TABLE));

@@ -10,6 +10,7 @@ import secrets
 from flask_restx import Resource, fields
 from google.auth.exceptions import InvalidValue
 from werkzeug.security import generate_password_hash
+from sqlalchemy import func
 
 def init_auth_routes(app, auth_ns):
     # Define models for Swagger documentation
@@ -39,7 +40,7 @@ def init_auth_routes(app, auth_ns):
             try:
                 # Check if token exists and is valid in database
                 user_jwt = UserJWT.query.filter_by(token=token).first()
-                if not user_jwt or not user_jwt.is_active or user_jwt.expires_at < datetime.utcnow():
+                if not user_jwt or not user_jwt.is_active or user_jwt.expires_at < func.now():
                     if user_jwt:
                         db.session.delete(user_jwt)
                         db.session.commit()
@@ -47,7 +48,7 @@ def init_auth_routes(app, auth_ns):
                 
                 # Verify token signature
                 data = PyJWT.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
-                current_user = User.query.get(data['user_id'])
+                current_user = db.session.get(User, data['user_id'])
                 if not current_user:
                     db.session.delete(user_jwt)
                     db.session.commit()
@@ -84,20 +85,20 @@ def init_auth_routes(app, auth_ns):
                 auth_ns.abort(401, "Invalid email or password")
             
             # Update last login
-            user.last_login = datetime.now(timezone.utc)
+            user.last_login = func.now()
             db.session.commit()
             
             # Generate JWT token
             token = PyJWT.encode({
                 'user_id': user.id,
-                'exp': datetime.utcnow() + timedelta(days=1)
+                'exp': datetime.now(timezone.utc) + timedelta(days=1)
             }, current_app.config['SECRET_KEY'], algorithm="HS256")
             
             # Store token in database
             user_jwt = UserJWT(
                 user_id=user.id,
                 token=token,
-                expires_at=datetime.utcnow() + timedelta(days=1)
+                expires_at=func.now() + timedelta(days=1)
             )
             db.session.add(user_jwt)
             db.session.commit()
@@ -181,20 +182,20 @@ def init_auth_routes(app, auth_ns):
                     db.session.commit()
                 
                 # Update last login
-                user.last_login = datetime.now(timezone.utc)
+                user.last_login = func.now()
                 db.session.commit()
                 
                 # Generate JWT token
                 token = PyJWT.encode({
                     'user_id': user.id,
-                    'exp': datetime.utcnow() + timedelta(days=1)
+                    'exp': datetime.now(timezone.utc) + timedelta(days=1)
                 }, current_app.config['SECRET_KEY'], algorithm="HS256")
                 
                 # Store token in database
                 user_jwt = UserJWT(
                     user_id=user.id,
                     token=token,
-                    expires_at=datetime.utcnow() + timedelta(days=1)
+                    expires_at=func.now() + timedelta(days=1)
                 )
                 db.session.add(user_jwt)
                 db.session.commit()
@@ -237,4 +238,4 @@ def init_auth_routes(app, auth_ns):
             """Get current user information"""
             return current_user.to_dict()
 
-    return token_required 
+    return token_required
