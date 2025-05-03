@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_restx import Api, Namespace
 import queue
 from datetime import datetime, timezone
@@ -15,8 +15,13 @@ from controllers.subscriptions import init_subscription_routes
 from controllers.products import init_product_routes
 from controllers.roles import init_role_routes
 from sqlalchemy import text
+from flask_cors import CORS
+
 def create_app(config_class=Config):
     app = Flask(__name__)
+    
+    # Enable CORS for all routes and headers
+    CORS(app, origins="*", allow_headers="*", methods="*")
     app.config.from_object(config_class)
     
     # Configure login manager
@@ -53,6 +58,12 @@ def create_app(config_class=Config):
     api.add_namespace(subscriptions_ns)
     api.add_namespace(products_ns)
     api.add_namespace(roles_ns)
+    
+    
+    @app.before_request
+    def handle_options():
+        if request.method == 'OPTIONS':
+            return '', 200
     
     @app.route('/health')
     def health_check():
