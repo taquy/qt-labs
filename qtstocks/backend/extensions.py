@@ -8,6 +8,7 @@ from google.auth.exceptions import InvalidValue
 # Create single instances of extensions
 db = SQLAlchemy()
 login_manager = LoginManager()
+cors = CORS()
 migrate = Migrate()
 ma = Marshmallow(db)
 
@@ -15,7 +16,6 @@ def init_extensions(app):
     """Initialize all extensions with the app"""
     db.init_app(app)
     migrate.init_app(app, db)
-    cors = CORS()
     cors.init_app(app)
     login_manager.init_app(app)
     return db 
