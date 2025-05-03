@@ -4,14 +4,14 @@ FROM python:3.10-slim
 # Set working directory
 WORKDIR /app
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    FLASK_APP=app.py \
+ENV FLASK_APP=app.py \
     FLASK_ENV=development \
     FLASK_DEBUG=1 \
-    PYTHONDONTWRITEBYTECODE=1
-
+    PYTHONPATH=/app \
+    FLASK_RUN_PORT=5555 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+    
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -29,7 +29,12 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install development dependencies
-RUN pip install --no-cache-dir watchdog[watchmedo] pytest pytest-cov
+RUN pip install --no-cache-dir \
+    watchdog[watchmedo] \
+    flask[development] \
+    pytest \
+    pytest-cov \
+    python-dotenv
 
 # Copy the rest of the application
 COPY . .
@@ -42,4 +47,4 @@ EXPOSE 5555
 EXPOSE 5678
 
 # Command to run the application with hot reload and debugger
-CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", "flask", "run", "--host=0.0.0.0", "--port=5555", "--reload"] 
+CMD ["flask", "run", "--reload", "--debugger"] 

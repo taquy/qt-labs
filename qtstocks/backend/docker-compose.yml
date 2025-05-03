@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build:
@@ -7,23 +5,19 @@ services:
       dockerfile: Dockerfile.dev
     ports:
       - "5555:5555"
-      - "5678:5678"  # Debug port
+      - "5678:5678"
     volumes:
-      - .:/app:delegated
-      - ./logs:/app/logs
+      - .:/app:cached
       - /app/venv
       - /app/__pycache__
       - /app/*.pyc
+      - /app/.pytest_cache
     environment:
-      - FLASK_APP=app.py
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/qtstocks
-      - PYTHONPATH=/app
+      - FLASK_RUN_PORT=5555
+      - FLASK_RUN_HOST=0.0.0.0
     depends_on:
       - db
-    command: python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m flask run --host=0.0.0.0 --port=5555 --reload
-
   db:
     image: postgres:15-alpine
     volumes:
