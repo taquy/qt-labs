@@ -60,7 +60,7 @@ def create_app(config_class=Config):
             # Check database connection
             db.session.execute(text('SELECT 1'))
             return jsonify({
-                'status': 'health2y',
+                'status': 'healthy',
                 'database': 'connected',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }), 200

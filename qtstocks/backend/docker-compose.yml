@@ -20,8 +20,7 @@ services:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
       - PYTHONBREAKPOINT=0
-      - WATCHDOG_ENABLED=1
-    command: watchmedo auto-restart --directory=/app --pattern=*.py --recursive -- python -m debugpy --listen 0.0.0.0:5678 -m flask run --debugger --host=0.0.0.0
+    command: python -m debugpy --listen 0.0.0.0:5678 -m flask run --reload --debugger --host=0.0.0.0
     depends_on:
       - db
   db:

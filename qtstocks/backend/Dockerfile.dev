@@ -9,7 +9,6 @@ ENV FLASK_APP=app.py \
 # Install development dependencies
 RUN pip install --no-cache-dir \
     debugpy \
-    watchdog[watchmedo] \
     flask[development] \
     pytest \
     pytest-cov \
@@ -23,4 +22,4 @@ EXPOSE 5555
 EXPOSE 5678
 
 # Command to run the application with hot reload and debugger
-CMD ["watchmedo", "auto-restart", "--directory=/app", "--pattern=*.py", "--recursive", "--", "python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "flask", "run", "--debugger", "--host=0.0.0.0"] 
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "flask", "run", "--reload", "--debugger", "--host=0.0.0.0"] 
