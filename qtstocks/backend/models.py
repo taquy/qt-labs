@@ -30,9 +30,11 @@ class User(UserMixin, db.Model):
     def is_google_user(self):
         return self.google_id is not None
 
-    def __init__(self, email, name, password=None, is_admin=False, budget=0.0):
+    def __init__(self, email, name, google_id=None, password=None, is_admin=False, budget=0.0):
         self.email = email
         self.name = name
+        if google_id:
+            self.google_id = google_id
         self.is_admin = is_admin
         self.budget = budget
         if password:
