@@ -11,11 +11,10 @@ const handleApiError = (error, saga) => {
 const getRequestConfig = () => {
   const token = localStorage.getItem('authToken');
   return {
-    headers: { 
+    headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
-    },
-    withCredentials: true
+    }
   };
 }
 
