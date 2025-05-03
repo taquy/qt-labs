@@ -16,6 +16,10 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/qtstocks
       - FLASK_RUN_PORT=5555
       - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - PYTHONBREAKPOINT=0
+    command: python -m debugpy --listen 0.0.0.0:5678 -m flask run --reload --debugger --host=0.0.0.0
     depends_on:
       - db
   db:
