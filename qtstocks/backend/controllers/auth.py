@@ -101,7 +101,7 @@ def init_auth_routes(app, auth_ns):
             user_jwt = UserJWT(
                 user_id=user.id,
                 token=token,
-                expires_at=func.now() + timedelta(days=1)
+                expires_at=datetime.now(timezone.utc) + timedelta(days=1)
             )
             db.session.add(user_jwt)
             db.session.commit()
@@ -206,7 +206,7 @@ def init_auth_routes(app, auth_ns):
                 user_jwt = UserJWT(
                     user_id=user.id,
                     token=token,
-                    expires_at=func.now() + timedelta(days=1)
+                    expires_at=datetime.now(timezone.utc) + timedelta(days=1)
                 )
                 db.session.add(user_jwt)
                 db.session.commit()

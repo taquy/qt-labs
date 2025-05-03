@@ -253,7 +253,7 @@ class UserJWT(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     token = db.Column(db.String(500), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    expires_at = db.Column(db.DateTime, nullable=False)
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
