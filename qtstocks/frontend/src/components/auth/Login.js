@@ -56,7 +56,10 @@ const Login = () => {
         client_id: clientId,
         callback: handleGoogleLogin,
         auto_select: false,
-        cancel_on_tap_outside: true
+        cancel_on_tap_outside: true,
+        context: 'signin',
+        ux_mode: 'popup',
+        flow: 'implicit'
       });
 
       // Render the Google Sign-In button
@@ -67,7 +70,8 @@ const Login = () => {
           theme: 'outline',
           size: 'large',
           text: 'continue_with',
-          logo_alignment: 'left'
+          logo_alignment: 'left',
+          width: '100%'
         }
       );
     };
@@ -162,6 +166,7 @@ const Login = () => {
             mb: 2,
             display: 'flex',
             justifyContent: 'center',
+            width: '100%'
           }}
         />
 

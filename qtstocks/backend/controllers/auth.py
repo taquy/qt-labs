@@ -11,6 +11,9 @@ from flask_restx import Resource, fields
 from google.auth.exceptions import InvalidValue
 from werkzeug.security import generate_password_hash
 from sqlalchemy import func
+import secrets
+import string
+
 
 def init_auth_routes(app, auth_ns):
     # Define models for Swagger documentation
@@ -149,6 +152,12 @@ def init_auth_routes(app, auth_ns):
 
     @auth_ns.route('/login/google')
     class GoogleLogin(Resource):
+        
+        def generate_random_string(self, length=128):
+            alphabet = string.ascii_letters + string.digits
+            return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+        
         @auth_ns.doc('google_login')
         @auth_ns.expect(google_login_model)
         def post(self):
@@ -171,12 +180,14 @@ def init_auth_routes(app, auth_ns):
                 # Check if user exists
                 user = User.query.filter_by(email=email).first()
                 if not user:
+                    generated_password = self.generate_random_string(32)
+                    print(f"Generated password: {generated_password}")
                     # Create new user
                     user = User(
                         email=email,
                         google_id=idinfo['sub'],
                         name=idinfo.get('name', ''),
-                        password=secrets.token_hex(8)
+                        password=generated_password
                     )
                     db.session.add(user)
                     db.session.commit()
