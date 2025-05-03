@@ -1,29 +1,10 @@
-from flask import Flask, current_app, render_template, jsonify, request, Response, send_file, redirect, url_for, flash, session, send_from_directory
-from flask_login import login_user, login_required, logout_user, current_user, LoginManager
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_restx import Api, Resource, fields, Namespace
-import pandas as pd
-import plotly
-import plotly.express as px
-import json
-import threading
+from flask import Flask, jsonify
+from flask_restx import Api, Namespace
 import queue
-from datetime import datetime, timedelta, timezone
-import io
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-from models import User, Stock, StockStats, UserSettings, user_stock_stats
+from datetime import datetime, timezone
+from models import User
 from config import Config
-import requests
-from bs4 import BeautifulSoup
-from services.get_stock_lists import get_stock_list
-from extensions import db, login_manager, cors, init_extensions, ma, migrate
-import os
-import jwt as PyJWT
-from functools import wraps
-from oauthlib.oauth2 import WebApplicationClient
-from services.get_stock_data import process_stock_list
-import csv
+from extensions import db, login_manager, init_extensions   
 from controllers.auth import init_auth_routes
 from controllers.settings import init_settings_routes
 from controllers.stocks import init_stock_routes
@@ -33,16 +14,18 @@ from controllers.payments import init_payment_routes
 from controllers.subscriptions import init_subscription_routes
 from controllers.products import init_product_routes
 from controllers.roles import init_role_routes
-from utils.auth import token_required
-
+from sqlalchemy import text
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
+    # Configure login manager
+    login_manager.login_view = 'login'
+    login_manager.login_message = 'Please log in to access this page.'
+    login_manager.login_message_category = 'info'
+    
     # Initialize extensions
-    db.init_app(app)
-    ma.init_app(app)
-    migrate.init_app(app, db)
+    init_extensions(app)
     
     # Initialize Swagger
     api = Api(app, version='1.0', title='QT Stocks API',
@@ -71,24 +54,23 @@ def create_app(config_class=Config):
     api.add_namespace(products_ns)
     api.add_namespace(roles_ns)
     
-    # Configure login manager
-    login_manager.login_view = 'login'
-    login_manager.login_message = 'Please log in to access this page.'
-    login_manager.login_message_category = 'info'
-    
-    # Configure CORS to allow all
-    cors.init_app(app, resources={r"/*": {
-        "origins": "http://localhost:3000",
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": "*",
-        "supports_credentials": True
-    }})
-    
-    # Queue for SSE messages
-    message_queue = queue.Queue()
-    
-    # OAuth 2 client setup
-    client = WebApplicationClient(app.config['GOOGLE_CLIENT_ID'])
+    @app.route('/health')
+    def health_check():
+        try:
+            # Check database connection
+            db.session.execute(text('SELECT 1'))
+            return jsonify({
+                'status': 'healthy',
+                'database': 'connected',
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            }), 200
+        except Exception as e:
+            return jsonify({
+                'status': 'unhealthy',
+                'database': 'disconnected',
+                'error': str(e),
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            }), 503
     
     @login_manager.user_loader
     def load_user(user_id):
@@ -106,21 +88,22 @@ def create_app(config_class=Config):
     init_role_routes(app, token_required, roles_ns)
     
     # Initialize database (comment out when run flask db upgrade)
-    with app.app_context():
-        # Create admin user if it doesn't exist
-        admin = User.query.filter_by(email=Config.ADMIN_EMAIL).first()
-        if not admin:
-            admin = User(
-                email=Config.ADMIN_EMAIL,
-                name='Admin',
-                is_admin=True
-            )
-            admin.set_password(Config.ADMIN_PASSWORD)
-            db.session.add(admin)
-            db.session.commit()
-            print(f"Admin user '{Config.ADMIN_EMAIL}' created successfully!")
-        else:
-            print(f"Admin user '{Config.ADMIN_EMAIL}' already exists.")
+    # Temporarily commenting out admin user creation for database migration
+    # with app.app_context():
+    #     # Create admin user if it doesn't exist
+    #     admin = User.query.filter_by(email=Config.ADMIN_EMAIL).first()
+    #     if not admin:
+    #         admin = User(
+    #             email=Config.ADMIN_EMAIL,
+    #             name='Admin',
+    #             is_admin=True
+    #         )
+    #         admin.set_password(Config.ADMIN_PASSWORD)
+    #         db.session.add(admin)
+    #         db.session.commit()
+    #         print(f"Admin user '{Config.ADMIN_EMAIL}' created successfully!")
+    #     else:
+    #         print(f"Admin user '{Config.ADMIN_EMAIL}' already exists.")
     
     return app
 

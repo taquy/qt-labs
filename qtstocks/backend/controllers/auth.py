@@ -176,7 +176,7 @@ def init_auth_routes(app, auth_ns):
                         email=email,
                         google_id=idinfo['sub'],
                         name=idinfo.get('name', ''),
-                        password_hash=generate_password_hash(secrets.token_hex(16))
+                        password=secrets.token_hex(16)
                     )
                     db.session.add(user)
                     db.session.commit()
