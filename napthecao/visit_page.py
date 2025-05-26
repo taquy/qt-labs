@@ -16,7 +16,13 @@ def form_fill_and_submit(driver, card_code):
     )
     fill_input_text(driver, card_code, "//input[@placeholder='Nhập mã thẻ*']")
     image = wait_for_image_stability(driver)
+    if image is None:
+        print("❌ Failed to capture CAPTCHA image")
+        return False
     captcha_text = show_image_and_prompt(image)
+    if captcha_text is None:
+        print("❌ No CAPTCHA text entered")
+        return False
     fill_input_text(driver, captcha_text, "//input[@placeholder='Nhập mã bảo mật*']")
     driver.find_element("css selector", "div.payment-online__btn-2column a.button.button--primary").click()
     

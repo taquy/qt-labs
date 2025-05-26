@@ -1,4 +1,3 @@
-
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -38,7 +37,7 @@ def wait_for_image_stability(driver, max_attempts=3, stability_time=1):
     last_hash = None
     stable_count = 0
     
-    for _ in range(max_attempts):
+    for attempt in range(max_attempts):
         try:
             # Scroll to top of the page
             driver.execute_script("window.scrollTo(0, 0);")
@@ -76,6 +75,7 @@ def wait_for_image_stability(driver, max_attempts=3, stability_time=1):
             
             # Check if image is stable
             if current_hash == last_hash:
+                stable_count += 1
                 if stable_count >= stability_time:
                     os.remove("temp_screenshot.png")
                     return img
@@ -87,10 +87,11 @@ def wait_for_image_stability(driver, max_attempts=3, stability_time=1):
             time.sleep(0.5)  # Wait before next check
             
         except Exception as e:
-            print(f"Error waiting for image stability: {e}")
+            print(f"❌ Error capturing CAPTCHA: {str(e)}")
             if os.path.exists("temp_screenshot.png"):
                 os.remove("temp_screenshot.png")
             time.sleep(0.5)
     
+    print("❌ Failed to capture CAPTCHA image")
     return None
     
