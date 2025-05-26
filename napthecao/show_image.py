@@ -3,11 +3,13 @@ from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtCore import Qt, QTimer
 import sys
 import cv2
+import numpy as np
+from PIL import Image
 
 # Global QApplication instance
 _app = None
 
-def show_image_and_prompt(image_path):
+def show_image_and_prompt(pil_image):
     global _app
     
     # Initialize QApplication if it doesn't exist
@@ -25,7 +27,10 @@ def show_image_and_prompt(image_path):
     layout = QVBoxLayout(central_widget)
     
     # Load and display image
-    img = cv2.imread(image_path)
+    
+    # Convert PIL image to NumPy array
+    image_np = np.array(pil_image)
+    img = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
     height, width = img.shape[:2]
     bytes_per_line = 3 * width
     q_img = QImage(img.data, width, height, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
@@ -76,5 +81,6 @@ def show_image_and_prompt(image_path):
     print(f"✅ You entered: {result[0]}")
     return result[0]
 
-
-# show_image_and_prompt("cards/IMG_7779.PNG")
+# if __name__ == "__main__":
+#     pil_image = Image.open('cards/IMG_7779.PNG')
+#     show_image_and_prompt(pil_image)
