@@ -51,7 +51,7 @@ def read_card_and_save_to_file(card_dir):
     card_files = os.listdir(card_dir)
     if not card_files:
         print(f"No card files found in {card_dir}")
-        return
+        return card_codes
     
     for filename in card_files:
         if filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp")):
@@ -66,5 +66,6 @@ def read_card_and_save_to_file(card_dir):
             })
     with open("card_code.json", "w") as file:
         json.dump(card_codes, file)
+    return card_codes
 
 # print(read_card_code("cards/IMG_7779.PNG"))
