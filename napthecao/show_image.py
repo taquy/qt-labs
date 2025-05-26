@@ -9,12 +9,72 @@ from PIL import Image
 # Global QApplication instance
 _app = None
 
-def show_image_and_prompt(pil_image):
+def get_application():
     global _app
-    
-    # Initialize QApplication if it doesn't exist
     if _app is None:
-        _app = QApplication(sys.argv)
+        _app = QApplication.instance()
+        if _app is None:
+            _app = QApplication(sys.argv)
+    return _app
+
+def show_retry_popup():
+    # Get the global QApplication instance
+    app = get_application()
+    
+    # Create main window
+    window = QMainWindow()
+    window.setWindowTitle("Action Required")
+    window.setFixedSize(300, 150)
+    
+    # Create central widget and layout
+    central_widget = QWidget()
+    window.setCentralWidget(central_widget)
+    layout = QVBoxLayout(central_widget)
+    
+    # Add label
+    label = QLabel("What would you like to do?")
+    label.setAlignment(Qt.AlignCenter)
+    layout.addWidget(label)
+    
+    # Variable to store the result
+    result = [None]
+    
+    def on_button_click(action):
+        result[0] = action
+        window.close()
+    
+    # Create buttons
+    button_layout = QVBoxLayout()
+    continue_btn = QPushButton("Continue")
+    retry_btn = QPushButton("Retry")
+    stop_btn = QPushButton("Stop")
+    
+    continue_btn.clicked.connect(lambda: on_button_click("continue"))
+    retry_btn.clicked.connect(lambda: on_button_click("retry"))
+    stop_btn.clicked.connect(lambda: on_button_click("stop"))
+    
+    button_layout.addWidget(continue_btn)
+    button_layout.addWidget(retry_btn)
+    button_layout.addWidget(stop_btn)
+    
+    layout.addLayout(button_layout)
+    
+    # Show window
+    window.show()
+    window.raise_()
+    window.activateWindow()
+    
+    # Process events until window is closed
+    while window.isVisible():
+        app.processEvents()
+        if result[0] is not None:  # If we have a result, break the loop
+            break
+    
+    return result[0]
+
+def show_image_and_prompt(pil_image):
+    # Get the global QApplication instance
+    app = get_application()
     
     # Create main window
     window = QMainWindow()
@@ -62,7 +122,6 @@ def show_image_and_prompt(pil_image):
         window.hide()  # Hide the window first
         window.close()  # Then close it
         window.deleteLater()  # Clean up resources
-        _app.quit()  # Quit the application
     
     submit_button.clicked.connect(on_submit)
     input_field.returnPressed.connect(on_submit)
@@ -74,7 +133,7 @@ def show_image_and_prompt(pil_image):
     
     # Process events until window is closed
     while window.isVisible():
-        _app.processEvents()
+        app.processEvents()
         if result[0] is not None:  # If we have a result, break the loop
             break
     
