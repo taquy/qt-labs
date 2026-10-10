@@ -1,0 +1,12 @@
+[submodule "carec/qt-cashflow-recorder-api"]
+	path = carec/qt-cashflow-recorder-api
+	url = git@github.com:taquy/qt-cashflow-recorder-api.git
+[submodule "carec/qt-cashflow-recorder-mobile"]
+	path = carec/qt-cashflow-recorder-mobile
+	url = git@github.com:taquy/qt-cashflow-recorder-mobile.git
+[submodule "carec/qt-cashflow-recorder-web"]
+	path = carec/qt-cashflow-recorder-web
+	url = git@github.com:taquy/qt-cashflow-recorder-web.git
+[submodule "snake-game/SnakeGame"]
+	path = snake-game/SnakeGame
+	url = git@github.com:taquy/qt-labs-snake-game.git
